@@ -1,88 +1,57 @@
 # 🌿 Verde Salon - Administrator's Manual
 
-Welcome to the **Verde Salon** digital sanctuary. This project is a premium, minimal, and high-end management suite designed specifically for luxury boutique salons.
+Welcome to the **Verde Salon** digital sanctuary. This project is a premium management suite designed for luxury boutique salons.
 
 ---
 
-## 🚀 1. First-Time Setup (Admin Access)
-Since this is a fresh installation, you need to manually set up your first administrator account in the Firebase Console:
+## 🚀 1. First-Time Setup (Unlocking the Sanctuary)
+As an AI, I cannot access your private credentials. You must perform these **two manual steps** to unlock your admin panel:
 
 ### Step A: Enable Authentication
 1. Go to the [Firebase Console](https://console.firebase.google.com/).
-2. Select your project.
-3. Navigate to **Build > Authentication**.
-4. Click **Get Started** and enable the **Email/Password** provider.
-5. In the **Users** tab, click **Add User** and create your account (e.g., `editor@verdesalon.com`).
-6. **Copy the UID** generated for this user.
+2. Navigate to **Build > Authentication**.
+3. Click **Get Started** and enable the **Email/Password** provider.
+4. In the **Users** tab, click **Add User** and create your account.
+5. **Copy the UID** generated for this user.
 
-### Step B: Grant Admin Privileges in Firestore
+### Step B: Grant Admin Privileges
 1. Navigate to **Build > Firestore Database**.
-2. Click **Create Database** if you haven't already.
-3. Click **Start Collection** and name it `roles_admin`.
-4. For the **Document ID**, paste the **UID** you copied in Step A.
-5. Add a field:
+2. Click **Start Collection** and name it `roles_admin`.
+3. For the **Document ID**, paste the **UID** you copied in Step A.
+4. Add a field:
    - Field name: `role`
    - Type: `string`
    - Value: `admin`
-6. Save the document.
-
-### Step C: Log In
-Visit `http://localhost:9002/admin/login` and use the email and password you created.
+5. Save the document.
 
 ---
 
-## 2. Project Overview
-Verde Salon is a full-stack digital experience that blends a cinematic frontend with a powerful administrative "sanctuary." 
+## 2. Project Overview & Features
+Verde Salon blends a cinematic frontend with a powerful administrative "sanctuary."
 
-### Key Features:
-- **Cinematic Frontend**: A luxury botanical aesthetic using the deep forest green (#0F2F2F) and gold accent (#C6A15B) palette.
-- **Dynamic Page Builder**: Manage your Home and Services pages by reordering sections (Hero, About, Gallery, etc.).
+### **Built Features:**
+- **Cinematic Frontend**: A luxury botanical aesthetic using Forest Green (#0F2F2F) and Gold (#C6A15B).
+- **Dynamic Page Builder**: Manage your Home and Services pages by reordering sections (Hero, About, Gallery, etc.) at `/admin/pages`.
+- **Real-Time Synchronization**: All changes reflect on the frontend instantly via Firestore listeners.
+- **One-Click Initializer**: Found on the main Dashboard, this seeds your entire site with luxury sample data so you don't start from scratch.
 - **The Journal (Blog)**: A high-end editorial system with automatic SEO optimization.
-- **Global Branding Controls**: Change your logo, site-wide colors, and typography directly from the Admin panel.
+- **Global Branding Controls**: Change your logo, colors, and typography site-wide at `/admin/branding`.
 
 ---
 
-## 3. CMS Dashboard & Page Builder
-Access your management suite at `/admin`.
-
-### **The Page Builder** (`/admin/pages`)
-1. **Choose a Page**: Toggle between "Home" and "Services".
-2. **Reorder Sections**: Use the up/down arrows to change the layout flow.
-3. **Edit Content**: Click the settings icon to change text and images in real-time.
-4. **Add Sections**: Click "Add New Section" to inject new modules like Video Blocks or FAQs.
-
-### **Branding & Theme** (`/admin/branding`)
-- **Logo**: Upload your brand mark and adjust its size.
-- **Colors**: Paste Hex codes to update the site's primary, background, and accent colors instantly.
-- **Fonts**: Choose luxury Google Font pairings for Headlines and Body text.
+## 3. How to Manage Content
+1. **Access the Dashboard**: Log in at `/admin/login`.
+2. **Page Builder**: Toggle between "Home" and "Services". Use arrows to reorder and the settings icon to edit text/images.
+3. **Rituals (Services)**: Manage your menu, categories, and pricing at `/admin/services`.
+4. **Journal**: Create and publish articles at `/admin/blog`.
 
 ---
 
-## 4. The Journal System
-### **Managing Articles** (`/admin/blog`)
-- **Create**: Click "New Article" to launch the editor.
-- **SEO Engine**: Every article includes an SEO Optimization card to manage browser titles and search engine descriptions.
-
----
-
-## 5. Firestore Data Structure
-Your data is organized into "Collections":
-- `roles_admin`: Your security vault. Document ID = User UID.
-- `cms_pages`: Definitions for your page layouts.
-- `cms_page_sections`: The raw content for every block on your site.
-- `blog_posts`: Your editorial content and SEO data.
-- `services`: Your rituals menu.
-- `form_submissions`: Client leads and booking inquiries.
-- `settings`: Global branding and API keys.
-
----
-
-## 6. Integrations & Analytics
-Manage these in **Admin > Branding & Theme** or the **Integrations** tab (if visible):
-- **Google Analytics**: Enter your "G-" ID.
-- **Facebook Pixel**: Enter your Pixel ID.
-- **CRM Webhooks**: Use the Zapier Webhook field to send lead data to HubSpot or GoHighLevel.
-
----
+## 4. Technical Architecture
+- **Framework**: Next.js 15 (App Router).
+- **Styling**: Tailwind CSS + ShadCN UI.
+- **Database**: Firebase Firestore (Real-time).
+- **Auth**: Firebase Authentication (Email/Password).
+- **AI Engine**: Genkit (Pre-wired for content assistance).
 
 **Verde Salon** is more than a website; it is an intentional digital ritual. May your sanctuary flourish.
