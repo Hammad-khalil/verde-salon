@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface HeroProps {
   title?: string;
@@ -9,6 +10,7 @@ interface HeroProps {
   ctaText?: string;
   imageUrl?: string;
   videoUrl?: string;
+  styles?: any;
 }
 
 export default function Hero({ 
@@ -16,10 +18,17 @@ export default function Hero({
   subtitle = "Premium hair, skin, and wellness treatments tailored for you.", 
   ctaText = "Book Appointment", 
   imageUrl = "https://picsum.photos/seed/verde-hero-main/1920/1080", 
-  videoUrl 
+  videoUrl,
+  styles
 }: HeroProps) {
+  const alignmentClass = styles?.alignment === 'left' ? 'text-left items-start' : 'text-center items-center';
+  const overlayOpacity = (styles?.overlayOpacity || 20) / 100;
+
   return (
-    <section className="relative h-[100vh] w-full overflow-hidden flex items-center justify-center bg-primary">
+    <section 
+      className="relative h-[100vh] w-full overflow-hidden flex items-center justify-center bg-primary"
+      style={{ backgroundColor: styles?.backgroundColor }}
+    >
       <div className="absolute inset-0 z-0">
         {videoUrl ? (
           <video 
@@ -37,28 +46,36 @@ export default function Hero({
             alt="Verde Salon Luxury Atmosphere" 
             fill 
             priority
-            className="object-cover brightness-[0.6] scale-[1.05]"
+            className="object-cover scale-[1.05]"
+            style={{ filter: `brightness(${1 - overlayOpacity})` }}
             data-ai-hint="luxury salon"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40" />
       </div>
       
-      <div className="relative z-10 container mx-auto px-6 text-center text-white">
-        <div className="max-w-4xl mx-auto space-y-10 animate-fade-in">
+      <div className={cn("relative z-10 container mx-auto px-6 text-white flex flex-col", alignmentClass)}>
+        <div className={cn("max-w-4xl space-y-10 animate-fade-in", alignmentClass)}>
           <span className="text-[12px] font-bold tracking-[0.6em] uppercase text-accent/80 block">
             The Art of Transformation
           </span>
-          <h1 className="text-5xl md:text-8xl font-headline font-light leading-[1.1] md:leading-[1.05] tracking-tight">
+          <h1 
+            className="text-5xl md:text-8xl font-headline font-light leading-[1.1] md:leading-[1.05] tracking-tight"
+            style={{ color: styles?.titleColor || '#ffffff' }}
+          >
             {title}
           </h1>
-          <p className="text-lg md:text-2xl font-light text-white/70 max-w-2xl mx-auto font-body tracking-wide leading-relaxed">
+          <p className="text-lg md:text-2xl font-light text-white/70 max-w-2xl font-body tracking-wide leading-relaxed">
             {subtitle}
           </p>
           <div className="pt-8">
-            <Button className="bg-accent text-primary hover:bg-white hover:text-primary rounded-none px-16 py-8 text-[12px] font-bold tracking-[0.4em] uppercase transition-all duration-700 shadow-2xl group">
+            <Button 
+              className={cn(
+                "rounded-none px-16 py-8 text-[12px] font-bold tracking-[0.4em] uppercase transition-all duration-700 shadow-2xl group relative overflow-hidden",
+                styles?.buttonType === 'outline' ? 'bg-transparent border border-white text-white hover:bg-white hover:text-primary' : 'bg-accent text-primary hover:bg-white hover:text-primary'
+              )}
+            >
               <span className="relative z-10">{ctaText}</span>
-              <div className="absolute inset-0 bg-white scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500 z-0" />
             </Button>
           </div>
         </div>

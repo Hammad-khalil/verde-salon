@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface BrandIntroProps {
   title: string;
@@ -10,6 +11,7 @@ interface BrandIntroProps {
   imageUrl?: string;
   subtitle?: string;
   buttonText?: string;
+  styles?: any;
 }
 
 export default function BrandIntro({ 
@@ -17,19 +19,35 @@ export default function BrandIntro({
   content, 
   imageUrl = "https://picsum.photos/seed/verde-about/800/1000",
   subtitle = "The Essence of Luxury",
-  buttonText = "Discover Our Story"
+  buttonText = "Discover Our Story",
+  styles
 }: BrandIntroProps) {
+  const paddingVal = styles?.paddingVertical || '128';
+  
   return (
-    <section className="py-32 md:py-48 bg-background overflow-hidden">
+    <section 
+      className="overflow-hidden"
+      style={{ 
+        backgroundColor: styles?.backgroundColor || '#F5F3EF',
+        paddingTop: `${paddingVal}px`,
+        paddingBottom: `${paddingVal}px`
+      }}
+    >
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
           {/* Text Content */}
           <div className="space-y-10 order-2 lg:order-1">
             <div className="space-y-6">
-              <span className="text-primary font-bold uppercase tracking-[0.5em] text-[11px] block animate-fade-in opacity-70">
+              <span 
+                className="font-bold uppercase tracking-[0.5em] text-[11px] block animate-fade-in opacity-70"
+                style={{ color: styles?.subtitleColor || 'var(--primary)' }}
+              >
                 {subtitle}
               </span>
-              <h2 className="text-4xl md:text-6xl lg:text-7xl font-headline font-light leading-[1.1] text-foreground tracking-tight">
+              <h2 
+                className="text-4xl md:text-6xl lg:text-7xl font-headline font-light leading-[1.1] tracking-tight"
+                style={{ color: styles?.titleColor || 'var(--foreground)' }}
+              >
                 {title}
               </h2>
               <div className="h-[1px] w-20 bg-accent/40" />
@@ -42,7 +60,10 @@ export default function BrandIntro({
             <div className="pt-6">
               <Button 
                 variant="outline" 
-                className="group relative overflow-hidden rounded-none border-primary/20 px-10 py-7 text-[11px] font-bold uppercase tracking-[0.3em] transition-all duration-500 hover:border-primary hover:bg-primary hover:text-white"
+                className={cn(
+                  "group relative overflow-hidden rounded-none border-primary/20 px-10 py-7 text-[11px] font-bold uppercase tracking-[0.3em] transition-all duration-500 hover:border-primary hover:bg-primary hover:text-white",
+                  styles?.buttonType === 'primary' && 'bg-primary text-white hover:bg-accent'
+                )}
               >
                 <span className="relative z-10 flex items-center">
                   {buttonText} 
@@ -63,11 +84,8 @@ export default function BrandIntro({
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 data-ai-hint="luxury salon"
               />
-              {/* Subtle Overlay */}
               <div className="absolute inset-0 bg-primary/5 group-hover:bg-transparent transition-colors duration-700" />
             </div>
-            
-            {/* Abstract Decorative Element */}
             <div className="absolute -bottom-8 -left-8 w-32 h-32 border-l border-b border-accent/20 hidden md:block" />
           </div>
         </div>
