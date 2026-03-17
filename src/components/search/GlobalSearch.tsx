@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Search, X, Scissors, FileText, ArrowRight } from 'lucide-react';
@@ -42,6 +43,10 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl p-0 overflow-hidden border-none shadow-2xl rounded-none">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Global Search</DialogTitle>
+          <DialogDescription>Search for rituals, journal articles, and salon information.</DialogDescription>
+        </DialogHeader>
         <div className="bg-white p-6 space-y-6">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />

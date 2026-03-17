@@ -30,7 +30,7 @@ import {
   Maximize
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function PagesEditor() {
@@ -242,11 +242,14 @@ export default function PagesEditor() {
           <div className="flex h-[80vh]">
             {/* Sidebar Controls */}
             <div className="w-80 bg-muted/30 border-r flex flex-col">
-              <div className="p-6 border-b bg-white">
-                <h2 className="font-headline text-xl font-bold flex items-center">
+              <DialogHeader className="p-6 border-b bg-white space-y-0 text-left">
+                <DialogTitle className="font-headline text-xl font-bold flex items-center">
                   <Maximize className="w-4 h-4 mr-2 text-primary" /> Edit {editingSection?.type}
-                </h2>
-              </div>
+                </DialogTitle>
+                <DialogDescription className="sr-only">
+                  Modify the content, styling, and layout options for this section.
+                </DialogDescription>
+              </DialogHeader>
               
               <Tabs defaultValue="content" className="flex-grow flex flex-col">
                 <TabsList className="w-full justify-start rounded-none bg-transparent border-b h-12 px-2">
