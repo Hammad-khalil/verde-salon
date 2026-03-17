@@ -7,14 +7,6 @@ rules_version = '2';
  * This ruleset implements a robust administrative-access model (DBAC) designed for a 
  * professional CMS. Security is centralized around a `roles_admin` collection, where 
  * the presence of a user's UID determines their administrative privileges.
- *
- * Key Security Decisions:
- * 1. Authorization Independence: Content visibility (isPublished/isApproved) is 
- *    denormalized onto each document to allow public reading without parent lookups.
- * 2. Admin Dominance: Authenticated administrators have full CRUD access.
- * 3. Public Readability: Public content is accessible if 'isPublished' is true. 
- *    Added check for 'resource == null' to allow 'get' operations on missing docs 
- *    so the client can handle 404/Empty states gracefully.
  */
 
 service cloud.firestore {
@@ -64,16 +56,16 @@ service cloud.firestore {
     }
 
     match /cms_pages/{pageId} {
-      // Allow get if doc doesn't exist (returns null safely) or is published
       allow get: if isAdmin() || resource == null || isPublished();
       allow list: if true; 
       allow create, update, delete: if isAdmin();
+    }
 
-      match /page_sections/{sectionId} {
-        allow get: if isAdmin() || resource == null || isPublished();
-        allow list: if true; 
-        allow create, update, delete: if isAdmin();
-      }
+    match /cms_page_sections/{sectionId} {
+      // Sections are public if the page they belong to is published.
+      // For simplicity in this MVP, we allow public read for rendering.
+      allow get, list: if true; 
+      allow create, update, delete: if isAdmin();
     }
 
     match /services/{serviceId} {
@@ -124,7 +116,6 @@ service cloud.firestore {
     }
 
     match /form_submissions/{submissionId} {
-      // Allow admins full access. For public booking, you could add 'allow create: if true;'
       allow get, list, create, update, delete: if isAdmin();
     }
   }

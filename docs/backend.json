@@ -524,7 +524,8 @@
         },
         "metaDescription": {
           "type": "string",
-          "description": "Specific meta description for the blog post, overriding global settings if provided."
+          "description": "Specific meta description for the blog post, overriding global settings if provided.",
+          "format": "string"
         },
         "canonicalUrl": {
           "type": "string",
@@ -884,27 +885,11 @@
           "schema": {
             "$ref": "#/backend/entities/AdminUser"
           },
-          "description": "Stores a minimal representation of an administrator for Database Access Control (DBAC). The existence of a document here (where `adminUserId` is a Firebase Auth UID) grants administrative privileges. Includes denormalized 'id' and 'role' for authorization clarity.",
+          "description": "Stores administrative privileges.",
           "params": [
             {
               "name": "adminUserId",
-              "description": "The Firebase Authentication User ID (UID) of an administrative user."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/admin_users/{adminUserId}",
-        "definition": {
-          "entityName": "AdminUser",
-          "schema": {
-            "$ref": "#/backend/entities/AdminUser"
-          },
-          "description": "Stores the full profile details for administrative users. Access is restricted to authenticated administrators, or the owner themselves, using the `roles_admin` collection for role validation.",
-          "params": [
-            {
-              "name": "adminUserId",
-              "description": "The Firebase Authentication User ID (UID) of an administrative user, also serving as the document ID."
+              "description": "Firebase UID."
             }
           ]
         }
@@ -916,7 +901,7 @@
           "schema": {
             "$ref": "#/backend/entities/Settings"
           },
-          "description": "A singleton document holding global website configuration and branding settings. Read/write access is restricted to authenticated administrators. Public read for safe configuration values is allowed.",
+          "description": "Global branding settings.",
           "params": []
         }
       },
@@ -927,31 +912,27 @@
           "schema": {
             "$ref": "#/backend/entities/Page"
           },
-          "description": "Represents individual website pages. Managed by administrators. Public read access is granted only if `isPublished` is true. Includes 'isPublished' for Authorization Independence.",
+          "description": "Website pages.",
           "params": [
             {
               "name": "pageId",
-              "description": "The unique identifier for a CMS page."
+              "description": "Page identifier."
             }
           ]
         }
       },
       {
-        "path": "/cms_pages/{pageId}/page_sections/{sectionId}",
+        "path": "/cms_page_sections/{sectionId}",
         "definition": {
           "entityName": "PageSection",
           "schema": {
             "$ref": "#/backend/entities/PageSection"
           },
-          "description": "Represents content sections within a specific page. Managed by administrators. Public read access is granted only if `isPublished` is true. Includes 'isPublished' and denormalized 'pageId' for Authorization Independence.",
+          "description": "Flat collection of page sections used by the Page Builder.",
           "params": [
             {
-              "name": "pageId",
-              "description": "The unique identifier of the parent CMS page."
-            },
-            {
               "name": "sectionId",
-              "description": "The unique identifier for a page section."
+              "description": "Section identifier."
             }
           ]
         }
@@ -963,144 +944,16 @@
           "schema": {
             "$ref": "#/backend/entities/Service"
           },
-          "description": "Stores details about salon services. Managed by administrators. Public read access is granted only if `isPublished` is true. Includes 'isPublished' for Authorization Independence.",
+          "description": "Salon services.",
           "params": [
             {
               "name": "serviceId",
-              "description": "The unique identifier for a service."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/service_categories/{categoryId}",
-        "definition": {
-          "entityName": "ServiceCategory",
-          "schema": {
-            "$ref": "#/backend/entities/ServiceCategory"
-          },
-          "description": "Defines categories for salon services. Managed by administrators. Public read access is granted only if `isPublished` is true. Includes 'isPublished' for Authorization Independence.",
-          "params": [
-            {
-              "name": "categoryId",
-              "description": "The unique identifier for a service category."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/blog_posts/{postId}",
-        "definition": {
-          "entityName": "BlogPost",
-          "schema": {
-            "$ref": "#/backend/entities/BlogPost"
-          },
-          "description": "Contains individual blog articles. Managed by administrators. Public read access is granted only if `isPublished` is true. Includes 'isPublished' for Authorization Independence.",
-          "params": [
-            {
-              "name": "postId",
-              "description": "The unique identifier for a blog post."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/blog_categories/{categoryId}",
-        "definition": {
-          "entityName": "BlogCategory",
-          "schema": {
-            "$ref": "#/backend/entities/BlogCategory"
-          },
-          "description": "Categorizes blog posts. Managed by administrators. Public read access is granted only if `isPublished` is true. Includes 'isPublished' for Authorization Independence.",
-          "params": [
-            {
-              "name": "categoryId",
-              "description": "The unique identifier for a blog category."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/blog_tags/{tagId}",
-        "definition": {
-          "entityName": "BlogTag",
-          "schema": {
-            "$ref": "#/backend/entities/BlogTag"
-          },
-          "description": "Tags for blog posts, enabling granular filtering. Managed by administrators. Public read access is always granted (tags are inherently public).",
-          "params": [
-            {
-              "name": "tagId",
-              "description": "The unique identifier for a blog tag."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/testimonials/{testimonialId}",
-        "definition": {
-          "entityName": "Testimonial",
-          "schema": {
-            "$ref": "#/backend/entities/Testimonial"
-          },
-          "description": "Customer testimonials. Managed by administrators. Public read access is granted only if `isApproved` is true. Includes 'isApproved' for Authorization Independence.",
-          "params": [
-            {
-              "name": "testimonialId",
-              "description": "The unique identifier for a testimonial."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/gallery_images/{imageId}",
-        "definition": {
-          "entityName": "GalleryImage",
-          "schema": {
-            "$ref": "#/backend/entities/GalleryImage"
-          },
-          "description": "Images for galleries or featured work sections. Managed by administrators. Public read access is granted only if `isPublished` is true. Includes 'isPublished' for Authorization Independence.",
-          "params": [
-            {
-              "name": "imageId",
-              "description": "The unique identifier for a gallery image."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/faqs/{faqId}",
-        "definition": {
-          "entityName": "FAQ",
-          "schema": {
-            "$ref": "#/backend/entities/FAQ"
-          },
-          "description": "Frequently Asked Questions. Managed by administrators. Public read access is granted only if `isPublished` is true. Includes 'isPublished' for Authorization Independence.",
-          "params": [
-            {
-              "name": "faqId",
-              "description": "The unique identifier for an FAQ entry."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/form_submissions/{submissionId}",
-        "definition": {
-          "entityName": "FormSubmission",
-          "schema": {
-            "$ref": "#/backend/entities/FormSubmission"
-          },
-          "description": "Records all form submissions from the website. Strictly accessible (read/write) by authenticated administrators only. No public access.",
-          "params": [
-            {
-              "name": "submissionId",
-              "description": "The unique identifier for a form submission."
+              "description": "Service identifier."
             }
           ]
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to be secure, scalable, and debuggable, strictly adhering to the core design principles and mandates. Authorization Independence is paramount, ensuring that security rules do not rely on fetching parent documents. This is achieved by centralizing administrative role checks and denormalizing `isPublished` status directly into content documents where public read access is permitted.\n\n**Authorization Independence (CRITICAL):**\nAll administrative actions (create, update, delete) for CMS content (`cms_pages`, `cms_pages/{pageId}/page_sections`, `services`, `blog_posts`, etc.), global `settings`, and `form_submissions` are gated by a single, atomic check: `exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))`. This eliminates any need for `get()` calls in rules to determine if a user is an admin. For public read access, each content document (e.g., `cms_pages`, `page_sections`, `blog_posts`) contains its own `isPublished: true` or `isApproved: true` field. This means a section's public readability does not depend on the parent page's status in a rule; the frontend application layer can then combine these statuses for rendering. This fully supports atomic operations and prevents cascading rule dependencies.\n\n**QAPs (Rules are not Filters):**\nThe structure supports secure `list` operations by segregating data based on its security posture:\n1.  **Admin-only collections:** `roles_admin`, `admin_users`, and `form_submissions` are strictly accessible by authenticated users with an entry in `roles_admin`. No public listing is allowed.\n2.  **Global singletons:** The `settings/global` document is writable by admins only, and public read access is granted to all fields (or a subset) without complex filtering, assuming all fields are safe for public consumption.\n3.  **Publicly queryable content with admin management:** Collections like `cms_pages`, `cms_pages/{pageId}/page_sections`, `services`, `blog_posts`, `testimonials`, `gallery_images`, and `faqs` explicitly use an `isPublished: true` (or `isApproved: true`) field. Public `list` operations will include a query constraint `where('isPublished', '==', true)`. This ensures that only explicitly published content is returned to public users, while administrators can query all content (published and unpublished) without additional filtering, fulfilling the QAP principle.\n\n**Structural Segregation & Access Modeling:**\n*   **DBAC:** The `roles_admin` collection serves as the central point for Database Access Control. Its existence at `/roles_admin/{request.auth.uid}` immediately grants administrative privileges. The `admin_users` collection stores detailed profile information for these administrators.\n*   **Hierarchical Paths:** `cms_pages` and their `page_sections` are structured hierarchically (`/cms_pages/{pageId}/page_sections/{sectionId}`). While this follows the 1:N relationship, Authorization Independence is maintained as described above.\n*   All other content collections (`services`, `blog_posts`, `testimonials`, etc.) are root-level collections, as their primary authorization is admin-managed writes and `isPublished` based public reads, without a strong logical *ownership* hierarchy that needs to be enforced via nested paths for security. Foreign keys (e.g., `pageId` in `page_sections`, `categoryId` in `services`) link related entities without creating authorization dependencies."
+    "reasoning": "Updated structure to use a flat 'cms_page_sections' collection to support efficient bulk fetching and real-time synchronization in the Page Builder."
   }
 }
