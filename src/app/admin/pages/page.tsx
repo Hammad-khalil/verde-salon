@@ -313,7 +313,11 @@ export default function PagesEditor() {
                                   value={editingSection.parsedContent.styles?.titleColor || '#000000'} 
                                   onChange={(e) => updateNestedContent('titleColor', e.target.value, true)} 
                                 />
-                                <Input className="h-8 text-[10px]" value={editingSection.parsedContent.styles?.titleColor} />
+                                <Input 
+                                  className="h-8 text-[10px]" 
+                                  value={editingSection.parsedContent.styles?.titleColor || ''} 
+                                  onChange={(e) => updateNestedContent('titleColor', e.target.value, true)} 
+                                />
                               </div>
                             </div>
                           </div>
