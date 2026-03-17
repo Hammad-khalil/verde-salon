@@ -1,57 +1,46 @@
 # 🌿 Verde Salon - Administrator's Manual
 
-Welcome to the **Verde Salon** digital sanctuary. This project is a premium management suite designed for luxury boutique salons.
+Welcome to your **Verde Salon** management sanctuary. This system is designed to be elegant, powerful, and simple enough for daily use without writing a single line of code.
 
 ---
 
-## 🚀 1. First-Time Setup (Unlocking the Sanctuary)
-As an AI, I cannot access your private credentials. You must perform these **two manual steps** to unlock your admin panel:
-
-### Step A: Enable Authentication
-1. Go to the [Firebase Console](https://console.firebase.google.com/).
-2. Navigate to **Build > Authentication**.
-3. Click **Get Started** and enable the **Email/Password** provider.
-4. In the **Users** tab, click **Add User** and create your account.
-5. **Copy the UID** generated for this user.
-
-### Step B: Grant Admin Privileges
-1. Navigate to **Build > Firestore Database**.
-2. Click **Start Collection** and name it `roles_admin`.
-3. For the **Document ID**, paste the **UID** you copied in Step A.
-4. Add a field:
-   - Field name: `role`
-   - Type: `string`
-   - Value: `admin`
-5. Save the document.
+## 🚀 Step 1: Initialize Your Sanctuary
+If your website looks empty, don't worry! 
+1. Log in at `/admin/login`.
+2. On the main **Dashboard**, you will see a prominent gold banner.
+3. Click **"Seed Sanctuary Now"**.
+4. This instantly creates your Home page layout, starter Services, and Global Colors.
 
 ---
 
-## 2. Project Overview & Features
-Verde Salon blends a cinematic frontend with a powerful administrative "sanctuary."
-
-### **Built Features:**
-- **Cinematic Frontend**: A luxury botanical aesthetic using Forest Green (#0F2F2F) and Gold (#C6A15B).
-- **Dynamic Page Builder**: Manage your Home and Services pages by reordering sections (Hero, About, Gallery, etc.) at `/admin/pages`.
-- **Real-Time Synchronization**: All changes reflect on the frontend instantly via Firestore listeners.
-- **One-Click Initializer**: Found on the main Dashboard, this seeds your entire site with luxury sample data so you don't start from scratch.
-- **The Journal (Blog)**: A high-end editorial system with automatic SEO optimization.
-- **Global Branding Controls**: Change your logo, colors, and typography site-wide at `/admin/branding`.
+## 🛠️ Step 2: Using the Page Builder
+Located at `/admin/pages`, the Page Builder is where you design your digital presence.
+- **Adding Sections**: Click the buttons at the bottom (Hero, Gallery, CTA, etc.) to add them to your page.
+- **Editing Content**: Click the **Settings (Gear icon)** on any section to change its text, images, and buttons.
+- **Reordering**: Use the **Up/Down Arrows** to move sections.
+- **Syncing**: There is **no Save button needed** for data—it saves automatically. The "Publish" button at the top is for your mental confirmation!
 
 ---
 
-## 3. How to Manage Content
-1. **Access the Dashboard**: Log in at `/admin/login`.
-2. **Page Builder**: Toggle between "Home" and "Services". Use arrows to reorder and the settings icon to edit text/images.
-3. **Rituals (Services)**: Manage your menu, categories, and pricing at `/admin/services`.
-4. **Journal**: Create and publish articles at `/admin/blog`.
+## 📖 Step 3: Managing Your Content
+- **Rituals (Services)**: Go to `/admin/services` to manage your menu, prices, and categories.
+- **The Journal (Blog)**: Go to `/admin/blog` to write new articles. It includes built-in SEO tools to help you rank on Google.
+- **Inquiries**: Go to `/admin/submissions` to see clients who have filled out your booking or contact forms.
+- **Branding**: Go to `/admin/branding` to change your Logo, Site Name, and primary brand colors site-wide.
 
 ---
 
-## 4. Technical Architecture
-- **Framework**: Next.js 15 (App Router).
-- **Styling**: Tailwind CSS + ShadCN UI.
-- **Database**: Firebase Firestore (Real-time).
-- **Auth**: Firebase Authentication (Email/Password).
-- **AI Engine**: Genkit (Pre-wired for content assistance).
+## ✨ Pro-Tips for Success
+1. **Real-Time Sync**: Open your live website in one tab and the Admin panel in another. As you edit the Admin panel, watch the live site update **instantly** without a refresh.
+2. **High-Quality Images**: For the best luxury feel, use vertical images for the Gallery and wide cinematic images for the Hero.
+3. **SEO Matters**: When writing blog posts, fill out the "SEO Optimization" fields. This is how Google understands what your salon is about.
+
+---
+
+## 🔒 Security & Access
+Your data is stored in **Google Firebase**.
+- All logins are managed via Firebase Authentication.
+- All permissions are restricted via `roles_admin` in Firestore.
+- Only users with the `admin` role can access the `/admin` area.
 
 **Verde Salon** is more than a website; it is an intentional digital ritual. May your sanctuary flourish.

@@ -16,7 +16,8 @@ import {
   Sparkles,
   Zap,
   Loader2,
-  HelpCircle
+  HelpCircle,
+  Eye
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -108,22 +109,13 @@ export default function AdminDashboard() {
 
       // 4. Seed Services
       const starterServices = [
-        { id: 's1', title: 'Signature Haircut', category: 'Hair', price: '$85', duration: '60 min', description: 'A bespoke cutting experience.', isPublished: true },
-        { id: 's2', title: 'Botanical Facial', category: 'Skin', price: '$120', duration: '75 min', description: 'Rejuvenating skin therapy.', isPublished: true },
-        { id: 's3', title: 'Artisan Manicure', category: 'Nails', price: '$45', duration: '45 min', description: 'Minimalist nail refinement.', isPublished: true }
+        { id: 's1', title: 'Signature Haircut', category: 'Hair', price: '$85', duration: '60 min', description: 'A bespoke cutting experience.', isPublished: true, imageUrl: 'https://picsum.photos/seed/verde-cut/800/600' },
+        { id: 's2', title: 'Botanical Facial', category: 'Skin', price: '$120', duration: '75 min', description: 'Rejuvenating skin therapy.', isPublished: true, imageUrl: 'https://picsum.photos/seed/verde-facial/800/600' },
+        { id: 's3', title: 'Artisan Manicure', category: 'Nails', price: '$45', duration: '45 min', description: 'Minimalist nail refinement.', isPublished: true, imageUrl: 'https://picsum.photos/seed/verde-mani/800/600' }
       ];
 
       starterServices.forEach(s => {
         setDocumentNonBlocking(doc(db, 'services', s.id), { ...s, updatedAt: new Date().toISOString() }, { merge: true });
-      });
-
-      // 5. Seed FAQs
-      const faqs = [
-        { id: 'f1', question: "What are your working hours?", answer: "We are open Tuesday through Friday from 10am to 8pm." },
-        { id: 'f2', question: "Do I need an appointment?", answer: "We highly recommend booking in advance." }
-      ];
-      faqs.forEach(f => {
-        setDocumentNonBlocking(doc(db, 'faqs', f.id), f, { merge: true });
       });
 
       toast({
@@ -153,13 +145,33 @@ export default function AdminDashboard() {
         </div>
         <div className="flex space-x-4">
           <Button variant="outline" className="rounded-none border-primary/20" asChild>
-            <Link href="/admin/pages">Design Pages</Link>
+            <Link href="/" target="_blank"><Eye className="w-4 h-4 mr-2" /> View Live Site</Link>
           </Button>
           <Button className="bg-primary hover:bg-primary/90 rounded-none" asChild>
             <Link href="/admin/blog/new"><Plus className="w-4 h-4 mr-2" /> New Journal</Link>
           </Button>
         </div>
       </div>
+
+      {/* Action Banner for Beginners */}
+      {!services || services.length === 0 ? (
+        <Card className="border-none bg-accent text-primary shadow-xl rounded-none">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="space-y-1">
+              <CardTitle className="text-2xl font-headline">First Step: Initialize Your Sanctuary</CardTitle>
+              <CardDescription className="text-primary/70">Your database is currently empty. Click the button to the right to generate a premium starter layout instantly.</CardDescription>
+            </div>
+            <Button 
+              onClick={handleSeedSanctuary} 
+              disabled={isSeeding}
+              className="bg-primary text-white hover:bg-primary/90 rounded-none uppercase tracking-[0.2em] text-[10px] font-bold h-16 px-10"
+            >
+              {isSeeding ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
+              {isSeeding ? "Initializing..." : "Seed Sanctuary Now"}
+            </Button>
+          </CardHeader>
+        </Card>
+      ) : null}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -222,27 +234,8 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Master Control Card */}
+        {/* Knowledge Base Card */}
         <div className="space-y-8">
-          <Card className="border-none shadow-sm bg-accent/5 border-l-4 border-l-accent rounded-none">
-            <CardHeader>
-              <CardTitle className="flex items-center text-xl font-headline">
-                <Zap className="w-5 h-5 mr-2 text-accent" /> One-Click Setup
-              </CardTitle>
-              <CardDescription>If your database is empty, click this to generate a premium starter layout instantly.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                onClick={handleSeedSanctuary} 
-                disabled={isSeeding}
-                className="w-full bg-accent text-primary hover:bg-accent/90 rounded-none uppercase tracking-[0.2em] text-[10px] font-bold py-8"
-              >
-                {isSeeding ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
-                {isSeeding ? "Initializing..." : "Initialize Sanctuary Content"}
-              </Button>
-            </CardContent>
-          </Card>
-
           <Card className="bg-primary text-white border-none shadow-xl overflow-hidden relative rounded-none">
             <CardHeader>
               <CardTitle className="text-xl font-headline">Knowledge Base</CardTitle>
@@ -257,6 +250,21 @@ export default function AdminDashboard() {
               </Button>
             </CardContent>
             <HelpCircle className="absolute -bottom-6 -right-6 w-32 h-32 opacity-10 rotate-12" />
+          </Card>
+
+          <Card className="border-none shadow-sm bg-muted/30 rounded-none">
+            <CardHeader>
+              <CardTitle className="text-xl font-headline">Quick Page Builder</CardTitle>
+              <CardDescription>Instantly jump into designing your pages.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex gap-4">
+              <Button className="bg-primary flex-1 h-12 rounded-none uppercase tracking-widest text-[10px]" asChild>
+                <Link href="/admin/pages">Design Home</Link>
+              </Button>
+              <Button variant="outline" className="flex-1 h-12 rounded-none border-primary/20 uppercase tracking-widest text-[10px]" asChild>
+                <Link href="/admin/pages">Design Services</Link>
+              </Button>
+            </CardContent>
           </Card>
         </div>
       </div>
