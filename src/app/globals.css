@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Luxury Botanical Palette */
+    --background: 40 24% 95%; /* #F5F3EF */
+    --foreground: 180 52% 12%; /* #0F2F2F */
+    
+    --card: 0 0% 100%;
+    --card-foreground: 180 52% 12%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 180 52% 12%;
+    
+    --primary: 180 52% 12%; /* #0F2F2F */
+    --primary-foreground: 40 24% 98%;
+    
+    --secondary: 180 10% 90%;
+    --secondary-foreground: 180 52% 12%;
+    
+    --muted: 180 10% 90%;
+    --muted-foreground: 180 20% 40%;
+    
+    --accent: 39 49% 57%; /* #C6A15B Gold */
+    --accent-foreground: 180 52% 12%;
+    
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 180 15% 85%;
+    --input: 180 15% 85%;
+    --ring: 39 49% 57%;
+    
+    --radius: 0rem;
+
+    --sidebar-background: 40 24% 97%;
+    --sidebar-foreground: 180 52% 15%;
+    --sidebar-primary: 180 52% 12%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 39 49% 95%;
+    --sidebar-accent-foreground: 180 52% 12%;
+    --sidebar-border: 180 10% 90%;
+    --sidebar-ring: 39 49% 57%;
+
+    /* Dynamic Fonts */
+    --font-headline: 'Playfair Display', serif;
+    --font-body: 'Inter', sans-serif;
+  }
+
+  .dark {
+    --background: 180 50% 5%;
+    --foreground: 40 20% 95%;
+    
+    --card: 180 50% 8%;
+    --card-foreground: 40 20% 95%;
+    
+    --popover: 180 50% 8%;
+    --popover-foreground: 40 20% 95%;
+    
+    --primary: 39 49% 57%;
+    --primary-foreground: 180 50% 5%;
+    
+    --secondary: 180 30% 15%;
+    --secondary-foreground: 40 20% 95%;
+    
+    --muted: 180 30% 15%;
+    --muted-foreground: 180 10% 65%;
+    
+    --accent: 39 49% 45%;
+    --accent-foreground: 180 50% 5%;
+    
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 40 20% 95%;
+    
+    --border: 180 30% 20%;
+    --input: 180 30% 20%;
+    --ring: 39 49% 57%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground selection:bg-accent/30 selection:text-foreground antialiased;
+    font-family: var(--font-body);
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-normal tracking-tight;
+    font-family: var(--font-headline);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.2);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.4);
+}

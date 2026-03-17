@@ -1,0 +1,131 @@
+rules_version = '2';
+
+/**
+ * Verde Salon CMS Security Rules
+ *
+ * Core Philosophy:
+ * This ruleset implements a robust administrative-access model (DBAC) designed for a 
+ * professional CMS. Security is centralized around a `roles_admin` collection, where 
+ * the presence of a user's UID determines their administrative privileges.
+ *
+ * Key Security Decisions:
+ * 1. Authorization Independence: Content visibility (isPublished/isApproved) is 
+ *    denormalized onto each document to allow public reading without parent lookups.
+ * 2. Admin Dominance: Authenticated administrators have full CRUD access.
+ * 3. Public Readability: Public content is accessible if 'isPublished' is true. 
+ *    Added check for 'resource == null' to allow 'get' operations on missing docs 
+ *    so the client can handle 404/Empty states gracefully.
+ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Helper Functions ---
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isPublished() {
+      return resource != null && resource.data.isPublished == true;
+    }
+
+    function isApproved() {
+      return resource != null && resource.data.isApproved == true;
+    }
+
+    // --- Rules ---
+
+    match /roles_admin/{adminUserId} {
+      allow get: if isAdmin() || isOwner(adminUserId);
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /admin_users/{adminUserId} {
+      allow get: if isAdmin() || isOwner(adminUserId);
+      allow list: if isAdmin();
+      allow create: if (isAdmin() || isOwner(adminUserId)) && request.resource.data.id == adminUserId;
+      allow update: if (isAdmin() || (resource != null && isOwner(adminUserId))) && request.resource.data.id == resource.data.id;
+      allow delete: if isAdmin() || (resource != null && isOwner(adminUserId));
+    }
+
+    match /settings/global {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /cms_pages/{pageId} {
+      // Allow get if doc doesn't exist (returns null safely) or is published
+      allow get: if isAdmin() || resource == null || isPublished();
+      allow list: if true; 
+      allow create, update, delete: if isAdmin();
+
+      match /page_sections/{sectionId} {
+        allow get: if isAdmin() || resource == null || isPublished();
+        allow list: if true; 
+        allow create, update, delete: if isAdmin();
+      }
+    }
+
+    match /services/{serviceId} {
+      allow get: if isAdmin() || resource == null || isPublished();
+      allow list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    
+    match /service_categories/{categoryId} {
+      allow get: if isAdmin() || resource == null || isPublished();
+      allow list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /blog_posts/{postId} {
+      allow get: if isAdmin() || resource == null || isPublished();
+      allow list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    
+    match /blog_categories/{categoryId} {
+      allow get: if isAdmin() || resource == null || isPublished();
+      allow list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    
+    match /blog_tags/{tagId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /testimonials/{testimonialId} {
+      allow get: if isAdmin() || resource == null || isApproved();
+      allow list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /gallery_images/{imageId} {
+      allow get: if isAdmin() || resource == null || isPublished();
+      allow list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /faqs/{faqId} {
+      allow get: if isAdmin() || resource == null || isPublished();
+      allow list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /form_submissions/{submissionId} {
+      // Allow admins full access. For public booking, you could add 'allow create: if true;'
+      allow get, list, create, update, delete: if isAdmin();
+    }
+  }
+}

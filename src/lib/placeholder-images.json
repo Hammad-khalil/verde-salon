@@ -1,0 +1,82 @@
+{
+  "placeholderImages": [
+    {
+      "id": "hero-bg",
+      "description": "Luxurious minimalist salon interior with soft lighting",
+      "imageUrl": "https://picsum.photos/seed/verde-hero/1920/1080",
+      "imageHint": "luxury salon"
+    },
+    {
+      "id": "service-hair",
+      "description": "Artistic shot of hair styling",
+      "imageUrl": "https://picsum.photos/seed/verde-hair/800/600",
+      "imageHint": "hair stylist"
+    },
+    {
+      "id": "service-skin",
+      "description": "Calm atmosphere for skincare treatment",
+      "imageUrl": "https://picsum.photos/seed/verde-skin/800/600",
+      "imageHint": "skincare treatment"
+    },
+    {
+      "id": "service-nails",
+      "description": "Elegant nail art close-up",
+      "imageUrl": "https://picsum.photos/seed/verde-nails/800/600",
+      "imageHint": "manicure"
+    },
+    {
+      "id": "gallery-1",
+      "description": "High-end hair transformation",
+      "imageUrl": "https://picsum.photos/seed/verde-gal1/600/800",
+      "imageHint": "blonde hair"
+    },
+    {
+      "id": "gallery-2",
+      "description": "Minimalist salon decor details",
+      "imageUrl": "https://picsum.photos/seed/verde-gal2/600/800",
+      "imageHint": "salon interior"
+    },
+    {
+      "id": "gallery-3",
+      "description": "Relaxing spa area",
+      "imageUrl": "https://picsum.photos/seed/verde-gal3/600/800",
+      "imageHint": "spa room"
+    },
+    {
+      "id": "insta-1",
+      "imageUrl": "https://picsum.photos/seed/insta1/500/500",
+      "description": "Instagram preview 1",
+      "imageHint": "hair art"
+    },
+    {
+      "id": "insta-2",
+      "imageUrl": "https://picsum.photos/seed/insta2/500/500",
+      "description": "Instagram preview 2",
+      "imageHint": "beauty face"
+    },
+    {
+      "id": "insta-3",
+      "imageUrl": "https://picsum.photos/seed/insta3/500/500",
+      "description": "Instagram preview 3",
+      "imageHint": "salon products"
+    },
+    {
+      "id": "insta-4",
+      "imageUrl": "https://picsum.photos/seed/insta4/500/500",
+      "description": "Instagram preview 4",
+      "imageHint": "happy client"
+    },
+    {
+      "id": "insta-5",
+      "imageUrl": "https://picsum.photos/seed/insta5/500/500",
+      "description": "Instagram preview 5",
+      "imageHint": "interior design"
+    },
+    {
+      "id": "insta-6",
+      "imageUrl": "https://picsum.photos/seed/insta6/500/500",
+      "description": "Instagram preview 6",
+      "imageHint": "nail polish"
+    }
+  ]
+}

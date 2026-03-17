@@ -1,0 +1,1106 @@
+{
+  "entities": {
+    "AdminUser": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AdminUser",
+      "type": "object",
+      "description": "Represents an administrative user within the CMS, linked to an external authentication system. Stores roles and profile information, but explicitly excludes authentication credentials like passwords.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the AdminUser. This typically corresponds to the user ID from an external authentication system (e.g., Firebase Auth UID)."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the administrative user.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the administrative user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the administrative user."
+        },
+        "role": {
+          "type": "string",
+          "description": "The role assigned to the user, defining their permissions within the CMS (e.g., 'admin', 'editor')."
+        },
+        "profileImageUrl": {
+          "type": "string",
+          "description": "URL to the user's profile image.",
+          "format": "uri"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the admin user record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the admin user record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "role",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Settings": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Settings",
+      "type": "object",
+      "description": "Stores global configuration, branding controls, SEO defaults, performance optimization, and integration settings for the entire website. Typically, there should be only one record of this entity.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the settings record (e.g., 'globalSettings')."
+        },
+        "websiteName": {
+          "type": "string",
+          "description": "The official name of the website or salon."
+        },
+        "logoUrl": {
+          "type": "string",
+          "description": "URL to the primary logo image of the salon, used across the website.",
+          "format": "uri"
+        },
+        "brandPrimaryColor": {
+          "type": "string",
+          "description": "Hexadecimal code for the primary brand color, used for overall theme."
+        },
+        "brandAccentColor": {
+          "type": "string",
+          "description": "Hexadecimal code for the accent brand color, used for highlights and interactive elements."
+        },
+        "fontHeadline": {
+          "type": "string",
+          "description": "CSS font-family string for headline typography (e.g., 'Playfair', serif)."
+        },
+        "fontBody": {
+          "type": "string",
+          "description": "CSS font-family string for body text typography (e.g., 'PT Sans', sans-serif)."
+        },
+        "defaultHeroImageUrl": {
+          "type": "string",
+          "description": "Default URL for the hero image displayed on pages without a specific hero image.",
+          "format": "uri"
+        },
+        "defaultBackgroundImageUrl": {
+          "type": "string",
+          "description": "Default URL for general background images used throughout the site.",
+          "format": "uri"
+        },
+        "instagramProfileUrl": {
+          "type": "string",
+          "description": "URL to the salon's Instagram profile for embedding feeds or direct links.",
+          "format": "uri"
+        },
+        "seoTitlePrefix": {
+          "type": "string",
+          "description": "A prefix applied to all page SEO titles if not overridden by page-specific settings (e.g., 'Verde Salon | ').",
+          "format": "string"
+        },
+        "seoMetaDescriptionDefault": {
+          "type": "string",
+          "description": "Default meta description for pages without a specific one, used for search engine snippets."
+        },
+        "googleTagManagerId": {
+          "type": "string",
+          "description": "The ID for Google Tag Manager integration."
+        },
+        "googleAnalyticsId": {
+          "type": "string",
+          "description": "The ID for Google Analytics integration."
+        },
+        "googleSearchConsoleVerificationCode": {
+          "type": "string",
+          "description": "Verification code for Google Search Console (e.g., HTML tag content)."
+        },
+        "facebookPixelId": {
+          "type": "string",
+          "description": "The ID for Facebook Pixel tracking."
+        },
+        "hubspotIntegrationEnabled": {
+          "type": "boolean",
+          "description": "Flag to enable or disable HubSpot CRM integration."
+        },
+        "gohighlevelIntegrationEnabled": {
+          "type": "boolean",
+          "description": "Flag to enable or disable GoHighLevel CRM integration."
+        },
+        "zapierWebhookUrl": {
+          "type": "string",
+          "description": "URL for a Zapier webhook to send form submissions or other events.",
+          "format": "uri"
+        },
+        "stripePublicKey": {
+          "type": "string",
+          "description": "Public key for Stripe payment gateway integration."
+        },
+        "paypalClientId": {
+          "type": "string",
+          "description": "Client ID for PayPal payment gateway integration."
+        },
+        "razorpayKeyId": {
+          "type": "string",
+          "description": "Key ID for Razorpay payment gateway integration."
+        },
+        "imageOptimizationEnabled": {
+          "type": "boolean",
+          "description": "Toggle for one-click image optimization (compression, WebP conversion)."
+        },
+        "webpConversionEnabled": {
+          "type": "boolean",
+          "description": "Toggle for automatic conversion of uploaded images to WebP format."
+        },
+        "minifyCssEnabled": {
+          "type": "boolean",
+          "description": "Toggle for one-click CSS minification to improve page speed."
+        },
+        "minifyJsEnabled": {
+          "type": "boolean",
+          "description": "Toggle for one-click JavaScript minification to improve page speed."
+        },
+        "lazyLoadImagesEnabled": {
+          "type": "boolean",
+          "description": "Toggle for lazy loading images to defer loading of off-screen images."
+        },
+        "cacheDurationInMinutes": {
+          "type": "number",
+          "description": "Duration in minutes for client-side caching settings."
+        },
+        "autoSitemapGenerationEnabled": {
+          "type": "boolean",
+          "description": "Toggle for automatic sitemap.xml generation for SEO."
+        },
+        "robotsTxtContent": {
+          "type": "string",
+          "description": "Custom content for the robots.txt file, allowing fine-grained control over search engine crawling."
+        },
+        "structuredSchemaDefault": {
+          "type": "string",
+          "description": "Default JSON-LD structured data schema (as a JSON string) for the entire site or as a fallback."
+        },
+        "whatsappIntegrationPhoneNumber": {
+          "type": "string",
+          "description": "Phone number for WhatsApp integration, if enabled, for direct communication."
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the settings were last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "websiteName",
+        "logoUrl",
+        "brandPrimaryColor",
+        "brandAccentColor",
+        "fontHeadline",
+        "fontBody",
+        "instagramProfileUrl",
+        "updatedAt"
+      ]
+    },
+    "Page": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Page",
+      "type": "object",
+      "description": "Represents a single webpage on the Verde Salon website, including its content layout, metadata, and SEO configurations.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the page."
+        },
+        "title": {
+          "type": "string",
+          "description": "The human-readable title of the page displayed in the navigation and browser tab."
+        },
+        "slug": {
+          "type": "string",
+          "description": "URL-friendly slug for the page (e.g., 'about-us' for an About Us page), forming part of its URL."
+        },
+        "description": {
+          "type": "string",
+          "description": "An internal description of the page for CMS users, not typically displayed publicly."
+        },
+        "isPublished": {
+          "type": "boolean",
+          "description": "Indicates whether the page is live and accessible to the public."
+        },
+        "seoTitle": {
+          "type": "string",
+          "description": "Specific SEO title for the page, overriding global settings if provided, displayed in search results.",
+          "format": "string"
+        },
+        "metaDescription": {
+          "type": "string",
+          "description": "Specific meta description for the page, overriding global settings if provided, used in search engine snippets."
+        },
+        "canonicalUrl": {
+          "type": "string",
+          "description": "The canonical URL for this page, used for SEO to prevent duplicate content issues.",
+          "format": "uri"
+        },
+        "openGraphTitle": {
+          "type": "string",
+          "description": "Open Graph title for social media sharing, displayed when the page is shared."
+        },
+        "openGraphDescription": {
+          "type": "string",
+          "description": "Open Graph description for social media sharing."
+        },
+        "openGraphImageUrl": {
+          "type": "string",
+          "description": "URL to an image for social media sharing (Open Graph image).",
+          "format": "uri"
+        },
+        "layoutTemplate": {
+          "type": "string",
+          "description": "Identifier for the layout template used by this page (e.g., 'homepage', 'services-listing', 'blog-listing', 'standard-content')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the page was first created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the page content or metadata was last updated.",
+          "format": "date-time"
+        },
+        "publishedAt": {
+          "type": "string",
+          "description": "Timestamp when the page was last published or made live.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "slug",
+        "isPublished",
+        "layoutTemplate",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PageSection": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PageSection",
+      "type": "object",
+      "description": "Represents a distinct, editable content block or module within a Page, allowing for flexible page construction via a page builder.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the page section."
+        },
+        "pageId": {
+          "type": "string",
+          "description": "Reference to the Page this section belongs to. (Relationship: Page 1:N PageSection)"
+        },
+        "order": {
+          "type": "number",
+          "description": "The display order of this section within its parent page, influencing its vertical position on the page."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type or component name of the section (e.g., 'hero', 'text-image', 'gallery', 'testimonials-carousel', 'faq-accordion', 'cta-banner', 'instagram-feed', 'service-grid', 'blog-post-list')."
+        },
+        "contentData": {
+          "type": "string",
+          "description": "A JSON string containing the specific data and configuration for this section type. This allows for flexible content structures per section type (e.g., {'heading': 'Welcome', 'imageUrl': '...', 'text': '...'})."
+        },
+        "isPublished": {
+          "type": "boolean",
+          "description": "Indicates whether this specific section is visible on the live page."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the page section was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the page section content or configuration was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "pageId",
+        "order",
+        "type",
+        "contentData",
+        "isPublished",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Service": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Service",
+      "type": "object",
+      "description": "Details about a specific salon service offered, including pricing, description, and associated media, displayed on the Services page.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the service."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the service (e.g., 'Women's Haircut', 'Full Balayage')."
+        },
+        "slug": {
+          "type": "string",
+          "description": "URL-friendly slug for the service detail page."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of what the service entails."
+        },
+        "shortDescription": {
+          "type": "string",
+          "description": "A brief summary of the service, suitable for previews."
+        },
+        "price": {
+          "type": "string",
+          "description": "The price or price range for the service (e.g., '$60', 'Starting from $120')."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to an image representing the service.",
+          "format": "uri"
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Reference to the ServiceCategory this service belongs to. (Relationship: ServiceCategory 1:N Service)"
+        },
+        "isPublished": {
+          "type": "boolean",
+          "description": "Indicates whether the service is actively offered and displayed on the website."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the service record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the service record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "slug",
+        "description",
+        "price",
+        "imageUrl",
+        "categoryId",
+        "isPublished",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ServiceCategory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ServiceCategory",
+      "type": "object",
+      "description": "Groups related services together, aiding navigation and organization on the Services Page.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the service category."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the service category (e.g., 'Haircuts', 'Coloring', 'Styling')."
+        },
+        "slug": {
+          "type": "string",
+          "description": "URL-friendly slug for the service category."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the service category."
+        },
+        "order": {
+          "type": "number",
+          "description": "The display order of this category on the Services Page, influencing its position in lists."
+        },
+        "isPublished": {
+          "type": "boolean",
+          "description": "Indicates whether the service category is visible on the website."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the service category was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the service category was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "slug",
+        "order",
+        "isPublished",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "BlogPost": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "BlogPost",
+      "type": "object",
+      "description": "Represents an individual blog article or insight, including content, author, categories, tags, and comprehensive SEO metadata.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the blog post."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the blog post."
+        },
+        "slug": {
+          "type": "string",
+          "description": "URL-friendly slug for the blog post detail page."
+        },
+        "content": {
+          "type": "string",
+          "description": "The full content of the blog post, typically stored as rich text (e.g., Markdown or HTML string)."
+        },
+        "excerpt": {
+          "type": "string",
+          "description": "A short summary or preview of the blog post content, used in listings."
+        },
+        "featuredImageUrl": {
+          "type": "string",
+          "description": "URL to the main image featured with the blog post.",
+          "format": "uri"
+        },
+        "authorId": {
+          "type": "string",
+          "description": "Reference to the AdminUser who authored the blog post. (Relationship: AdminUser 1:N BlogPost)"
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Reference to the BlogCategory this post belongs to. (Relationship: BlogCategory 1:N BlogPost)"
+        },
+        "tagIds": {
+          "type": "array",
+          "description": "References to BlogTag entities associated with this post. (Relationship: BlogTag N:N BlogPost)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "publishedDate": {
+          "type": "string",
+          "description": "The date and time when the blog post was published.",
+          "format": "date-time"
+        },
+        "isPublished": {
+          "type": "boolean",
+          "description": "Indicates whether the blog post is live and visible on the website."
+        },
+        "seoTitle": {
+          "type": "string",
+          "description": "Specific SEO title for the blog post, overriding global settings if provided.",
+          "format": "string"
+        },
+        "metaDescription": {
+          "type": "string",
+          "description": "Specific meta description for the blog post, overriding global settings if provided."
+        },
+        "canonicalUrl": {
+          "type": "string",
+          "description": "The canonical URL for this blog post.",
+          "format": "uri"
+        },
+        "openGraphTitle": {
+          "type": "string",
+          "description": "Open Graph title for social media sharing of the blog post."
+        },
+        "openGraphDescription": {
+          "type": "string",
+          "description": "Open Graph description for social media sharing of the blog post."
+        },
+        "openGraphImageUrl": {
+          "type": "string",
+          "description": "URL to an image for social media sharing of the blog post.",
+          "format": "uri"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the blog post was first created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the blog post content or metadata was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "slug",
+        "content",
+        "excerpt",
+        "featuredImageUrl",
+        "authorId",
+        "categoryId",
+        "publishedDate",
+        "isPublished",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "BlogCategory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "BlogCategory",
+      "type": "object",
+      "description": "Categorizes blog posts, enabling filtering and organization on the Blog / Insights Page.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the blog category."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the blog category (e.g., 'Hair Care Tips', 'Salon Trends')."
+        },
+        "slug": {
+          "type": "string",
+          "description": "URL-friendly slug for the blog category."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the blog category."
+        },
+        "isPublished": {
+          "type": "boolean",
+          "description": "Indicates whether the blog category is visible on the website."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the blog category was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the blog category was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "slug",
+        "isPublished",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "BlogTag": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "BlogTag",
+      "type": "object",
+      "description": "Tags used to further classify blog posts, allowing for more granular filtering and searchability.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the blog tag."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the blog tag (e.g., 'balayage', 'bridal-hair', 'product-reviews')."
+        },
+        "slug": {
+          "type": "string",
+          "description": "URL-friendly slug for the blog tag."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the blog tag was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the blog tag was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "slug",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Testimonial": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Testimonial",
+      "type": "object",
+      "description": "Customer testimonials displayed on the website to build trust and showcase positive feedback from clients.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the testimonial."
+        },
+        "authorName": {
+          "type": "string",
+          "description": "The name of the person who provided the testimonial."
+        },
+        "text": {
+          "type": "string",
+          "description": "The full content of the testimonial."
+        },
+        "authorTitle": {
+          "type": "string",
+          "description": "Optional title or description of the author (e.g., 'Satisfied Client', 'Local Business Owner')."
+        },
+        "authorImageUrl": {
+          "type": "string",
+          "description": "URL to an optional image of the testimonial author.",
+          "format": "uri"
+        },
+        "rating": {
+          "type": "number",
+          "description": "Optional numeric rating (e.g., 1-5 stars) given in the testimonial."
+        },
+        "isApproved": {
+          "type": "boolean",
+          "description": "Indicates whether the testimonial has been approved by an administrator for display on the website."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the testimonial was submitted or created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the testimonial was last updated (e.g., approval status change).",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "authorName",
+        "text",
+        "isApproved",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "GalleryImage": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GalleryImage",
+      "type": "object",
+      "description": "Represents an image in a gallery or featured work section, with metadata for display, accessibility, and SEO.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the gallery image."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to the image file.",
+          "format": "uri"
+        },
+        "altText": {
+          "type": "string",
+          "description": "Alternative text for the image, crucial for SEO and accessibility for visually impaired users."
+        },
+        "caption": {
+          "type": "string",
+          "description": "An optional caption or description for the image, displayed below it."
+        },
+        "category": {
+          "type": "string",
+          "description": "Optional category for the image (e.g., 'Hair', 'Makeup', 'Event'), for filtering or grouping."
+        },
+        "order": {
+          "type": "number",
+          "description": "The display order of the image within a gallery or section."
+        },
+        "isFeatured": {
+          "type": "boolean",
+          "description": "Indicates if this image should be highlighted as 'featured salon work' on the homepage or other prominent sections."
+        },
+        "isPublished": {
+          "type": "boolean",
+          "description": "Indicates if the image is visible on the public website."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the gallery image record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the gallery image record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "imageUrl",
+        "altText",
+        "isFeatured",
+        "isPublished",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "FAQ": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FAQ",
+      "type": "object",
+      "description": "A frequently asked question and its answer, intended for display in an accordion style on the website.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the FAQ entry."
+        },
+        "question": {
+          "type": "string",
+          "description": "The frequently asked question itself."
+        },
+        "answer": {
+          "type": "string",
+          "description": "The detailed answer to the frequently asked question."
+        },
+        "order": {
+          "type": "number",
+          "description": "The display order of the FAQ entry within an FAQ section or list."
+        },
+        "isPublished": {
+          "type": "boolean",
+          "description": "Indicates whether the FAQ entry is visible on the website."
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Optional reference to an FAQ category if applicable, to group related questions. (Relationship: FAQCategory 1:N FAQ)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the FAQ entry was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the FAQ entry was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "question",
+        "answer",
+        "order",
+        "isPublished",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "FormSubmission": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FormSubmission",
+      "type": "object",
+      "description": "Records data submitted through various forms on the website (e.g., contact forms, booking requests, lead generation forms).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the form submission."
+        },
+        "formName": {
+          "type": "string",
+          "description": "The name or type of the form that was submitted (e.g., 'Contact Us Form', 'Booking Inquiry')."
+        },
+        "data": {
+          "type": "string",
+          "description": "A JSON string containing all the field data submitted by the user in the form. This allows for flexible form fields without predefined schema."
+        },
+        "submittedAt": {
+          "type": "string",
+          "description": "Timestamp when the form was submitted.",
+          "format": "date-time"
+        },
+        "isRead": {
+          "type": "boolean",
+          "description": "Flag indicating whether an administrator has reviewed or processed this submission."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address provided in the form, extracted for quick access and follow-up.",
+          "format": "email"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The phone number provided in the form, extracted for quick access and contact."
+        },
+        "leadStatus": {
+          "type": "string",
+          "description": "Current status of the lead generated from this submission (e.g., 'New', 'Contacted', 'Converted', 'Archived')."
+        }
+      },
+      "required": [
+        "id",
+        "formName",
+        "data",
+        "submittedAt",
+        "isRead"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/roles_admin/{adminUserId}",
+        "definition": {
+          "entityName": "AdminUser",
+          "schema": {
+            "$ref": "#/backend/entities/AdminUser"
+          },
+          "description": "Stores a minimal representation of an administrator for Database Access Control (DBAC). The existence of a document here (where `adminUserId` is a Firebase Auth UID) grants administrative privileges. Includes denormalized 'id' and 'role' for authorization clarity.",
+          "params": [
+            {
+              "name": "adminUserId",
+              "description": "The Firebase Authentication User ID (UID) of an administrative user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/admin_users/{adminUserId}",
+        "definition": {
+          "entityName": "AdminUser",
+          "schema": {
+            "$ref": "#/backend/entities/AdminUser"
+          },
+          "description": "Stores the full profile details for administrative users. Access is restricted to authenticated administrators, or the owner themselves, using the `roles_admin` collection for role validation.",
+          "params": [
+            {
+              "name": "adminUserId",
+              "description": "The Firebase Authentication User ID (UID) of an administrative user, also serving as the document ID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/settings/global",
+        "definition": {
+          "entityName": "Settings",
+          "schema": {
+            "$ref": "#/backend/entities/Settings"
+          },
+          "description": "A singleton document holding global website configuration and branding settings. Read/write access is restricted to authenticated administrators. Public read for safe configuration values is allowed.",
+          "params": []
+        }
+      },
+      {
+        "path": "/cms_pages/{pageId}",
+        "definition": {
+          "entityName": "Page",
+          "schema": {
+            "$ref": "#/backend/entities/Page"
+          },
+          "description": "Represents individual website pages. Managed by administrators. Public read access is granted only if `isPublished` is true. Includes 'isPublished' for Authorization Independence.",
+          "params": [
+            {
+              "name": "pageId",
+              "description": "The unique identifier for a CMS page."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/cms_pages/{pageId}/page_sections/{sectionId}",
+        "definition": {
+          "entityName": "PageSection",
+          "schema": {
+            "$ref": "#/backend/entities/PageSection"
+          },
+          "description": "Represents content sections within a specific page. Managed by administrators. Public read access is granted only if `isPublished` is true. Includes 'isPublished' and denormalized 'pageId' for Authorization Independence.",
+          "params": [
+            {
+              "name": "pageId",
+              "description": "The unique identifier of the parent CMS page."
+            },
+            {
+              "name": "sectionId",
+              "description": "The unique identifier for a page section."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/services/{serviceId}",
+        "definition": {
+          "entityName": "Service",
+          "schema": {
+            "$ref": "#/backend/entities/Service"
+          },
+          "description": "Stores details about salon services. Managed by administrators. Public read access is granted only if `isPublished` is true. Includes 'isPublished' for Authorization Independence.",
+          "params": [
+            {
+              "name": "serviceId",
+              "description": "The unique identifier for a service."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/service_categories/{categoryId}",
+        "definition": {
+          "entityName": "ServiceCategory",
+          "schema": {
+            "$ref": "#/backend/entities/ServiceCategory"
+          },
+          "description": "Defines categories for salon services. Managed by administrators. Public read access is granted only if `isPublished` is true. Includes 'isPublished' for Authorization Independence.",
+          "params": [
+            {
+              "name": "categoryId",
+              "description": "The unique identifier for a service category."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/blog_posts/{postId}",
+        "definition": {
+          "entityName": "BlogPost",
+          "schema": {
+            "$ref": "#/backend/entities/BlogPost"
+          },
+          "description": "Contains individual blog articles. Managed by administrators. Public read access is granted only if `isPublished` is true. Includes 'isPublished' for Authorization Independence.",
+          "params": [
+            {
+              "name": "postId",
+              "description": "The unique identifier for a blog post."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/blog_categories/{categoryId}",
+        "definition": {
+          "entityName": "BlogCategory",
+          "schema": {
+            "$ref": "#/backend/entities/BlogCategory"
+          },
+          "description": "Categorizes blog posts. Managed by administrators. Public read access is granted only if `isPublished` is true. Includes 'isPublished' for Authorization Independence.",
+          "params": [
+            {
+              "name": "categoryId",
+              "description": "The unique identifier for a blog category."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/blog_tags/{tagId}",
+        "definition": {
+          "entityName": "BlogTag",
+          "schema": {
+            "$ref": "#/backend/entities/BlogTag"
+          },
+          "description": "Tags for blog posts, enabling granular filtering. Managed by administrators. Public read access is always granted (tags are inherently public).",
+          "params": [
+            {
+              "name": "tagId",
+              "description": "The unique identifier for a blog tag."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/testimonials/{testimonialId}",
+        "definition": {
+          "entityName": "Testimonial",
+          "schema": {
+            "$ref": "#/backend/entities/Testimonial"
+          },
+          "description": "Customer testimonials. Managed by administrators. Public read access is granted only if `isApproved` is true. Includes 'isApproved' for Authorization Independence.",
+          "params": [
+            {
+              "name": "testimonialId",
+              "description": "The unique identifier for a testimonial."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/gallery_images/{imageId}",
+        "definition": {
+          "entityName": "GalleryImage",
+          "schema": {
+            "$ref": "#/backend/entities/GalleryImage"
+          },
+          "description": "Images for galleries or featured work sections. Managed by administrators. Public read access is granted only if `isPublished` is true. Includes 'isPublished' for Authorization Independence.",
+          "params": [
+            {
+              "name": "imageId",
+              "description": "The unique identifier for a gallery image."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/faqs/{faqId}",
+        "definition": {
+          "entityName": "FAQ",
+          "schema": {
+            "$ref": "#/backend/entities/FAQ"
+          },
+          "description": "Frequently Asked Questions. Managed by administrators. Public read access is granted only if `isPublished` is true. Includes 'isPublished' for Authorization Independence.",
+          "params": [
+            {
+              "name": "faqId",
+              "description": "The unique identifier for an FAQ entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/form_submissions/{submissionId}",
+        "definition": {
+          "entityName": "FormSubmission",
+          "schema": {
+            "$ref": "#/backend/entities/FormSubmission"
+          },
+          "description": "Records all form submissions from the website. Strictly accessible (read/write) by authenticated administrators only. No public access.",
+          "params": [
+            {
+              "name": "submissionId",
+              "description": "The unique identifier for a form submission."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to be secure, scalable, and debuggable, strictly adhering to the core design principles and mandates. Authorization Independence is paramount, ensuring that security rules do not rely on fetching parent documents. This is achieved by centralizing administrative role checks and denormalizing `isPublished` status directly into content documents where public read access is permitted.\n\n**Authorization Independence (CRITICAL):**\nAll administrative actions (create, update, delete) for CMS content (`cms_pages`, `cms_pages/{pageId}/page_sections`, `services`, `blog_posts`, etc.), global `settings`, and `form_submissions` are gated by a single, atomic check: `exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))`. This eliminates any need for `get()` calls in rules to determine if a user is an admin. For public read access, each content document (e.g., `cms_pages`, `page_sections`, `blog_posts`) contains its own `isPublished: true` or `isApproved: true` field. This means a section's public readability does not depend on the parent page's status in a rule; the frontend application layer can then combine these statuses for rendering. This fully supports atomic operations and prevents cascading rule dependencies.\n\n**QAPs (Rules are not Filters):**\nThe structure supports secure `list` operations by segregating data based on its security posture:\n1.  **Admin-only collections:** `roles_admin`, `admin_users`, and `form_submissions` are strictly accessible by authenticated users with an entry in `roles_admin`. No public listing is allowed.\n2.  **Global singletons:** The `settings/global` document is writable by admins only, and public read access is granted to all fields (or a subset) without complex filtering, assuming all fields are safe for public consumption.\n3.  **Publicly queryable content with admin management:** Collections like `cms_pages`, `cms_pages/{pageId}/page_sections`, `services`, `blog_posts`, `testimonials`, `gallery_images`, and `faqs` explicitly use an `isPublished: true` (or `isApproved: true`) field. Public `list` operations will include a query constraint `where('isPublished', '==', true)`. This ensures that only explicitly published content is returned to public users, while administrators can query all content (published and unpublished) without additional filtering, fulfilling the QAP principle.\n\n**Structural Segregation & Access Modeling:**\n*   **DBAC:** The `roles_admin` collection serves as the central point for Database Access Control. Its existence at `/roles_admin/{request.auth.uid}` immediately grants administrative privileges. The `admin_users` collection stores detailed profile information for these administrators.\n*   **Hierarchical Paths:** `cms_pages` and their `page_sections` are structured hierarchically (`/cms_pages/{pageId}/page_sections/{sectionId}`). While this follows the 1:N relationship, Authorization Independence is maintained as described above.\n*   All other content collections (`services`, `blog_posts`, `testimonials`, etc.) are root-level collections, as their primary authorization is admin-managed writes and `isPublished` based public reads, without a strong logical *ownership* hierarchy that needs to be enforced via nested paths for security. Foreign keys (e.g., `pageId` in `page_sections`, `categoryId` in `services`) link related entities without creating authorization dependencies."
+  }
+}
