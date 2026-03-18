@@ -98,7 +98,10 @@ const MediaField = ({
           const file = e.dataTransfer.files[0];
           handleFile(file);
         }}
-        onClick={() => document.getElementById(inputId)?.click()}
+        onClick={() => {
+          const el = document.getElementById(inputId);
+          if (el) (el as HTMLInputElement).click();
+        }}
       >
         {safeValue ? (
           <div className="relative w-full h-full group">
@@ -168,8 +171,6 @@ export default function LiveEditorSidebar() {
     }
   }, [sectionData]);
 
-  if (!isEditMode) return null;
-
   const updateValue = (path: string, value: any) => {
     if (!editingData) return;
     const updated = { ...editingData.parsedContent };
@@ -211,6 +212,9 @@ export default function LiveEditorSidebar() {
     setDocumentNonBlocking(doc(db, 'cms_page_sections', selectedSectionId), { ...editingData, content: contentString }, { merge: true });
     toast({ title: "Sanctuary Synced", description: "Live updates published." });
   }
+
+  // Moved conditional return to the bottom to avoid Rules of Hooks violation
+  if (!isEditMode) return null;
 
   return (
     <div className={cn(
