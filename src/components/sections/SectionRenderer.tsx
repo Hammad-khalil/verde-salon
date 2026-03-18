@@ -16,7 +16,7 @@ import { collection, query, doc, getDoc } from 'firebase/firestore';
 import { useSearchParams, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
-import { Plus, Trash2, Edit2, Layout } from 'lucide-react';
+import { Plus, Trash2, Edit2, Layout, Sparkles, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
@@ -48,21 +48,12 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
   if (isLoading) {
     return (
       <div className="py-40 text-center animate-pulse font-headline text-primary uppercase tracking-widest bg-background min-h-screen flex items-center justify-center">
-        Assembling Sanctuary...
+        VERDE
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="py-40 text-center text-muted-foreground bg-background min-h-screen flex flex-col items-center justify-center space-y-4">
-        <p className="font-headline text-xl">Sanctuary Syncing Issue</p>
-        <p className="text-sm opacity-60">The layout engine encountered an unexpected state. Please refresh or check your connection.</p>
-      </div>
-    );
-  }
-
-  if (!allSections) return null;
+  if (error || !allSections) return null;
 
   const orderedSections = sectionIds
     .map(id => allSections.find(s => s.id === id))
@@ -75,21 +66,6 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
     }
   };
 
-  async function handleDeleteSection(id: string) {
-    if (!confirm('Permanently remove this element from this sanctuary page?')) return;
-    
-    const pageId = pathname === '/' ? 'home' : pathname.replace('/', '');
-    const pageRef = doc(db, 'cms_pages', pageId);
-    const pageSnap = await getDoc(pageRef);
-    
-    if (pageSnap.exists()) {
-      const data = pageSnap.data();
-      const currentIds = (data.sectionIds || []).filter((sid: string) => sid !== id);
-      setDocumentNonBlocking(pageRef, { ...data, sectionIds: currentIds }, { merge: true });
-      toast({ title: "Blueprint Removed", description: "The element has been archived from this view." });
-    }
-  }
-
   async function handleAddSectionAt(index: number, type: string) {
     const pageId = pathname === '/' ? 'home' : pathname.replace('/', '');
     const newId = doc(collection(db, 'cms_page_sections')).id;
@@ -98,8 +74,6 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       Hero: { title: 'A New Awakening', subtitle: 'Experience true luxury.', ctaText: 'Explore', imageUrl: 'https://picsum.photos/seed/verde-luxury-hero/1920/1080', backgroundType: 'image', styles: { paddingVertical: '0', buttonType: 'primary' } },
       TextBlock: { title: 'Our Narrative', content: 'Share the soul of your brand...', alignment: 'center', styles: { paddingVertical: '128' } },
       CTA: { title: 'Join the Sanctuary', subtitle: 'Reserve your next ritual.', buttonText: 'Contact Us', styles: { paddingVertical: '96' } },
-      VideoBlock: { title: 'Visual Motion', videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', styles: { paddingVertical: '96' } },
-      FAQSection: { title: 'Ritual Knowledge', subtitle: 'Preparation' },
       BrandIntro: { title: 'Our Philosophy', subtitle: 'Pure. Conscious.', content: 'Beauty refined through natural elegance...', buttonText: 'Discover', imageUrl: 'https://picsum.photos/seed/verde-about/800/1000', styles: { paddingVertical: '128' } }
     };
 
@@ -132,13 +106,8 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center" className="w-56 p-2 rounded-none border-2 shadow-2xl">
-          <div className="px-2 py-1.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground opacity-50">Select Blueprint</div>
           {['Hero', 'TextBlock', 'BrandIntro', 'CTA', 'VideoBlock', 'FAQSection', 'ServicesPreview', 'FeaturedWork', 'Testimonials'].map(type => (
-            <DropdownMenuItem 
-              key={type} 
-              className="rounded-none text-[10px] font-bold uppercase tracking-wider py-3 cursor-pointer hover:bg-primary hover:text-white"
-              onClick={() => handleAddSectionAt(index, type)}
-            >
+            <DropdownMenuItem key={type} className="rounded-none text-[10px] font-bold uppercase tracking-wider py-3 cursor-pointer" onClick={() => handleAddSectionAt(index, type)}>
               {type.replace(/([A-Z])/g, ' $1')}
             </DropdownMenuItem>
           ))}
@@ -156,7 +125,7 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
         try {
           data = JSON.parse(section.content || '{}');
         } catch (e) {
-          console.error("Renderer: Failed to parse section content", e);
+          console.error("Renderer: Error parsing section", e);
         }
         
         let content;
@@ -180,37 +149,22 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
             <div 
               className={cn(
                 "relative group/section transition-all duration-300",
-                isEditMode && "cursor-pointer hover:ring-4 hover:ring-accent/50",
+                isEditMode && "cursor-pointer hover:ring-2 hover:ring-accent/50",
                 isEditMode && activeSectionId === section.id && "ring-4 ring-accent"
               )}
               onClick={() => handleSectionClick(section.id)}
             >
-              {/* Element Label Overlay */}
-              {isEditMode && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 z-[60] bg-accent text-primary px-4 py-1 text-[9px] font-bold uppercase tracking-[0.3em] shadow-lg opacity-0 group-hover/section:opacity-100 transition-opacity">
-                  Blueprint: {section.type}
-                </div>
-              )}
-
-              {/* Element Controls */}
               {isEditMode && (
                 <div className="absolute top-4 right-4 z-[60] flex space-x-2 opacity-0 group-hover/section:opacity-100 transition-opacity">
-                  <Button 
-                    size="icon" 
-                    variant="secondary"
-                    className="h-8 w-8 rounded-none shadow-lg bg-white hover:bg-accent hover:text-white transition-all"
-                    onClick={(e) => { e.stopPropagation(); handleSectionClick(section.id); }}
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button 
-                    size="icon" 
-                    variant="destructive" 
-                    className="h-8 w-8 rounded-none shadow-lg"
-                    onClick={(e) => { e.stopPropagation(); handleDeleteSection(section.id); }}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
+                  <div className="flex items-center space-x-2 bg-white/90 backdrop-blur-md p-1 pr-3 rounded-none shadow-xl border border-accent/20">
+                    <div className="bg-accent p-2">
+                      <Sparkles className="w-3.5 h-3.5 text-primary" />
+                    </div>
+                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary">{section.type}</span>
+                    <Button size="icon" variant="ghost" className="h-7 w-7 text-primary hover:bg-primary/5" onClick={(e) => { e.stopPropagation(); handleSectionClick(section.id); }}>
+                      <Edit2 className="w-3 h-3" />
+                    </Button>
+                  </div>
                 </div>
               )}
               {content}

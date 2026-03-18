@@ -25,7 +25,8 @@ import {
   Component,
   Upload,
   Search,
-  AlertCircle
+  Settings2,
+  Layout
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -43,7 +44,7 @@ const MediaField = ({ label, value, onChange, type = 'image' }: { label: string,
     if (!file) return;
     
     // Firestore limit is 1MB. Base64 adds ~33% overhead. 
-    // We restrict to ~700KB to be safe and prevent browser memory crashes.
+    // We restrict to ~700KB to be safe.
     if (file.size > 700000) {
       toast({
         variant: "destructive",
@@ -60,17 +61,10 @@ const MediaField = ({ label, value, onChange, type = 'image' }: { label: string,
         onChange(result);
       }
     };
-    reader.onerror = () => {
-      toast({
-        variant: "destructive",
-        title: "Read Error",
-        description: "Could not read the local file system.",
-      });
-    };
     reader.readAsDataURL(file);
   };
 
-  const safeValue = value || '';
+  const safeValue = typeof value === 'string' ? value : '';
   const inputId = `file-input-${label.replace(/\s+/g, '-')}-${type}`;
 
   return (
@@ -157,9 +151,7 @@ export default function LiveEditorSidebar() {
 
   useEffect(() => {
     const handleSectionSelect = (e: any) => {
-      if (isEditMode) {
-        setSelectedSectionId(e.detail.id);
-      }
+      if (isEditMode) setSelectedSectionId(e.detail.id);
     };
     window.addEventListener('verde-select-section', handleSectionSelect);
     return () => window.removeEventListener('verde-select-section', handleSectionSelect);
@@ -178,7 +170,7 @@ export default function LiveEditorSidebar() {
         if (!parsed.styles) parsed.styles = {};
         setEditingData({ ...sectionData, parsedContent: parsed });
       } catch (err) {
-        console.error("Editor: Failed to parse content", err);
+        console.error("Editor: Error parsing section content", err);
       }
     }
   }, [sectionData]);
@@ -198,40 +190,32 @@ export default function LiveEditorSidebar() {
 
   function handleSave() {
     if (!editingData || !selectedSectionId) return;
+    const contentString = JSON.stringify(editingData.parsedContent);
     
-    try {
-      const contentString = JSON.stringify(editingData.parsedContent);
-      
-      // Safety check for Firestore write limits (1MB)
-      if (contentString.length > 1000000) {
-        toast({
-          variant: "destructive",
-          title: "Save Failed",
-          description: "This section is too large. Please reduce image sizes or use external links.",
-        });
-        return;
-      }
-
-      const finalSection = {
-        ...editingData,
-        content: contentString
-      };
-      delete finalSection.parsedContent;
-      
-      setDocumentNonBlocking(doc(db, 'cms_page_sections', selectedSectionId), finalSection, { merge: true });
-      toast({ title: "Design Synced", description: "Your changes are now live." });
-    } catch (err) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to prepare data for sync.",
-      });
+    if (contentString.length > 950000) {
+      toast({ variant: "destructive", title: "Section too large", description: "Please use external links for large images." });
+      return;
     }
+
+    const finalSection = { ...editingData, content: contentString };
+    delete finalSection.parsedContent;
+    
+    setDocumentNonBlocking(doc(db, 'cms_page_sections', selectedSectionId), finalSection, { merge: true });
+    toast({ title: "Sanctuary Synced", description: "Design changes are now live." });
   }
 
-  function handleExitEditor() {
-    router.push(pathname);
-  }
+  const isMediaKey = (key: string) => 
+    key.toLowerCase().includes('image') || 
+    key.toLowerCase().includes('photo') || 
+    key.toLowerCase().includes('thumb') || 
+    key.toLowerCase().includes('logo') || 
+    key.toLowerCase().includes('icon') ||
+    key.toLowerCase().includes('video');
+
+  const isLinkKey = (key: string) => 
+    key.toLowerCase().includes('url') || 
+    key.toLowerCase().includes('link') || 
+    key.toLowerCase().includes('href');
 
   return (
     <div className={cn(
@@ -246,7 +230,7 @@ export default function LiveEditorSidebar() {
           </div>
           <div>
             <h3 className="font-headline font-bold text-lg">{editingData?.type || 'Element Editor'}</h3>
-            <p className="text-[9px] uppercase tracking-[0.2em] text-accent font-bold">Element ID: {selectedSectionId?.slice(0,8)}</p>
+            <p className="text-[9px] uppercase tracking-[0.2em] text-accent font-bold">Live Visual Architect</p>
           </div>
         </div>
         <button className="p-2 hover:bg-white/10 rounded-full transition-colors" onClick={() => setSelectedSectionId(null)}>
@@ -254,118 +238,81 @@ export default function LiveEditorSidebar() {
         </button>
       </div>
 
-      {/* Editor Content Area */}
       <div className="flex-grow overflow-y-auto custom-scrollbar bg-slate-50/30">
         {editingData && (
           <Tabs defaultValue="content" className="w-full">
             <TabsList className="w-full rounded-none h-14 bg-white border-b sticky top-0 z-10">
-              <TabsTrigger value="content" className="flex-1 h-full rounded-none text-[10px] uppercase font-bold tracking-widest data-[state=active]:border-b-2 data-[state=active]:border-primary">Content</TabsTrigger>
-              <TabsTrigger value="style" className="flex-1 h-full rounded-none text-[10px] uppercase font-bold tracking-widest data-[state=active]:border-b-2 data-[state=active]:border-primary">Style</TabsTrigger>
-              <TabsTrigger value="advanced" className="flex-1 h-full rounded-none text-[10px] uppercase font-bold tracking-widest data-[state=active]:border-b-2 data-[state=active]:border-primary">Layout</TabsTrigger>
+              <TabsTrigger value="content" className="flex-1 h-full rounded-none text-[10px] uppercase font-bold tracking-widest">Content</TabsTrigger>
+              <TabsTrigger value="style" className="flex-1 h-full rounded-none text-[10px] uppercase font-bold tracking-widest">Style</TabsTrigger>
+              <TabsTrigger value="layout" className="flex-1 h-full rounded-none text-[10px] uppercase font-bold tracking-widest">Layout</TabsTrigger>
             </TabsList>
 
             <div className="p-8 space-y-10 pb-32">
               <TabsContent value="content" className="mt-0 space-y-10">
-                {/* Text Group */}
+                {/* Text discovery */}
                 <div className="space-y-6">
                   <div className="flex items-center text-primary font-bold text-[10px] uppercase tracking-[0.2em]">
                     <Type className="w-3 h-3 mr-2 text-accent" /> Text Elements
                   </div>
-                  {['title', 'subtitle', 'content', 'handle', 'ctaText', 'buttonText'].map((key) => {
-                    if (editingData.parsedContent[key] === undefined) return null;
+                  {Object.keys(editingData.parsedContent).map(key => {
+                    const val = editingData.parsedContent[key];
+                    if (typeof val !== 'string' || isMediaKey(key) || isLinkKey(key) || key === 'backgroundType') return null;
                     return (
                       <div key={key} className="space-y-2">
                         <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">{key.replace(/([A-Z])/g, ' $1')}</Label>
-                        {key.includes('content') || key.includes('subtitle') ? (
-                          <Textarea 
-                            className="rounded-none min-h-[100px] text-sm border-slate-200 focus-visible:ring-primary/20"
-                            value={editingData.parsedContent[key] || ''} 
-                            onChange={(e) => updateValue(key, e.target.value)}
-                          />
+                        {val.length > 50 || key.includes('content') ? (
+                          <Textarea className="rounded-none min-h-[100px] text-sm" value={val} onChange={(e) => updateValue(key, e.target.value)} />
                         ) : (
-                          <Input 
-                            className="rounded-none h-11 text-sm border-slate-200 focus-visible:ring-primary/20"
-                            value={editingData.parsedContent[key] || ''} 
-                            onChange={(e) => updateValue(key, e.target.value)}
-                          />
+                          <Input className="rounded-none h-11 text-sm" value={val} onChange={(e) => updateValue(key, e.target.value)} />
                         )}
                       </div>
                     );
                   })}
                 </div>
 
-                {/* Media Group */}
+                {/* Media discovery */}
                 <div className="space-y-8 pt-6 border-t border-slate-100">
                   <div className="flex items-center text-primary font-bold text-[10px] uppercase tracking-[0.2em]">
                     <ImageIcon className="w-3 h-3 mr-2 text-accent" /> Media Management
                   </div>
-                  
-                  {/* Primary Media Field */}
-                  {editingData.parsedContent.imageUrl !== undefined && (
-                    <div className="space-y-6">
-                      <MediaField 
-                        label="Image Asset" 
-                        value={editingData.parsedContent.imageUrl} 
-                        onChange={(val) => updateValue('imageUrl', val)}
-                        type="image"
-                      />
-                      <div className="space-y-2">
-                        <Label className="text-[10px] uppercase font-bold opacity-50">Alt Text (SEO)</Label>
-                        <Input 
-                          placeholder="Describe the image..."
-                          className="h-10 text-sm rounded-none border-slate-200"
-                          value={editingData.parsedContent.altText || ''} 
-                          onChange={(e) => updateValue('altText', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {editingData.parsedContent.videoUrl !== undefined && (
-                    <MediaField 
-                      label="Video Asset" 
-                      value={editingData.parsedContent.videoUrl} 
-                      onChange={(val) => updateValue('videoUrl', val)}
-                      type="video"
-                    />
-                  )}
+                  {Object.keys(editingData.parsedContent).map(key => {
+                    if (!isMediaKey(key)) return null;
+                    const val = editingData.parsedContent[key];
+                    if (Array.isArray(val)) {
+                      return val.map((item, idx) => (
+                        <MediaField key={`${key}-${idx}`} label={`${key} ${idx + 1}`} value={item} onChange={(newVal) => {
+                          const newArr = [...val];
+                          newArr[idx] = newVal;
+                          updateValue(key, newArr);
+                        }} />
+                      ));
+                    }
+                    return <MediaField key={key} label={key} value={val} onChange={(newVal) => updateValue(key, newVal)} type={key.toLowerCase().includes('video') ? 'video' : 'image'} />;
+                  })}
                 </div>
 
-                {/* Navigation Group */}
-                {['ctaUrl', 'buttonUrl', 'linkUrl'].some(k => editingData.parsedContent[k] !== undefined) && (
-                  <div className="space-y-6 pt-6 border-t border-slate-100">
-                    <div className="flex items-center text-primary font-bold text-[10px] uppercase tracking-[0.2em]">
-                      <LinkIcon className="w-3 h-3 mr-2 text-accent" /> Navigation
-                    </div>
-                    {['ctaUrl', 'buttonUrl', 'linkUrl'].map((key) => {
-                      if (editingData.parsedContent[key] === undefined) return null;
-                      return (
-                        <div key={key} className="space-y-2">
-                          <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">{key.replace(/([A-Z])/g, ' $1')}</Label>
-                          <Input 
-                            placeholder="/services or https://..."
-                            className="rounded-none h-11 text-sm border-slate-200"
-                            value={editingData.parsedContent[key] || ''} 
-                            onChange={(e) => updateValue(key, e.target.value)}
-                          />
-                        </div>
-                      );
-                    })}
+                {/* Link discovery */}
+                <div className="space-y-6 pt-6 border-t border-slate-100">
+                  <div className="flex items-center text-primary font-bold text-[10px] uppercase tracking-[0.2em]">
+                    <LinkIcon className="w-3 h-3 mr-2 text-accent" /> Navigation
                   </div>
-                )}
+                  {Object.keys(editingData.parsedContent).map(key => {
+                    if (!isLinkKey(key) || isMediaKey(key)) return null;
+                    return (
+                      <div key={key} className="space-y-2">
+                        <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">{key.replace(/([A-Z])/g, ' $1')}</Label>
+                        <Input className="rounded-none h-11 text-sm" value={editingData.parsedContent[key]} onChange={(e) => updateValue(key, e.target.value)} />
+                      </div>
+                    );
+                  })}
+                </div>
               </TabsContent>
 
               <TabsContent value="style" className="mt-0 space-y-10">
-                {/* Background Strategy */}
                 <div className="space-y-4">
-                  <div className="flex items-center text-primary font-bold text-[10px] uppercase tracking-[0.2em]">
-                    <Layers className="w-3 h-3 mr-2 text-accent" /> Styling Strategy
-                  </div>
-                  <Select 
-                    value={editingData.parsedContent.backgroundType || 'color'} 
-                    onValueChange={(val) => updateValue('backgroundType', val)}
-                  >
-                    <SelectTrigger className="rounded-none h-11 border-slate-200"><SelectValue /></SelectTrigger>
+                  <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">Background Mode</Label>
+                  <Select value={editingData.parsedContent.backgroundType || 'color'} onValueChange={(val) => updateValue('backgroundType', val)}>
+                    <SelectTrigger className="rounded-none h-11"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="color">Solid Background</SelectItem>
                       <SelectItem value="image">High-Res Image</SelectItem>
@@ -374,189 +321,57 @@ export default function LiveEditorSidebar() {
                   </Select>
                 </div>
 
-                {/* Object Fit Control (If media is used) */}
-                {['image', 'video'].includes(editingData.parsedContent.backgroundType) && (
-                  <div className="space-y-4 pt-6 border-t border-slate-100">
-                    <Label className="text-[10px] uppercase font-bold opacity-50">Media Sizing</Label>
-                    <Select 
-                      value={editingData.parsedContent.styles?.objectFit || 'cover'} 
-                      onValueChange={(val) => updateValue('objectFit', val, true)}
-                    >
-                      <SelectTrigger className="h-10 text-xs rounded-none"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cover">Cover (Full Bleed)</SelectItem>
-                        <SelectItem value="contain">Contain (Keep Aspect)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                {editingData.parsedContent.backgroundType === 'image' && (
+                  <MediaField label="Background Image" value={editingData.parsedContent.imageUrl || ''} onChange={(val) => updateValue('imageUrl', val)} />
                 )}
 
-                {/* Color Palette */}
                 <div className="space-y-6 pt-6 border-t border-slate-100">
                   <div className="flex items-center text-primary font-bold text-[10px] uppercase tracking-[0.2em]">
                     <Palette className="w-3 h-3 mr-2 text-accent" /> Palette Controls
                   </div>
-                  <div className="grid grid-cols-1 gap-6">
-                    <div className="space-y-3">
-                      <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">Background Color</Label>
-                      <div className="flex items-center space-x-3">
-                        <input type="color" className="w-10 h-10 border rounded-full cursor-pointer" value={editingData.parsedContent.styles?.backgroundColor || '#FFFFFF'} onChange={(e) => updateValue('backgroundColor', e.target.value, true)} />
-                        <Input 
-                          className="h-11 rounded-none font-mono text-xs uppercase" 
-                          value={editingData.parsedContent.styles?.backgroundColor || ''} 
-                          onChange={(e) => updateValue('backgroundColor', e.target.value, true)} 
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">Heading Color</Label>
-                      <div className="flex items-center space-x-3">
-                        <input type="color" className="w-10 h-10 border rounded-full cursor-pointer" value={editingData.parsedContent.styles?.titleColor || '#000000'} onChange={(e) => updateValue('titleColor', e.target.value, true)} />
-                        <Input 
-                          className="h-11 rounded-none font-mono text-xs uppercase" 
-                          value={editingData.parsedContent.styles?.titleColor || ''} 
-                          onChange={(e) => updateValue('titleColor', e.target.value, true)} 
-                        />
-                      </div>
+                  <div className="space-y-4">
+                    <Label className="text-[10px] opacity-50 uppercase font-bold">Base Color</Label>
+                    <div className="flex items-center space-x-3">
+                      <input type="color" className="w-10 h-10 border rounded-full cursor-pointer" value={editingData.parsedContent.styles?.backgroundColor || '#FFFFFF'} onChange={(e) => updateValue('backgroundColor', e.target.value, true)} />
+                      <Input className="h-11 rounded-none font-mono text-xs" value={editingData.parsedContent.styles?.backgroundColor || ''} onChange={(e) => updateValue('backgroundColor', e.target.value, true)} />
                     </div>
                   </div>
-                </div>
-
-                {/* Overlay Intensity */}
-                <div className="pt-6 border-t border-slate-100 space-y-6">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">Overlay Intensity</Label>
-                    <span className="text-[10px] font-mono bg-slate-100 px-2 py-1 rounded">{editingData.parsedContent.styles?.overlayOpacity || 20}%</span>
-                  </div>
-                  <Slider 
-                    value={[editingData.parsedContent.styles?.overlayOpacity ?? 20]} 
-                    max={100} 
-                    onValueChange={([val]) => updateValue('overlayOpacity', val, true)} 
-                  />
                 </div>
               </TabsContent>
 
-              <TabsContent value="advanced" className="mt-0 space-y-8">
-                {/* Video Playback Settings (If video is used) */}
-                {(editingData.parsedContent.videoUrl || editingData.parsedContent.backgroundType === 'video') && (
-                  <div className="space-y-6">
-                    <div className="flex items-center text-primary font-bold text-[10px] uppercase tracking-[0.2em]">
-                      <Video className="w-3 h-3 mr-2 text-accent" /> Playback Rules
-                    </div>
-                    <div className="grid grid-cols-1 gap-4 bg-white p-4 border rounded-sm">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-[9px] uppercase font-bold opacity-60">Autoplay</Label>
-                        <Switch checked={editingData.parsedContent.autoplay ?? true} onCheckedChange={(val) => updateValue('autoplay', val)} />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label className="text-[9px] uppercase font-bold opacity-60">Loop</Label>
-                        <Switch checked={editingData.parsedContent.loop ?? true} onCheckedChange={(val) => updateValue('loop', val)} />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label className="text-[9px] uppercase font-bold opacity-60">Mute</Label>
-                        <Switch checked={editingData.parsedContent.muted ?? true} onCheckedChange={(val) => updateValue('muted', val)} />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label className="text-[9px] uppercase font-bold opacity-60">Player Controls</Label>
-                        <Switch checked={editingData.parsedContent.showControls ?? false} onCheckedChange={(val) => updateValue('showControls', val)} />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-[9px] font-bold opacity-50">Start (sec)</Label>
-                        <Input type="number" className="h-9 text-xs" value={editingData.parsedContent.startTime || 0} onChange={(e) => updateValue('startTime', parseInt(e.target.value))} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[9px] font-bold opacity-50">End (sec)</Label>
-                        <Input type="number" className="h-9 text-xs" value={editingData.parsedContent.endTime || 0} onChange={(e) => updateValue('endTime', parseInt(e.target.value))} />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Layout Spacing */}
-                <div className="space-y-6 pt-6 border-t border-slate-100">
+              <TabsContent value="layout" className="mt-0 space-y-10">
+                <div className="space-y-6">
                   <div className="flex justify-between items-center">
-                    <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">Vertical Padding</Label>
-                    <span className="text-[10px] font-mono bg-slate-100 px-2 py-1 rounded">{editingData.parsedContent.styles?.paddingVertical || '128'}px</span>
+                    <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">Vertical Spacing</Label>
+                    <span className="text-[10px] font-mono">{editingData.parsedContent.styles?.paddingVertical || '128'}px</span>
                   </div>
-                  <Slider 
-                    value={[parseInt(editingData.parsedContent.styles?.paddingVertical || '128')]} 
-                    max={300} 
-                    step={8} 
-                    onValueChange={([val]) => updateValue('paddingVertical', val.toString(), true)} 
-                  />
+                  <Slider value={[parseInt(editingData.parsedContent.styles?.paddingVertical || '128')]} max={300} step={8} onValueChange={([val]) => updateValue('paddingVertical', val.toString(), true)} />
                 </div>
 
                 <div className="space-y-4 pt-6 border-t border-slate-100">
                   <Label className="text-[10px] uppercase font-bold opacity-50">Content Alignment</Label>
                   <div className="grid grid-cols-2 gap-2">
                     {['left', 'center'].map(align => (
-                      <Button 
-                        key={align}
-                        variant={editingData.parsedContent.styles?.alignment === align ? 'default' : 'outline'}
-                        className="rounded-none h-11 text-[10px] uppercase font-bold tracking-widest"
-                        onClick={() => updateValue('alignment', align, true)}
-                      >
+                      <Button key={align} variant={editingData.parsedContent.styles?.alignment === align ? 'default' : 'outline'} className="rounded-none h-11 text-[10px] uppercase font-bold" onClick={() => updateValue('alignment', align, true)}>
                         {align}
                       </Button>
                     ))}
                   </div>
                 </div>
-
-                {['ctaText', 'buttonText'].some(k => editingData.parsedContent[k] !== undefined) && (
-                  <div className="space-y-4 pt-6 border-t border-slate-100">
-                    <Label className="text-[10px] uppercase font-bold opacity-50">Button Style</Label>
-                    <Select 
-                      value={editingData.parsedContent.styles?.buttonType || 'primary'} 
-                      onValueChange={(val) => updateValue('buttonType', val, true)}
-                    >
-                      <SelectTrigger className="rounded-none h-11"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="primary">Solid Gold</SelectItem>
-                        <SelectItem value="outline">Luxury Outline</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
               </TabsContent>
             </div>
           </Tabs>
         )}
       </div>
 
-      {/* Footer Actions */}
       <div className="p-6 border-t bg-white flex flex-col space-y-3 shrink-0">
-        <Button className="w-full bg-primary hover:bg-primary/90 rounded-none h-14 uppercase tracking-[0.2em] text-[10px] font-bold shadow-xl" onClick={handleSave}>
+        <Button className="w-full bg-primary hover:bg-primary/90 rounded-none h-14 uppercase tracking-[0.2em] text-[10px] font-bold" onClick={handleSave}>
           <Save className="w-4 h-4 mr-2" /> Sync Design Changes
         </Button>
-        <div className="flex space-x-2">
-          <Button variant="outline" className="flex-grow rounded-none h-12 uppercase tracking-widest text-[9px] font-bold" onClick={handleExitEditor}>
-            Publish & Exit Architect
-          </Button>
-          <Button variant="outline" className="rounded-none h-12 px-4" onClick={() => setSelectedSectionId(null)} title="Back to Overview">
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-        </div>
+        <Button variant="outline" className="w-full rounded-none h-12 uppercase tracking-widest text-[9px] font-bold" onClick={() => router.push(pathname)}>
+          Exit Visual Architect
+        </Button>
       </div>
-
-      {/* Builder Overlay (When no section is active) */}
-      {!selectedSectionId && (
-        <div className="absolute inset-0 bg-white/95 backdrop-blur-md flex flex-col items-center justify-center p-12 text-center space-y-8 animate-fade-in">
-          <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center">
-            <Sparkles className="w-10 h-10 text-accent animate-pulse" />
-          </div>
-          <div>
-            <h4 className="font-headline text-3xl font-bold text-primary">Sanctuary Mode</h4>
-            <p className="text-muted-foreground text-sm mt-4 font-light leading-relaxed">
-              Navigate your live sanctuary. Click any element to refine its aesthetic or reorder content blocks.
-            </p>
-          </div>
-          <Button variant="outline" className="rounded-none px-10 h-12 uppercase tracking-widest text-[10px] font-bold border-primary/20" onClick={handleExitEditor}>
-            Exit Architect Mode
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
