@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -30,7 +31,9 @@ import {
   Palette,
   Maximize,
   Image as ImageIcon,
-  Monitor
+  Monitor,
+  Library,
+  Search
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -41,6 +44,7 @@ export default function PagesEditor() {
   const { toast } = useToast();
   const [currentPageId, setCurrentPageId] = useState('home');
   const [isSectionDialogOpen, setIsSectionDialogOpen] = useState(false);
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [editingSection, setEditingSection] = useState<any>(null);
 
   const pageRef = useMemoFirebase(() => doc(db, 'cms_pages', currentPageId), [db, currentPageId]);
@@ -53,10 +57,14 @@ export default function PagesEditor() {
     ?.map((id: string) => allSections?.find(s => s.id === id))
     .filter(Boolean) || [];
 
+  const unassignedSections = allSections?.filter(s => 
+    !pageData?.sectionIds?.includes(s.id)
+  ) || [];
+
   function handleInitializePage() {
     setDocumentNonBlocking(pageRef, {
       id: currentPageId,
-      title: currentPageId === 'home' ? 'Home' : 'Services',
+      title: currentPageId.charAt(0).toUpperCase() + currentPageId.slice(1),
       sectionIds: [],
       isPublished: true,
       updatedAt: new Date().toISOString()
@@ -78,6 +86,17 @@ export default function PagesEditor() {
     if (!pageData) return;
     const newIds = pageData.sectionIds.filter((sid: string) => sid !== id);
     setDocumentNonBlocking(pageRef, { ...pageData, sectionIds: newIds }, { merge: true });
+    toast({ title: "Section Detached", description: "The section was moved to your Library for recovery." });
+  }
+
+  function handleAttachFromLibrary(sectionId: string) {
+    if (!pageData) return;
+    setDocumentNonBlocking(pageRef, { 
+      ...pageData, 
+      sectionIds: [...(pageData?.sectionIds || []), sectionId] 
+    }, { merge: true });
+    setIsLibraryOpen(false);
+    toast({ title: "Restored", description: "The section has been re-attached to your page." });
   }
 
   function openEditSection(section: any) {
@@ -144,7 +163,9 @@ export default function PagesEditor() {
     ServicesPreview: Layout,
     FeaturedWork: Grid,
     Testimonials: Quote,
-    InstagramPreview: Instagram
+    InstagramPreview: Instagram,
+    BlogListing: FileText,
+    ServicesListing: Scissors
   };
 
   return (
@@ -155,8 +176,11 @@ export default function PagesEditor() {
           <p className="text-muted-foreground mt-2">The ultimate no-code design system for your sanctuary.</p>
         </div>
         <div className="flex space-x-4">
+          <Button variant="outline" className="border-primary/20" onClick={() => setIsLibraryOpen(true)}>
+            <Library className="w-4 h-4 mr-2 text-primary" /> Section Library
+          </Button>
           <Button variant="outline" asChild>
-            <a href="/" target="_blank"><Eye className="w-4 h-4 mr-2" /> Live Preview</a>
+            <a href={`/${currentPageId === 'home' ? '' : currentPageId}`} target="_blank"><Eye className="w-4 h-4 mr-2" /> Live Preview</a>
           </Button>
           <Button className="bg-primary hover:bg-primary/90" onClick={() => toast({ title: "System Synced", description: "Changes are live." })}>
             <Save className="w-4 h-4 mr-2" /> Publish Site
@@ -168,6 +192,7 @@ export default function PagesEditor() {
         <TabsList className="bg-white border p-1 rounded-sm">
           <TabsTrigger value="home" className="px-8 rounded-none data-[state=active]:bg-primary data-[state=active]:text-white">Home Page</TabsTrigger>
           <TabsTrigger value="services" className="px-8 rounded-none data-[state=active]:bg-primary data-[state=active]:text-white">Services Page</TabsTrigger>
+          <TabsTrigger value="blog" className="px-8 rounded-none data-[state=active]:bg-primary data-[state=active]:text-white">Blog Page</TabsTrigger>
         </TabsList>
 
         <TabsContent value={currentPageId} className="mt-8 space-y-4">
@@ -188,7 +213,9 @@ export default function PagesEditor() {
             <>
               {pageSections.map((section: any, index: number) => {
                 const Icon = sectionIcons[section.type] || Layout;
-                const content = JSON.parse(section.content || '{}');
+                let content = {};
+                try { content = JSON.parse(section.content || '{}'); } catch(e) {}
+                
                 return (
                   <Card key={section.id} className="border-none shadow-sm group overflow-hidden bg-white hover:ring-1 hover:ring-primary/20 transition-all">
                     <div className="flex items-center justify-between px-6 py-4">
@@ -199,7 +226,7 @@ export default function PagesEditor() {
                         <div>
                           <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-accent">{section.type}</span>
                           <h3 className="font-headline text-base font-bold">
-                            {content.title || content.handle || 'Custom Section'}
+                            {(content as any).title || (content as any).handle || 'Custom Section'}
                           </h3>
                         </div>
                       </div>
@@ -240,6 +267,60 @@ export default function PagesEditor() {
         </TabsContent>
       </Tabs>
 
+      {/* SECTION LIBRARY DIALOG (RECOVERY TOOL) */}
+      <Dialog open={isLibraryOpen} onOpenChange={setIsLibraryOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col p-0">
+          <DialogHeader className="p-6 border-b bg-white">
+            <div className="flex items-center space-x-3">
+              <Library className="w-6 h-6 text-primary" />
+              <div>
+                <DialogTitle className="text-2xl font-headline">Section Library</DialogTitle>
+                <DialogDescription>Recover your manual sections, Video Blocks, and custom galleries here.</DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          
+          <div className="flex-grow overflow-y-auto p-6 bg-muted/10">
+            {unassignedSections.length === 0 ? (
+              <div className="py-20 text-center space-y-4">
+                <Search className="w-12 h-12 text-muted-foreground mx-auto opacity-20" />
+                <p className="text-muted-foreground">No unassigned sections found. All your sections are currently on pages.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {unassignedSections.map((section: any) => {
+                  const Icon = sectionIcons[section.type] || Layout;
+                  let content = {};
+                  try { content = JSON.parse(section.content || '{}'); } catch(e) {}
+                  
+                  return (
+                    <Card key={section.id} className="p-4 flex items-center justify-between bg-white border-none shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center space-x-4">
+                        <div className="p-3 bg-muted/50 rounded-sm">
+                          <Icon className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-accent">{section.type}</p>
+                          <h4 className="font-bold">{(content as any).title || 'Custom Section'}</h4>
+                          <p className="text-[10px] font-mono text-muted-foreground">{section.id}</p>
+                        </div>
+                      </div>
+                      <Button size="sm" variant="ghost" className="text-primary hover:bg-primary/5" onClick={() => handleAttachFromLibrary(section.id)}>
+                        <Plus className="w-4 h-4 mr-2" /> Add to Page
+                      </Button>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <DialogFooter className="p-6 border-t bg-white">
+            <Button variant="ghost" onClick={() => setIsLibraryOpen(false)}>Close Library</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* EDIT SECTION DIALOG */}
       <Dialog open={isSectionDialogOpen} onOpenChange={setIsSectionDialogOpen}>
         <DialogContent className="max-w-5xl p-0 overflow-hidden border-none shadow-2xl">
           <div className="flex h-[85vh]">

@@ -16,7 +16,8 @@ import {
   Scissors, 
   MessageSquare,
   Loader2,
-  Eye
+  Eye,
+  ShieldCheck
 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -62,17 +63,10 @@ export default function AdminDashboard() {
         }, { merge: true });
       }
 
-      // 2. Define Essential Sections
-      const heroId = 'initial-hero';
-      const introId = 'initial-intro';
-      const craftId = 'initial-craft';
-      const blogListId = 'initial-blog-list';
-      const servicesListId = 'initial-services-list';
-      const galleryId = 'initial-gallery';
-      
+      // 2. Define Essential Sections (Default IDs)
       const sections = [
         {
-          id: heroId,
+          id: 'initial-hero',
           type: 'Hero',
           content: JSON.stringify({ 
             title: 'Elevate Your Natural Beauty', 
@@ -84,7 +78,7 @@ export default function AdminDashboard() {
           })
         },
         {
-          id: introId,
+          id: 'initial-intro',
           type: 'BrandIntro',
           content: JSON.stringify({ 
             title: 'The Verde Philosophy', 
@@ -94,17 +88,17 @@ export default function AdminDashboard() {
           })
         },
         {
-          id: craftId,
+          id: 'initial-craft',
           type: 'ServicesPreview',
           content: JSON.stringify({ title: 'Signature Rituals', subtitle: 'Our Craft' })
         },
         {
-          id: galleryId,
+          id: 'initial-gallery',
           type: 'FeaturedWork',
           content: JSON.stringify({ title: 'Our Work', subtitle: 'The Verde Aesthetic', images: [] })
         },
         {
-          id: blogListId,
+          id: 'initial-blog-list',
           type: 'BlogListing',
           content: JSON.stringify({ 
             title: 'Rituals & Reflections', 
@@ -113,7 +107,7 @@ export default function AdminDashboard() {
           })
         },
         {
-          id: servicesListId,
+          id: 'initial-services-list',
           type: 'ServicesListing',
           content: JSON.stringify({ 
             title: 'Signature Rituals', 
@@ -132,11 +126,11 @@ export default function AdminDashboard() {
         }
       }
 
-      // 3. Safe Page Construction
+      // 3. Safe Page Construction (Additive Only)
       const pageDefinitions = [
-        { id: 'home', title: 'Home', slug: '/', sections: [heroId, introId, craftId, galleryId] },
-        { id: 'services', title: 'Services', slug: '/services', sections: [servicesListId] },
-        { id: 'blog', title: 'Blog', slug: '/blog', sections: [blogListId] }
+        { id: 'home', title: 'Home', slug: '/', sections: ['initial-hero', 'initial-intro', 'initial-craft', 'initial-gallery'] },
+        { id: 'services', title: 'Services', slug: '/services', sections: ['initial-services-list'] },
+        { id: 'blog', title: 'Blog', slug: '/blog', sections: ['initial-blog-list'] }
       ];
 
       for (const p of pageDefinitions) {
@@ -144,7 +138,6 @@ export default function AdminDashboard() {
         const pSnap = await getDoc(pRef);
         
         if (!pSnap.exists()) {
-          // Create new page if missing
           setDocumentNonBlocking(pRef, {
             id: p.id,
             title: p.title,
@@ -154,21 +147,22 @@ export default function AdminDashboard() {
             createdAt: new Date().toISOString()
           }, { merge: true });
         } else {
-          // Ensure essential sections are present without overwriting custom ones
+          // PROTECTION: If page exists, check if essential sections are there. 
+          // Add them ONLY if the page is currently empty or doesn't have them.
           const currentData = pSnap.data();
           const currentIds = currentData.sectionIds || [];
-          const missingIds = p.sections.filter(id => !currentIds.includes(id));
           
-          if (missingIds.length > 0) {
+          // Only perform additive seeding if the page structure seems incomplete
+          if (currentIds.length === 0) {
             setDocumentNonBlocking(pRef, {
               ...currentData,
-              sectionIds: [...currentIds, ...missingIds]
+              sectionIds: p.sections
             }, { merge: true });
           }
         }
       }
 
-      toast({ title: "Sanctuary Safeguarded", description: "Missing architecture filled without overwriting your changes." });
+      toast({ title: "Sanctuary Safeguarded", description: "Architecture filled without overwriting your custom sections." });
     } catch (e) {
       console.error(e);
       toast({ variant: "destructive", title: "Setup Failed", description: "Could not safely verify architecture." });
@@ -212,7 +206,7 @@ export default function AdminDashboard() {
           <CardHeader className="flex flex-row items-center justify-between relative z-10">
             <div className="space-y-2">
               <CardTitle className="text-3xl font-headline font-bold">Initialize Your Sanctuary</CardTitle>
-              <CardDescription className="text-primary/70 text-base max-w-xl">Complete your architecture. This creates missing Services, Blog, and Home page structures in your CMS.</CardDescription>
+              <CardDescription className="text-primary/70 text-base max-w-xl">Complete your architecture. This only fills in missing Services, Blog, and Home page structures without touching your edits.</CardDescription>
             </div>
             <Button 
               onClick={handleSeedSanctuary} 
@@ -220,11 +214,27 @@ export default function AdminDashboard() {
               className="bg-primary text-white hover:bg-primary/90 rounded-none uppercase tracking-[0.2em] text-[11px] font-bold h-16 px-12 shadow-2xl"
             >
               {isSeeding ? <Loader2 className="w-4 h-4 animate-spin mr-3" /> : <Sparkles className="w-4 h-4 mr-3" />}
-              {isSeeding ? "Syncing..." : "Complete Architecture Now"}
+              {isSeeding ? "Protecting & Syncing..." : "Complete Architecture Now"}
             </Button>
           </CardHeader>
         </Card>
       )}
+
+      {/* Recovery Banner (Always visible if page builder was used) */}
+      <Card className="border-2 border-dashed border-primary/20 bg-white/50 rounded-none">
+        <CardContent className="py-6 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="p-3 bg-primary/5 rounded-full"><ShieldCheck className="w-6 h-6 text-primary" /></div>
+            <div>
+              <h4 className="font-headline font-bold text-lg">Data Recovery Center</h4>
+              <p className="text-sm text-muted-foreground">If you are missing your custom Video Block or Gallery, use the "Section Library" inside the Page Editor.</p>
+            </div>
+          </div>
+          <Button variant="outline" className="rounded-none font-bold uppercase tracking-widest text-[10px]" asChild>
+            <Link href="/admin/pages">Open Page Editor</Link>
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
