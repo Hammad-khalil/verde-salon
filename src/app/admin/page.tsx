@@ -55,6 +55,7 @@ export default function AdminDashboard() {
       // 2. Seed Page Sections
       const heroId = 'initial-hero';
       const introId = 'initial-intro';
+      const craftId = 'initial-craft';
       
       setDocumentNonBlocking(doc(db, 'cms_page_sections', heroId), {
         id: heroId,
@@ -80,55 +81,72 @@ export default function AdminDashboard() {
         })
       }, { merge: true });
 
+      setDocumentNonBlocking(doc(db, 'cms_page_sections', craftId), {
+        id: craftId,
+        type: 'ServicesPreview',
+        content: JSON.stringify({ 
+          title: 'Signature Rituals', 
+          subtitle: 'Our Craft'
+        })
+      }, { merge: true });
+
       // 3. Seed Home Page Layout
       setDocumentNonBlocking(doc(db, 'cms_pages', 'home'), {
         id: 'home',
         title: 'Home',
         slug: '/',
-        sectionIds: [heroId, introId],
+        sectionIds: [heroId, introId, craftId],
         isPublished: true
       }, { merge: true });
 
-      // 4. Seed Services Page
-      setDocumentNonBlocking(doc(db, 'cms_pages', 'services'), {
-        id: 'services',
-        title: 'Services',
-        slug: '/services',
-        sectionIds: [],
-        isPublished: true
-      }, { merge: true });
-
-      // 5. Seed Demo Blog Post
-      const demoBlogId = 'demo-hair-care';
-      setDocumentNonBlocking(doc(db, 'blog_posts', demoBlogId), {
-        id: demoBlogId,
-        title: 'The Verde Guide to Radiant Summer Hair',
-        slug: 'radiant-summer-hair-guide',
-        category: 'Hair',
-        excerpt: 'Discover the essential rituals to protect and nourish your hair during the golden months.',
-        content: `As the sun reaches its zenith, our hair requires a different kind of intentional care. The salt of the sea and the intensity of the UV rays can strip away the natural luster we work so hard to maintain.
-
-At Verde Salon, we believe summer hair care is a ritual of hydration. We recommend transitioning to botanical-heavy masks once a week to replenish the core of the hair shaft. 
-
-Key Tips for the Season:
-1. Rinse with cold water to seal the cuticle after a swim.
-2. Use wide-toothed wooden combs to prevent breakage when damp.
-3. Apply lightweight oils before sun exposure.
-
-Our specialists are here to tailor a summer ritual specifically for your hair texture. Book a consultation today to ensure your radiance never fades.`,
-        author: 'Elena Verde',
-        publishedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        isPublished: true,
-        imageUrl: 'https://picsum.photos/seed/verde-blog-demo/1200/800',
-        seo: {
-          title: 'Summer Hair Care Rituals | Verde Salon',
-          description: 'Expert tips on maintaining healthy, shiny hair during the summer months with botanical care.',
-          keywords: ['summer hair', 'hair rituals', 'botanical beauty']
+      // 4. Seed High-Quality Blog Posts
+      const blogsToSeed = [
+        {
+          id: 'blog-balayage',
+          title: 'The Art of the Balayage: Beyond Color',
+          slug: 'art-of-balayage',
+          category: 'Hair',
+          excerpt: 'Explore why this hand-painted technique remains the ultimate luxury in hair transformation.',
+          content: `# Understanding Balayage\n\nUnlike traditional highlights, balayage is an artistic approach to hair coloring. It involves hand-painting color onto the hair to create a soft, natural-looking effect.\n\n## Why We Love It\n\n1. Low Maintenance: The grow-out is seamless.\n2. Bespoke: Every application is tailored to your movement.\n3. Dimension: Adds depth and shine that foils can't replicate.`,
+          author: 'Elena Verde',
+          isPublished: true,
+          publishedAt: new Date().toISOString(),
+          imageUrl: 'https://picsum.photos/seed/balayage/1200/800',
+          seo: { title: 'Art of Balayage | Verde Salon', description: 'Expert insights into the balayage coloring technique.' }
+        },
+        {
+          id: 'blog-skincare',
+          title: 'Botanical Rituals for Radiant Skin',
+          slug: 'botanical-skincare-guide',
+          category: 'Skincare',
+          excerpt: 'Unlock the secrets of nature-inspired skincare for a healthier, more vibrant complexion.',
+          content: `# Nature's Secret\n\nYour skin is your largest organ, and it deserves the purest care. Botanical extracts provide powerful antioxidants without the harsh chemicals of synthetic products.\n\n## The Verde Routine\n\n* **Cleanse**: Use oil-based botanical cleansers.\n* **Tone**: Rosewater or witch hazel for balance.\n* **Nourish**: Jojoba or squalane for deep hydration.`,
+          author: 'Elena Verde',
+          isPublished: true,
+          publishedAt: new Date().toISOString(),
+          imageUrl: 'https://picsum.photos/seed/skincare/1200/800',
+          seo: { title: 'Botanical Skincare Guide | Verde Salon', description: 'Natural skincare routines for glowing skin.' }
+        },
+        {
+          id: 'blog-barbering',
+          title: 'The Return of the Artisan Barber',
+          slug: 'artisan-barbering-trends',
+          category: 'Trends',
+          excerpt: 'Modern grooming meets old-world craftsmanship in our latest men\'s ritual series.',
+          content: `# The Modern Gentleman\n\nBarbering is undergoing a renaissance. It's no longer just about a quick trim; it's about the experience, the precision, and the ritual.\n\n## Our Signature Cut\n\nEvery session starts with a consultation, followed by a hot towel treatment and a precision cut using hand-forged tools.`,
+          author: 'Julian Thorne',
+          isPublished: true,
+          publishedAt: new Date().toISOString(),
+          imageUrl: 'https://picsum.photos/seed/barber/1200/800',
+          seo: { title: 'Modern Barbering Trends | Verde Salon', description: 'Exploring the artisan approach to men\'s grooming.' }
         }
-      }, { merge: true });
+      ];
 
-      toast({ title: "Sanctuary Initialized", description: "Your luxury digital space and demo content are ready." });
+      for (const blog of blogsToSeed) {
+        setDocumentNonBlocking(doc(db, 'blog_posts', blog.id), blog, { merge: true });
+      }
+
+      toast({ title: "Sanctuary Initialized", description: "Your luxury digital space and dynamic blogs are ready." });
     } catch (e) {
       toast({ variant: "destructive", title: "Setup Failed", description: "Could not seed initial data." });
     } finally {

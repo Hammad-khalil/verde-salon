@@ -8,7 +8,6 @@ import Footer from '@/components/layout/Footer';
 import SEOManager from '@/components/seo/SEOManager';
 import Image from 'next/image';
 import { format } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
 import { Calendar, User, ArrowLeft, Share2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -28,7 +27,7 @@ export default function BlogPostDetail({ params }: { params: Promise<{ slug: str
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center animate-pulse font-headline text-primary tracking-widest uppercase">
-        VERDE BLOGS
+        VERDE JOURNAL
       </div>
     );
   }
@@ -100,13 +99,25 @@ export default function BlogPostDetail({ params }: { params: Promise<{ slug: str
           {/* Article Content */}
           <div className="max-w-3xl mx-auto">
             <div className="prose prose-lg prose-primary max-w-none font-body leading-[1.8] text-muted-foreground space-y-10 tracking-wide">
-              {post.content.split('\n').map((para: string, i: number) => (
-                para.trim() ? (
-                  <p key={i} className="first-letter:text-5xl first-letter:font-headline first-letter:float-left first-letter:mr-3 first-letter:text-accent first-letter:leading-none">
-                    {para}
-                  </p>
-                ) : <div key={i} className="h-4" />
-              ))}
+              {post.content.split('\n').map((line: string, i: number) => {
+                if (line.startsWith('# ')) {
+                  return <h1 key={i} className="text-4xl font-headline font-bold text-primary mt-12 mb-6">{line.replace('# ', '')}</h1>;
+                }
+                if (line.startsWith('## ')) {
+                  return <h2 key={i} className="text-2xl font-headline font-bold text-primary mt-10 mb-4">{line.replace('## ', '')}</h2>;
+                }
+                if (line.startsWith('* ') || line.startsWith('1. ')) {
+                  return <li key={i} className="ml-6 mb-2 list-disc">{line.replace(/^\* |^1\. /, '')}</li>;
+                }
+                if (line.trim()) {
+                  return (
+                    <p key={i} className="first-letter:text-5xl first-letter:font-headline first-letter:float-left first-letter:mr-3 first-letter:text-accent first-letter:leading-none">
+                      {line}
+                    </p>
+                  );
+                }
+                return <div key={i} className="h-4" />;
+              })}
             </div>
 
             {/* Footer / Share */}
@@ -116,8 +127,8 @@ export default function BlogPostDetail({ params }: { params: Promise<{ slug: str
                   <User className="w-5 h-5 text-accent" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary">Elena Verde</p>
-                  <p className="text-[9px] uppercase tracking-widest text-muted-foreground">Founder & Creative Director</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary">{post.author}</p>
+                  <p className="text-[9px] uppercase tracking-widest text-muted-foreground">Artisan Contributor</p>
                 </div>
               </div>
               <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-accent">
