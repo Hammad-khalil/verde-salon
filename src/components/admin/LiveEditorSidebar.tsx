@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -21,8 +20,6 @@ import {
   Link as LinkIcon, 
   Component, 
   Upload,
-  Layout,
-  Plus,
   Trash2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -60,7 +57,7 @@ const MediaField = ({
   const handleFile = (file: File) => {
     if (!file) return;
     if (file.size > 800000) {
-      toast({ variant: "destructive", title: "Asset too large", description: "Use files under 800KB." });
+      toast({ variant: "destructive", title: "Asset too large", description: "Please use files under 800KB for direct upload, or use a URL." });
       return;
     }
     const reader = new FileReader();
@@ -157,6 +154,24 @@ export default function LiveEditorSidebar() {
   const sectionRef = useMemoFirebase(() => selectedSectionId ? doc(db, 'cms_page_sections', selectedSectionId) : null, [db, selectedSectionId]);
   const { data: sectionData } = useDoc(sectionRef);
 
+  const getDeepFields = useCallback((obj: any, path: string = '', acc: any[] = []) => {
+    if (!obj || typeof obj !== 'object') return acc;
+    Object.keys(obj).forEach(key => {
+      const val = obj[key];
+      const fullPath = path ? `${path}.${key}` : key;
+      if (Array.isArray(val)) {
+        acc.push({ path: fullPath, value: val, key, type: 'array' });
+      } else if (typeof val === 'object' && val !== null) {
+        getDeepFields(val, fullPath, acc);
+      } else {
+        acc.push({ path: fullPath, value: val, key, type: typeof val });
+      }
+    });
+    return acc;
+  }, []);
+
+  const allFields = useMemo(() => editingData ? getDeepFields(editingData.parsedContent) : [], [editingData, getDeepFields]);
+
   useEffect(() => {
     const handleSectionSelect = (e: any) => { if (isEditMode) setSelectedSectionId(e.detail.id); };
     window.addEventListener('verde-select-section', handleSectionSelect);
@@ -186,32 +201,24 @@ export default function LiveEditorSidebar() {
     setEditingData({ ...editingData, parsedContent: updated });
   };
 
-  const getDeepFields = useCallback((obj: any, path: string = '', acc: any[] = []) => {
-    if (!obj || typeof obj !== 'object') return acc;
-    Object.keys(obj).forEach(key => {
-      const val = obj[key];
-      const fullPath = path ? `${path}.${key}` : key;
-      if (Array.isArray(val)) {
-        acc.push({ path: fullPath, value: val, key, type: 'array' });
-      } else if (typeof val === 'object' && val !== null) {
-        getDeepFields(val, fullPath, acc);
-      } else {
-        acc.push({ path: fullPath, value: val, key, type: typeof val });
-      }
-    });
-    return acc;
-  }, []);
-
-  const allFields = useMemo(() => editingData ? getDeepFields(editingData.parsedContent) : [], [editingData, getDeepFields]);
-
   function handleSave() {
     if (!editingData || !selectedSectionId) return;
-    const contentString = JSON.stringify(editingData.parsedContent);
+    
+    // Clean data for Firestore (Strip local parsedContent before saving)
+    const { parsedContent, ...rest } = editingData;
+    const contentString = JSON.stringify(parsedContent);
+    
     if (contentString.length > 900000) {
-      toast({ variant: "destructive", title: "Error", description: "Config too large." });
+      toast({ variant: "destructive", title: "Sync Failed", description: "Image data too large for database. Use a direct URL instead." });
       return;
     }
-    setDocumentNonBlocking(doc(db, 'cms_page_sections', selectedSectionId), { ...editingData, content: contentString }, { merge: true });
+
+    setDocumentNonBlocking(
+      doc(db, 'cms_page_sections', selectedSectionId), 
+      { ...rest, content: contentString }, 
+      { merge: true }
+    );
+    
     toast({ title: "Sanctuary Synced", description: "Live updates published." });
   }
 

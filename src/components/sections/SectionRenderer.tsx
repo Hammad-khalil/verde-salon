@@ -115,12 +115,19 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       {isEditMode && <AddButton index={0} />}
       {orderedSections.map((section: any, idx: number) => {
         let data = {};
-        try { data = JSON.parse(section.content || '{}'); } catch (e) { console.error("Parse Error:", e); }
+        try { 
+          data = JSON.parse(section.content || '{}'); 
+        } catch (e) { 
+          console.error("Renderer Parse Error:", e);
+          return null; // Skip corrupted sections
+        }
         
         const SectionComponents: Record<string, any> = {
           Hero, BrandIntro, TextBlock, ServicesPreview, FeaturedWork, Testimonials, InstagramPreview, CTA, FormBlock, VideoBlock, FAQSection, BlogListing, ServicesListing
         };
         const Component = SectionComponents[section.type];
+
+        if (!Component) return null;
 
         return (
           <div key={section.id}>
@@ -136,12 +143,12 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
                 <div className="absolute top-4 right-4 z-50 flex space-x-2 opacity-0 hover:opacity-100 transition-opacity">
                   <div className="flex items-center space-x-2 bg-white/90 backdrop-blur-md p-1 pr-3 shadow-xl border border-accent/20">
                     <div className="bg-accent p-2"><Sparkles className="w-3 h-3 text-primary" /></div>
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-primary">{section.type}</span>
+                    <span className="text-[9px] font-bold uppercase widests tracking-widest text-primary">{section.type}</span>
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleSectionClick(section.id); }}><Edit2 className="w-3 h-3" /></Button>
                   </div>
                 </div>
               )}
-              {Component ? <Component {...data} /> : null}
+              <Component {...data} />
             </div>
             {isEditMode && <AddButton index={idx + 1} />}
           </div>
