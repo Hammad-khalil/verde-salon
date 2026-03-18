@@ -22,8 +22,8 @@ service cloud.firestore {
       // Allow access if the user has an explicit admin role document 
       // OR if they are signed in with a password (standard for CMS users).
       return isSignedIn() && (
-        exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) ||
-        request.auth.token.firebase.sign_in_provider == 'password'
+        request.auth.token.firebase.sign_in_provider == 'password' ||
+        exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))
       );
     }
 
@@ -85,7 +85,7 @@ service cloud.firestore {
 
     match /blog_posts/{postId} {
       allow get: if isAdmin() || resource == null || isPublished();
-      allow list: if true;
+      allow list: if true; 
       allow create, update, delete: if isAdmin();
     }
     
