@@ -26,7 +26,9 @@ import {
   Upload,
   Search,
   Settings2,
-  Layout
+  Layout,
+  Maximize,
+  Minimize
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -34,22 +36,33 @@ import { useToast } from '@/hooks/use-toast';
 
 /**
  * MediaField Component
- * Handles both URL input and Drag & Drop file uploads
+ * Handles both URL input, Drag & Drop, and Alt Text
  */
-const MediaField = ({ label, value, onChange, type = 'image' }: { label: string, value: string, onChange: (val: string) => void, type?: 'image' | 'video' }) => {
+const MediaField = ({ 
+  label, 
+  value, 
+  onChange, 
+  type = 'image',
+  altText = '',
+  onAltChange
+}: { 
+  label: string, 
+  value: string, 
+  onChange: (val: string) => void, 
+  type?: 'image' | 'video',
+  altText?: string,
+  onAltChange?: (val: string) => void
+}) => {
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
 
   const handleFile = (file: File) => {
     if (!file) return;
-    
-    // Firestore limit is 1MB. Base64 adds ~33% overhead. 
-    // We restrict to ~700KB to be safe.
-    if (file.size > 700000) {
+    if (file.size > 800000) {
       toast({
         variant: "destructive",
-        title: "File too large",
-        description: "Please use an asset under 700KB for real-time synchronization.",
+        title: "Asset too large",
+        description: "Please use files under 800KB for high-performance syncing.",
       });
       return;
     }
@@ -57,24 +70,26 @@ const MediaField = ({ label, value, onChange, type = 'image' }: { label: string,
     const reader = new FileReader();
     reader.onload = (e) => {
       const result = e.target?.result;
-      if (typeof result === 'string') {
-        onChange(result);
-      }
+      if (typeof result === 'string') onChange(result);
     };
     reader.readAsDataURL(file);
   };
 
   const safeValue = typeof value === 'string' ? value : '';
-  const inputId = `file-input-${label.replace(/\s+/g, '-')}-${type}`;
+  const inputId = `file-upload-${label.replace(/\s+/g, '-')}-${Math.random().toString(36).substr(2, 9)}`;
 
   return (
-    <div className="space-y-3">
-      <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">{label}</Label>
+    <div className="space-y-4 p-4 bg-white border rounded-sm shadow-sm">
+      <div className="flex items-center justify-between">
+        <Label className="text-[10px] uppercase font-bold text-primary tracking-widest">{label}</Label>
+        {safeValue && <span className="text-[8px] font-mono opacity-40 uppercase">Media Detected</span>}
+      </div>
+
       <div 
         className={cn(
-          "relative border-2 border-dashed rounded-lg p-6 transition-all flex flex-col items-center justify-center space-y-3 cursor-pointer group",
-          isDragging ? "border-primary bg-primary/5" : "border-slate-200 hover:border-primary/50",
-          safeValue ? "aspect-video" : "h-32"
+          "relative border-2 border-dashed rounded-sm transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden bg-slate-50",
+          isDragging ? "border-accent bg-accent/5" : "border-slate-200 hover:border-accent/50",
+          safeValue ? "aspect-video" : "h-24"
         )}
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={() => setIsDragging(false)}
@@ -87,27 +102,28 @@ const MediaField = ({ label, value, onChange, type = 'image' }: { label: string,
         onClick={() => document.getElementById(inputId)?.click()}
       >
         {safeValue ? (
-          <div className="relative w-full h-full">
+          <div className="relative w-full h-full group">
             {type === 'image' ? (
-              <img src={safeValue} className="w-full h-full object-contain rounded" alt="Preview" />
+              <img src={safeValue} className="w-full h-full object-cover" alt="Preview" />
             ) : (
-              <div className="w-full h-full bg-slate-900 rounded flex items-center justify-center">
+              <div className="w-full h-full bg-slate-900 flex items-center justify-center">
                 <Video className="w-8 h-8 text-white/20" />
               </div>
             )}
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded">
-              <p className="text-[10px] text-white font-bold uppercase tracking-widest">Replace Media</p>
+            <div className="absolute inset-0 bg-primary/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity">
+              <Upload className="w-6 h-6 text-accent mb-2" />
+              <p className="text-[9px] text-white font-bold uppercase tracking-widest">Replace Asset</p>
             </div>
           </div>
         ) : (
-          <>
-            <div className="p-3 bg-slate-100 rounded-full group-hover:bg-primary/10 transition-colors">
-              <Upload className="w-5 h-5 text-slate-400 group-hover:text-primary" />
+          <div className="flex flex-col items-center space-y-2">
+            <div className="p-2 bg-white rounded-full shadow-sm">
+              <ImageIcon className="w-4 h-4 text-slate-400" />
             </div>
-            <p className="text-[10px] text-slate-500 font-medium text-center">
-              Drag & drop or <span className="text-primary underline">browse</span>
+            <p className="text-[9px] text-slate-500 font-medium uppercase tracking-tighter">
+              Drop or <span className="text-accent underline">Upload</span>
             </p>
-          </>
+          </div>
         )}
         <input 
           id={inputId}
@@ -120,17 +136,35 @@ const MediaField = ({ label, value, onChange, type = 'image' }: { label: string,
           }}
         />
       </div>
-      <div className="flex items-center space-x-2">
-        <Input 
-          placeholder="Or paste external URL..."
-          className="h-9 text-[10px] font-mono border-slate-200"
-          value={safeValue.startsWith('data:') ? '' : safeValue}
-          onChange={(e) => onChange(e.target.value)}
-        />
-        {safeValue && (
-          <Button variant="outline" size="icon" className="h-9 w-9 shrink-0 text-destructive hover:bg-destructive/5" onClick={() => onChange('')}>
-            <X className="w-3 h-3" />
-          </Button>
+
+      <div className="space-y-3">
+        <div className="space-y-1">
+          <Label className="text-[8px] uppercase opacity-50 font-bold">Source URL</Label>
+          <div className="flex items-center space-x-2">
+            <Input 
+              placeholder="Paste URL..."
+              className="h-8 text-[10px] font-mono rounded-none"
+              value={safeValue.startsWith('data:') ? 'Local Asset' : safeValue}
+              onChange={(e) => onChange(e.target.value)}
+            />
+            {safeValue && (
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => onChange('')}>
+                <X className="w-3 h-3" />
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {onAltChange && (
+          <div className="space-y-1">
+            <Label className="text-[8px] uppercase opacity-50 font-bold">Alt Text (SEO)</Label>
+            <Input 
+              placeholder="Describe this image..."
+              className="h-8 text-[10px] rounded-none"
+              value={altText}
+              onChange={(e) => onAltChange(e.target.value)}
+            />
+          </div>
         )}
       </div>
     </div>
@@ -193,7 +227,7 @@ export default function LiveEditorSidebar() {
     const contentString = JSON.stringify(editingData.parsedContent);
     
     if (contentString.length > 950000) {
-      toast({ variant: "destructive", title: "Section too large", description: "Please use external links for large images." });
+      toast({ variant: "destructive", title: "Config too large", description: "Use external URLs for large assets." });
       return;
     }
 
@@ -201,21 +235,20 @@ export default function LiveEditorSidebar() {
     delete finalSection.parsedContent;
     
     setDocumentNonBlocking(doc(db, 'cms_page_sections', selectedSectionId), finalSection, { merge: true });
-    toast({ title: "Sanctuary Synced", description: "Design changes are now live." });
+    toast({ title: "Sanctuary Synced", description: "Live updates are now persistent." });
   }
 
-  const isMediaKey = (key: string) => 
-    key.toLowerCase().includes('image') || 
-    key.toLowerCase().includes('photo') || 
-    key.toLowerCase().includes('thumb') || 
-    key.toLowerCase().includes('logo') || 
-    key.toLowerCase().includes('icon') ||
-    key.toLowerCase().includes('video');
+  const isMediaKey = (key: string) => {
+    const k = key.toLowerCase();
+    return k.includes('image') || k.includes('photo') || k.includes('thumb') || 
+           k.includes('logo') || k.includes('icon') || k.includes('video') || 
+           k === 'images' || k === 'posts' || k === 'gallery';
+  };
 
-  const isLinkKey = (key: string) => 
-    key.toLowerCase().includes('url') || 
-    key.toLowerCase().includes('link') || 
-    key.toLowerCase().includes('href');
+  const isLinkKey = (key: string) => {
+    const k = key.toLowerCase();
+    return k.includes('url') || k.includes('link') || k.includes('href');
+  };
 
   return (
     <div className={cn(
@@ -230,7 +263,7 @@ export default function LiveEditorSidebar() {
           </div>
           <div>
             <h3 className="font-headline font-bold text-lg">{editingData?.type || 'Element Editor'}</h3>
-            <p className="text-[9px] uppercase tracking-[0.2em] text-accent font-bold">Live Visual Architect</p>
+            <p className="text-[9px] uppercase tracking-[0.2em] text-accent font-bold">Visual Architect</p>
           </div>
         </div>
         <button className="p-2 hover:bg-white/10 rounded-full transition-colors" onClick={() => setSelectedSectionId(null)}>
@@ -243,15 +276,15 @@ export default function LiveEditorSidebar() {
           <Tabs defaultValue="content" className="w-full">
             <TabsList className="w-full rounded-none h-14 bg-white border-b sticky top-0 z-10">
               <TabsTrigger value="content" className="flex-1 h-full rounded-none text-[10px] uppercase font-bold tracking-widest">Content</TabsTrigger>
+              <TabsTrigger value="media" className="flex-1 h-full rounded-none text-[10px] uppercase font-bold tracking-widest">Media</TabsTrigger>
               <TabsTrigger value="style" className="flex-1 h-full rounded-none text-[10px] uppercase font-bold tracking-widest">Style</TabsTrigger>
-              <TabsTrigger value="layout" className="flex-1 h-full rounded-none text-[10px] uppercase font-bold tracking-widest">Layout</TabsTrigger>
             </TabsList>
 
-            <div className="p-8 space-y-10 pb-32">
-              <TabsContent value="content" className="mt-0 space-y-10">
+            <div className="p-6 space-y-8 pb-32">
+              <TabsContent value="content" className="mt-0 space-y-8">
                 {/* Text discovery */}
                 <div className="space-y-6">
-                  <div className="flex items-center text-primary font-bold text-[10px] uppercase tracking-[0.2em]">
+                  <div className="flex items-center text-primary font-bold text-[9px] uppercase tracking-[0.2em] border-b pb-2">
                     <Type className="w-3 h-3 mr-2 text-accent" /> Text Elements
                   </div>
                   {Object.keys(editingData.parsedContent).map(key => {
@@ -261,48 +294,69 @@ export default function LiveEditorSidebar() {
                       <div key={key} className="space-y-2">
                         <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">{key.replace(/([A-Z])/g, ' $1')}</Label>
                         {val.length > 50 || key.includes('content') ? (
-                          <Textarea className="rounded-none min-h-[100px] text-sm" value={val} onChange={(e) => updateValue(key, e.target.value)} />
+                          <Textarea className="rounded-none min-h-[100px] text-sm border-slate-200" value={val} onChange={(e) => updateValue(key, e.target.value)} />
                         ) : (
-                          <Input className="rounded-none h-11 text-sm" value={val} onChange={(e) => updateValue(key, e.target.value)} />
+                          <Input className="rounded-none h-11 text-sm border-slate-200" value={val} onChange={(e) => updateValue(key, e.target.value)} />
                         )}
                       </div>
                     );
                   })}
                 </div>
 
-                {/* Media discovery */}
-                <div className="space-y-8 pt-6 border-t border-slate-100">
-                  <div className="flex items-center text-primary font-bold text-[10px] uppercase tracking-[0.2em]">
-                    <ImageIcon className="w-3 h-3 mr-2 text-accent" /> Media Management
+                {/* Link discovery */}
+                <div className="space-y-6">
+                  <div className="flex items-center text-primary font-bold text-[9px] uppercase tracking-[0.2em] border-b pb-2">
+                    <LinkIcon className="w-3 h-3 mr-2 text-accent" /> Navigation & Links
+                  </div>
+                  {Object.keys(editingData.parsedContent).map(key => {
+                    const val = editingData.parsedContent[key];
+                    if (typeof val !== 'string' || !isLinkKey(key)) return null;
+                    return (
+                      <div key={key} className="space-y-2">
+                        <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">{key.replace(/([A-Z])/g, ' $1')}</Label>
+                        <Input className="rounded-none h-11 text-sm border-slate-200" value={val} onChange={(e) => updateValue(key, e.target.value)} />
+                      </div>
+                    );
+                  })}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="media" className="mt-0 space-y-8">
+                <div className="space-y-6">
+                  <div className="flex items-center text-primary font-bold text-[9px] uppercase tracking-[0.2em] border-b pb-2">
+                    <ImageIcon className="w-3 h-3 mr-2 text-accent" /> Media Library
                   </div>
                   {Object.keys(editingData.parsedContent).map(key => {
                     if (!isMediaKey(key)) return null;
                     const val = editingData.parsedContent[key];
+                    
                     if (Array.isArray(val)) {
                       return val.map((item, idx) => (
-                        <MediaField key={`${key}-${idx}`} label={`${key} ${idx + 1}`} value={item} onChange={(newVal) => {
-                          const newArr = [...val];
-                          newArr[idx] = newVal;
-                          updateValue(key, newArr);
-                        }} />
+                        <MediaField 
+                          key={`${key}-${idx}`} 
+                          label={`${key.replace(/([A-Z])/g, ' $1')} Slot ${idx + 1}`} 
+                          value={typeof item === 'string' ? item : (item.imageUrl || '')} 
+                          onChange={(newVal) => {
+                            const newArr = [...val];
+                            if (typeof newArr[idx] === 'string') {
+                              newArr[idx] = newVal;
+                            } else {
+                              newArr[idx] = { ...newArr[idx], imageUrl: newVal };
+                            }
+                            updateValue(key, newArr);
+                          }} 
+                        />
                       ));
                     }
-                    return <MediaField key={key} label={key} value={val} onChange={(newVal) => updateValue(key, newVal)} type={key.toLowerCase().includes('video') ? 'video' : 'image'} />;
-                  })}
-                </div>
-
-                {/* Link discovery */}
-                <div className="space-y-6 pt-6 border-t border-slate-100">
-                  <div className="flex items-center text-primary font-bold text-[10px] uppercase tracking-[0.2em]">
-                    <LinkIcon className="w-3 h-3 mr-2 text-accent" /> Navigation
-                  </div>
-                  {Object.keys(editingData.parsedContent).map(key => {
-                    if (!isLinkKey(key) || isMediaKey(key)) return null;
+                    
                     return (
-                      <div key={key} className="space-y-2">
-                        <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">{key.replace(/([A-Z])/g, ' $1')}</Label>
-                        <Input className="rounded-none h-11 text-sm" value={editingData.parsedContent[key]} onChange={(e) => updateValue(key, e.target.value)} />
-                      </div>
+                      <MediaField 
+                        key={key} 
+                        label={key} 
+                        value={val} 
+                        onChange={(newVal) => updateValue(key, newVal)} 
+                        type={key.toLowerCase().includes('video') ? 'video' : 'image'} 
+                      />
                     );
                   })}
                 </div>
@@ -314,48 +368,64 @@ export default function LiveEditorSidebar() {
                   <Select value={editingData.parsedContent.backgroundType || 'color'} onValueChange={(val) => updateValue('backgroundType', val)}>
                     <SelectTrigger className="rounded-none h-11"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="color">Solid Background</SelectItem>
-                      <SelectItem value="image">High-Res Image</SelectItem>
-                      <SelectItem value="video">Cinematic Video</SelectItem>
+                      <SelectItem value="color">Solid Theme Color</SelectItem>
+                      <SelectItem value="image">Cinematic Image</SelectItem>
+                      <SelectItem value="video">Background Video</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                {editingData.parsedContent.backgroundType === 'image' && (
-                  <MediaField label="Background Image" value={editingData.parsedContent.imageUrl || ''} onChange={(val) => updateValue('imageUrl', val)} />
+                {(editingData.parsedContent.backgroundType === 'image' || editingData.parsedContent.backgroundType === 'video') && (
+                  <MediaField 
+                    label="Background Media" 
+                    value={editingData.parsedContent.backgroundType === 'image' ? (editingData.parsedContent.imageUrl || '') : (editingData.parsedContent.videoUrl || '')} 
+                    onChange={(val) => updateValue(editingData.parsedContent.backgroundType === 'image' ? 'imageUrl' : 'videoUrl', val)} 
+                    type={editingData.parsedContent.backgroundType === 'video' ? 'video' : 'image'}
+                  />
                 )}
 
-                <div className="space-y-6 pt-6 border-t border-slate-100">
-                  <div className="flex items-center text-primary font-bold text-[10px] uppercase tracking-[0.2em]">
-                    <Palette className="w-3 h-3 mr-2 text-accent" /> Palette Controls
+                <div className="space-y-6 pt-6 border-t">
+                  <div className="flex items-center text-primary font-bold text-[9px] uppercase tracking-[0.2em] mb-4">
+                    <Palette className="w-3 h-3 mr-2 text-accent" /> Palette & Visuals
                   </div>
                   <div className="space-y-4">
-                    <Label className="text-[10px] opacity-50 uppercase font-bold">Base Color</Label>
+                    <Label className="text-[10px] opacity-50 uppercase font-bold">Accent Overlay</Label>
                     <div className="flex items-center space-x-3">
-                      <input type="color" className="w-10 h-10 border rounded-full cursor-pointer" value={editingData.parsedContent.styles?.backgroundColor || '#FFFFFF'} onChange={(e) => updateValue('backgroundColor', e.target.value, true)} />
-                      <Input className="h-11 rounded-none font-mono text-xs" value={editingData.parsedContent.styles?.backgroundColor || ''} onChange={(e) => updateValue('backgroundColor', e.target.value, true)} />
+                      <input type="color" className="w-10 h-10 border rounded-sm cursor-pointer" value={editingData.parsedContent.styles?.backgroundColor || '#FFFFFF'} onChange={(e) => updateValue('backgroundColor', e.target.value, true)} />
+                      <Input className="h-11 rounded-none font-mono text-xs border-slate-200" value={editingData.parsedContent.styles?.backgroundColor || ''} onChange={(e) => updateValue('backgroundColor', e.target.value, true)} />
                     </div>
                   </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="layout" className="mt-0 space-y-10">
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">Vertical Spacing</Label>
-                    <span className="text-[10px] font-mono">{editingData.parsedContent.styles?.paddingVertical || '128'}px</span>
+                  
+                  <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <Label className="text-[10px] opacity-50 uppercase font-bold">Overlay Intensity</Label>
+                      <span className="text-[10px] font-mono">{editingData.parsedContent.styles?.overlayOpacity || 20}%</span>
+                    </div>
+                    <Slider value={[editingData.parsedContent.styles?.overlayOpacity || 20]} max={100} onValueChange={([v]) => updateValue('overlayOpacity', v, true)} />
                   </div>
-                  <Slider value={[parseInt(editingData.parsedContent.styles?.paddingVertical || '128')]} max={300} step={8} onValueChange={([val]) => updateValue('paddingVertical', val.toString(), true)} />
                 </div>
 
-                <div className="space-y-4 pt-6 border-t border-slate-100">
-                  <Label className="text-[10px] uppercase font-bold opacity-50">Content Alignment</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {['left', 'center'].map(align => (
-                      <Button key={align} variant={editingData.parsedContent.styles?.alignment === align ? 'default' : 'outline'} className="rounded-none h-11 text-[10px] uppercase font-bold" onClick={() => updateValue('alignment', align, true)}>
-                        {align}
-                      </Button>
-                    ))}
+                <div className="space-y-6 pt-6 border-t">
+                  <div className="flex items-center text-primary font-bold text-[9px] uppercase tracking-[0.2em]">
+                    <Layout className="w-3 h-3 mr-2 text-accent" /> Layout Config
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-[10px] uppercase font-bold opacity-50">Section Padding</Label>
+                      <span className="text-[10px] font-mono">{editingData.parsedContent.styles?.paddingVertical || '128'}px</span>
+                    </div>
+                    <Slider value={[parseInt(editingData.parsedContent.styles?.paddingVertical || '128')]} max={300} step={8} onValueChange={([val]) => updateValue('paddingVertical', val.toString(), true)} />
+                  </div>
+
+                  <div className="space-y-4">
+                    <Label className="text-[10px] uppercase font-bold opacity-50">Alignment</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {['left', 'center'].map(align => (
+                        <Button key={align} variant={editingData.parsedContent.styles?.alignment === align ? 'default' : 'outline'} className="rounded-none h-11 text-[10px] uppercase font-bold" onClick={() => updateValue('alignment', align, true)}>
+                          {align}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </TabsContent>
@@ -366,10 +436,10 @@ export default function LiveEditorSidebar() {
 
       <div className="p-6 border-t bg-white flex flex-col space-y-3 shrink-0">
         <Button className="w-full bg-primary hover:bg-primary/90 rounded-none h-14 uppercase tracking-[0.2em] text-[10px] font-bold" onClick={handleSave}>
-          <Save className="w-4 h-4 mr-2" /> Sync Design Changes
+          <Save className="w-4 h-4 mr-2" /> Publish to Live Site
         </Button>
         <Button variant="outline" className="w-full rounded-none h-12 uppercase tracking-widest text-[9px] font-bold" onClick={() => router.push(pathname)}>
-          Exit Visual Architect
+          Cancel & Exit
         </Button>
       </div>
     </div>

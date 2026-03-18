@@ -15,8 +15,8 @@ export default function InstagramPreview({
   title = "Follow Us on Instagram",
   posts = [] 
 }: InstagramPreviewProps) {
-  // Use 6 images as requested
-  const galleryPosts = posts.length > 0 ? posts : [
+  // Use the provided posts array or default aesthetic placeholders
+  const galleryPosts = (Array.isArray(posts) && posts.length > 0) ? posts : [
     'https://picsum.photos/seed/insta1/600/600',
     'https://picsum.photos/seed/insta2/600/600',
     'https://picsum.photos/seed/insta3/600/600',
@@ -42,7 +42,7 @@ export default function InstagramPreview({
         
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {galleryPosts.slice(0, 6).map((url, i) => (
-            <div key={i} className="relative aspect-square overflow-hidden group bg-muted">
+            <div key={i} className="relative aspect-square overflow-hidden group bg-muted border border-slate-100">
               <Image 
                 src={url} 
                 alt={`Instagram Post ${i+1}`} 
@@ -51,7 +51,7 @@ export default function InstagramPreview({
                 sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 16vw"
                 data-ai-hint="salon aesthetic"
               />
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-primary/20">
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-primary/20 pointer-events-none">
                 <InstagramIcon className="text-white w-6 h-6 font-light" />
               </div>
             </div>

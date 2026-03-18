@@ -5,7 +5,7 @@ import Image from 'next/image';
 interface FeaturedWorkProps {
   title?: string;
   subtitle?: string;
-  images: string[];
+  images?: string[];
 }
 
 export default function FeaturedWork({ 
@@ -13,8 +13,9 @@ export default function FeaturedWork({
   subtitle = "The Verde Aesthetic",
   images = [] 
 }: FeaturedWorkProps) {
-  // Use 6 images as requested, or defaults if empty
-  const galleryImages = images.length > 0 ? images : [
+  // Ensure we handle both prop-based images and fallbacks correctly
+  // If images array is empty or not provided, use default luxury placeholders
+  const galleryImages = (Array.isArray(images) && images.length > 0) ? images : [
     'https://picsum.photos/seed/verde-work-1/600/800',
     'https://picsum.photos/seed/verde-work-2/600/800',
     'https://picsum.photos/seed/verde-work-3/600/800',
@@ -36,16 +37,16 @@ export default function FeaturedWork({
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {galleryImages.slice(0, 6).map((img, i) => (
-            <div key={i} className="group relative aspect-[3/4] overflow-hidden bg-muted">
+            <div key={i} className="group relative aspect-[3/4] overflow-hidden bg-muted shadow-sm">
               <Image 
                 src={img} 
-                alt={`Featured Work ${i+1}`} 
+                alt={`${title} item ${i+1}`} 
                 fill 
                 className="object-cover grayscale-[0.3] group-hover:grayscale-0 transition-all duration-[1.5s] ease-out group-hover:scale-110"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                data-ai-hint="salon hair"
+                data-ai-hint="luxury hair"
               />
-              <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-colors duration-700" />
+              <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-colors duration-700 pointer-events-none" />
             </div>
           ))}
         </div>
