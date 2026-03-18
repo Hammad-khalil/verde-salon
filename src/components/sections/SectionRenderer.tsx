@@ -86,7 +86,7 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       const currentIds = [...(data.sectionIds || [])];
       currentIds.splice(index, 0, newId);
       setDocumentNonBlocking(pageRef, { ...data, sectionIds: currentIds }, { merge: true });
-      toast({ title: "Section Added", description: `${type} integrated.` });
+      toast({ title: "Draft Section Added", description: `${type} integrated into draft layout.` });
     }
   }
 
@@ -116,10 +116,12 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       {orderedSections.map((section: any, idx: number) => {
         let data = {};
         try { 
-          data = JSON.parse(section.content || '{}'); 
+          // CRITICAL: Choose between draft content and published content
+          const contentToRender = isEditMode ? section.content : (section.publishedContent || section.content);
+          data = JSON.parse(contentToRender || '{}'); 
         } catch (e) { 
           console.error("Renderer Parse Error:", e);
-          return null; // Skip corrupted sections
+          return null;
         }
         
         const SectionComponents: Record<string, any> = {

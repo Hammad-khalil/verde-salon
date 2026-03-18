@@ -4,17 +4,28 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import SectionRenderer from '@/components/sections/SectionRenderer';
 import SEOManager from '@/components/seo/SEOManager';
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
+import { useSearchParams } from 'next/navigation';
+import { useMemo } from 'react';
 
 export default function Home() {
   const db = useFirestore();
+  const { user } = useUser();
+  const searchParams = useSearchParams();
+  const isEditMode = useMemo(() => searchParams.get('edit') === 'true' && !!user, [searchParams, user]);
   
   const pageRef = useMemoFirebase(() => {
     return doc(db, 'cms_pages', 'home');
   }, [db]);
 
   const { data: pageData, isLoading } = useDoc(pageRef);
+
+  // Choose between draft and live section IDs
+  const sectionIds = useMemo(() => {
+    if (!pageData) return [];
+    return isEditMode ? (pageData.sectionIds || []) : (pageData.publishedSectionIds || pageData.sectionIds || []);
+  }, [pageData, isEditMode]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -30,8 +41,8 @@ export default function Home() {
           <div className="h-screen flex items-center justify-center animate-pulse font-headline text-primary tracking-widest">
             VERDE
           </div>
-        ) : pageData?.sectionIds ? (
-          <SectionRenderer sectionIds={pageData.sectionIds} />
+        ) : sectionIds.length > 0 ? (
+          <SectionRenderer sectionIds={sectionIds} />
         ) : (
           <div className="py-40 text-center text-muted-foreground">
             Welcome to Verde Salon. Please configure your Home page in the CMS.

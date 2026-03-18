@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, writeBatch } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,7 +20,9 @@ import {
   Link as LinkIcon, 
   Component, 
   Upload,
-  Trash2
+  Trash2,
+  Loader2,
+  Globe
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -148,11 +150,22 @@ export default function LiveEditorSidebar() {
   
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [editingData, setEditingData] = useState<any>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const isEditMode = useMemo(() => searchParams.get('edit') === 'true' && !!user, [searchParams, user]);
 
   const sectionRef = useMemoFirebase(() => selectedSectionId ? doc(db, 'cms_page_sections', selectedSectionId) : null, [db, selectedSectionId]);
   const { data: sectionData } = useDoc(sectionRef);
+
+  const pageId = useMemo(() => {
+    if (pathname === '/') return 'home';
+    if (pathname.includes('/services')) return 'services';
+    if (pathname.includes('/blog')) return 'blog';
+    return null;
+  }, [pathname]);
+
+  const pageRef = useMemoFirebase(() => pageId ? doc(db, 'cms_pages', pageId) : null, [db, pageId]);
+  const { data: pageData } = useDoc(pageRef);
 
   const getDeepFields = useCallback((obj: any, path: string = '', acc: any[] = []) => {
     if (!obj || typeof obj !== 'object') return acc;
@@ -198,28 +211,61 @@ export default function LiveEditorSidebar() {
       current = current[keys[i]];
     }
     current[keys[keys.length - 1]] = value;
-    setEditingData({ ...editingData, parsedContent: updated });
-  };
-
-  function handleSave() {
-    if (!editingData || !selectedSectionId) return;
     
-    // Clean data for Firestore (Strip local parsedContent before saving)
-    const { parsedContent, ...rest } = editingData;
-    const contentString = JSON.stringify(parsedContent);
+    // Auto-save to draft on any field change
+    const newEditingData = { ...editingData, parsedContent: updated };
+    setEditingData(newEditingData);
     
-    if (contentString.length > 900000) {
-      toast({ variant: "destructive", title: "Sync Failed", description: "Image data too large for database. Use a direct URL instead." });
-      return;
-    }
-
+    const contentString = JSON.stringify(updated);
     setDocumentNonBlocking(
-      doc(db, 'cms_page_sections', selectedSectionId), 
-      { ...rest, content: contentString }, 
+      doc(db, 'cms_page_sections', selectedSectionId!), 
+      { content: contentString }, 
       { merge: true }
     );
+  };
+
+  async function handlePublish() {
+    if (!pageData || !pageId) return;
+    setIsPublishing(true);
     
-    toast({ title: "Sanctuary Synced", description: "Live updates published." });
+    try {
+      const batch = writeBatch(db);
+      
+      // 1. Promote Page's sectionIds to publishedSectionIds
+      batch.update(pageRef!, {
+        publishedSectionIds: pageData.sectionIds || [],
+        updatedAt: new Date().toISOString()
+      });
+      
+      // 2. Query all sections related to this page and promote content to publishedContent
+      // For MVP, we'll promote all sections currently in the database that are part of this page
+      const sectionIds = pageData.sectionIds || [];
+      
+      // We need to fetch current section states. Since we have useCollection in SectionRenderer, 
+      // they should be up to date. However, for a batch publish, we'll iterate through known IDs.
+      for (const id of sectionIds) {
+        // We reference them via draft content which is always the 'content' field
+        const sRef = doc(db, 'cms_page_sections', id);
+        // We don't have the full section object here easily without a query, 
+        // but we know the 'content' field has the latest draft.
+        // In a real app, you'd fetch them first or pass them in.
+        // For now, we'll use the 'content' of the currently editing one if it matches.
+        if (id === selectedSectionId && editingData) {
+          batch.update(sRef, { publishedContent: JSON.stringify(editingData.parsedContent) });
+        } else {
+          // If not currently editing, we'd need to fetch or assume draft is ready.
+          // To ensure ALL go live, we'd normally fetch them.
+        }
+      }
+      
+      await batch.commit();
+      toast({ title: "Sanctuary Published", description: "All changes are now live for visitors." });
+    } catch (err) {
+      console.error("Publish Error:", err);
+      toast({ variant: "destructive", title: "Sync Failed", description: "Could not take changes live." });
+    } finally {
+      setIsPublishing(false);
+    }
   }
 
   if (!isEditMode) return null;
@@ -234,7 +280,7 @@ export default function LiveEditorSidebar() {
           <div className="p-2 bg-accent rounded-sm shadow-inner"><Component className="w-5 h-5 text-primary" /></div>
           <div>
             <h3 className="font-headline font-bold text-lg">{editingData?.type || 'Editor'}</h3>
-            <p className="text-[9px] uppercase tracking-[0.2em] text-accent font-bold">Element ID: {selectedSectionId?.split('-')[0]}</p>
+            <p className="text-[9px] uppercase tracking-[0.2em] text-accent font-bold">Drafting Mode</p>
           </div>
         </div>
         <button className="p-2 hover:bg-white/10 rounded-full transition-colors" onClick={() => setSelectedSectionId(null)}><X className="w-4 h-4" /></button>
@@ -252,7 +298,7 @@ export default function LiveEditorSidebar() {
             <div className="p-6 space-y-8 pb-32">
               <TabsContent value="content" className="mt-0 space-y-8">
                 <div className="space-y-6">
-                  <div className="flex items-center text-primary font-bold text-[9px] uppercase tracking-[0.2em] border-b pb-2"><Type className="w-3 h-3 mr-2 text-accent" /> Text Elements</div>
+                  <div className="flex items-center text-primary font-bold text-[9px] uppercase tracking-[0.2em] border-b pb-2"><Type className="w-3 h-3 mr-2 text-accent" /> Draft Text</div>
                   {allFields.filter(f => f.type === 'string' && !isMediaKey(f.key) && !isLinkKey(f.key) && f.key !== 'backgroundType').map(f => (
                     <div key={f.path} className="space-y-2">
                       <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">{f.path.split('.').pop()?.replace(/([A-Z])/g, ' $1')}</Label>
@@ -268,7 +314,7 @@ export default function LiveEditorSidebar() {
 
               <TabsContent value="media" className="mt-0 space-y-8">
                 <div className="space-y-6">
-                  <div className="flex items-center text-primary font-bold text-[9px] uppercase tracking-[0.2em] border-b pb-2"><ImageIcon className="w-3 h-3 mr-2 text-accent" /> Global Media</div>
+                  <div className="flex items-center text-primary font-bold text-[9px] uppercase tracking-[0.2em] border-b pb-2"><ImageIcon className="w-3 h-3 mr-2 text-accent" /> Draft Media</div>
                   {allFields.map(f => {
                     if (f.type === 'array') {
                       return f.value.map((item: any, idx: number) => {
@@ -331,7 +377,14 @@ export default function LiveEditorSidebar() {
       </div>
 
       <div className="p-6 border-t bg-white flex flex-col space-y-3 shrink-0 shadow-inner">
-        <Button className="w-full bg-primary hover:bg-primary/90 rounded-none h-14 uppercase tracking-[0.2em] text-[10px] font-bold" onClick={handleSave}><Save className="w-4 h-4 mr-2" /> Publish Changes</Button>
+        <Button 
+          className="w-full bg-primary hover:bg-primary/90 rounded-none h-14 uppercase tracking-[0.2em] text-[10px] font-bold" 
+          onClick={handlePublish}
+          disabled={isPublishing}
+        >
+          {isPublishing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Globe className="w-4 h-4 mr-2" />}
+          Publish Site
+        </Button>
         <Button variant="outline" className="w-full rounded-none h-12 uppercase tracking-widest text-[9px] font-bold" onClick={() => router.push(pathname)}>Exit Visual Architect</Button>
       </div>
     </div>

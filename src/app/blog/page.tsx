@@ -1,17 +1,28 @@
-
 'use client';
 
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import SectionRenderer from '@/components/sections/SectionRenderer';
 import SEOManager from '@/components/seo/SEOManager';
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
+import { useSearchParams } from 'next/navigation';
+import { useMemo } from 'react';
 
 export default function BlogPage() {
   const db = useFirestore();
+  const { user } = useUser();
+  const searchParams = useSearchParams();
+  const isEditMode = useMemo(() => searchParams.get('edit') === 'true' && !!user, [searchParams, user]);
+
   const pageRef = useMemoFirebase(() => doc(db, 'cms_pages', 'blog'), [db]);
   const { data: pageData, isLoading } = useDoc(pageRef);
+
+  // Choose between draft and live section IDs
+  const sectionIds = useMemo(() => {
+    if (!pageData) return [];
+    return isEditMode ? (pageData.sectionIds || []) : (pageData.publishedSectionIds || pageData.sectionIds || []);
+  }, [pageData, isEditMode]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -26,8 +37,8 @@ export default function BlogPage() {
           <div className="h-screen flex items-center justify-center animate-pulse font-headline text-primary tracking-widest bg-background">
             VERDE JOURNAL
           </div>
-        ) : pageData?.sectionIds && pageData.sectionIds.length > 0 ? (
-          <SectionRenderer sectionIds={pageData.sectionIds} />
+        ) : sectionIds.length > 0 ? (
+          <SectionRenderer sectionIds={sectionIds} />
         ) : (
           <div className="py-40 text-center text-muted-foreground flex flex-col items-center justify-center space-y-6">
             <p className="font-headline text-2xl">Journal Architecture Pending</p>

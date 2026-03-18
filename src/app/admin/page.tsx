@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
@@ -75,6 +74,14 @@ export default function AdminDashboard() {
             imageUrl: 'https://picsum.photos/seed/verde-hero-main/1920/1080',
             backgroundType: 'image',
             styles: { paddingVertical: '0', titleColor: '#ffffff', subtitleColor: '#C6A15B' }
+          }),
+          publishedContent: JSON.stringify({ 
+            title: 'Elevate Your Natural Beauty', 
+            subtitle: 'Premium hair, skin, and wellness treatments tailored for you.', 
+            ctaText: 'Book Appointment', 
+            imageUrl: 'https://picsum.photos/seed/verde-hero-main/1920/1080',
+            backgroundType: 'image',
+            styles: { paddingVertical: '0', titleColor: '#ffffff', subtitleColor: '#C6A15B' }
           })
         },
         {
@@ -85,22 +92,35 @@ export default function AdminDashboard() {
             subtitle: 'Pure. Elegant. Conscious.',
             content: 'At Verde Salon, we blend modern beauty techniques with natural care. Our mission is to enhance your beauty while maintaining the health of your hair and skin.',
             imageUrl: 'https://picsum.photos/seed/verde-about/800/1000'
+          }),
+          publishedContent: JSON.stringify({ 
+            title: 'The Verde Philosophy', 
+            subtitle: 'Pure. Elegant. Conscious.',
+            content: 'At Verde Salon, we blend modern beauty techniques with natural care. Our mission is to enhance your beauty while maintaining the health of your hair and skin.',
+            imageUrl: 'https://picsum.photos/seed/verde-about/800/1000'
           })
         },
         {
           id: 'initial-craft',
           type: 'ServicesPreview',
-          content: JSON.stringify({ title: 'Signature Rituals', subtitle: 'Our Craft' })
+          content: JSON.stringify({ title: 'Signature Rituals', subtitle: 'Our Craft' }),
+          publishedContent: JSON.stringify({ title: 'Signature Rituals', subtitle: 'Our Craft' })
         },
         {
           id: 'initial-gallery',
           type: 'FeaturedWork',
-          content: JSON.stringify({ title: 'Our Work', subtitle: 'The Verde Aesthetic', images: [] })
+          content: JSON.stringify({ title: 'Our Work', subtitle: 'The Verde Aesthetic', images: [] }),
+          publishedContent: JSON.stringify({ title: 'Our Work', subtitle: 'The Verde Aesthetic', images: [] })
         },
         {
           id: 'initial-blog-list',
           type: 'BlogListing',
           content: JSON.stringify({ 
+            title: 'Rituals & Reflections', 
+            subtitle: 'The Journal',
+            description: 'Curated insights on beauty and intentional living.'
+          }),
+          publishedContent: JSON.stringify({ 
             title: 'Rituals & Reflections', 
             subtitle: 'The Journal',
             description: 'Curated insights on beauty and intentional living.'
@@ -110,6 +130,11 @@ export default function AdminDashboard() {
           id: 'initial-services-list',
           type: 'ServicesListing',
           content: JSON.stringify({ 
+            title: 'Signature Rituals', 
+            subtitle: 'The Menu',
+            description: 'Timeless techniques meets contemporary science.'
+          }),
+          publishedContent: JSON.stringify({ 
             title: 'Signature Rituals', 
             subtitle: 'The Menu',
             description: 'Timeless techniques meets contemporary science.'
@@ -143,20 +168,18 @@ export default function AdminDashboard() {
             title: p.title,
             slug: p.slug,
             sectionIds: p.sections,
+            publishedSectionIds: p.sections,
             isPublished: true,
             createdAt: new Date().toISOString()
           }, { merge: true });
         } else {
-          // PROTECTION: If page exists, check if essential sections are there. 
-          // Add them ONLY if the page is currently empty or doesn't have them.
           const currentData = pSnap.data();
           const currentIds = currentData.sectionIds || [];
-          
-          // Only perform additive seeding if the page structure seems incomplete
           if (currentIds.length === 0) {
             setDocumentNonBlocking(pRef, {
               ...currentData,
-              sectionIds: p.sections
+              sectionIds: p.sections,
+              publishedSectionIds: p.sections
             }, { merge: true });
           }
         }

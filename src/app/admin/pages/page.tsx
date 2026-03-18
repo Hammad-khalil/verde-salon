@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useDoc, useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
-import { doc, collection } from 'firebase/firestore';
+import { doc, collection, getDocs, query, where, writeBatch } from 'firebase/firestore';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -34,7 +34,8 @@ import {
   Library,
   Search,
   FileText,
-  Scissors
+  Scissors,
+  Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -47,6 +48,7 @@ export default function PagesEditor() {
   const [isSectionDialogOpen, setIsSectionDialogOpen] = useState(false);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [editingSection, setEditingSection] = useState<any>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const pageRef = useMemoFirebase(() => doc(db, 'cms_pages', currentPageId), [db, currentPageId]);
   const { data: pageData, isLoading: pageLoading } = useDoc(pageRef);
@@ -67,6 +69,7 @@ export default function PagesEditor() {
       id: currentPageId,
       title: currentPageId.charAt(0).toUpperCase() + currentPageId.slice(1),
       sectionIds: [],
+      publishedSectionIds: [],
       isPublished: true,
       updatedAt: new Date().toISOString()
     }, { merge: true });
@@ -75,7 +78,7 @@ export default function PagesEditor() {
 
   function handleMove(index: number, direction: 'up' | 'down') {
     if (!pageData) return;
-    const newIds = [...pageData.sectionIds];
+    const newIds = [...(pageData.sectionIds || [])];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= newIds.length) return;
 
@@ -85,7 +88,7 @@ export default function PagesEditor() {
 
   function handleRemoveSection(id: string) {
     if (!pageData) return;
-    const newIds = pageData.sectionIds.filter((sid: string) => sid !== id);
+    const newIds = (pageData.sectionIds || []).filter((sid: string) => sid !== id);
     setDocumentNonBlocking(pageRef, { ...pageData, sectionIds: newIds }, { merge: true });
     toast({ title: "Section Detached", description: "The section was moved to your Library for recovery." });
   }
@@ -129,7 +132,41 @@ export default function PagesEditor() {
     
     setDocumentNonBlocking(doc(db, 'cms_page_sections', editingSection.id), updatedSection, { merge: true });
     setIsSectionDialogOpen(false);
-    toast({ title: "Updated", description: "Section settings published." });
+    toast({ title: "Draft Updated", description: "Changes saved to draft." });
+  }
+
+  async function handlePublish() {
+    if (!pageData || !allSections) return;
+    setIsPublishing(true);
+    
+    try {
+      const batch = writeBatch(db);
+      
+      // 1. Update the Page document to promote draft IDs to published IDs
+      batch.update(pageRef, {
+        publishedSectionIds: pageData.sectionIds || [],
+        updatedAt: new Date().toISOString()
+      });
+      
+      // 2. Update all sections on this page to promote draft content to published content
+      const activeIds = pageData.sectionIds || [];
+      activeIds.forEach((id: string) => {
+        const section = allSections.find(s => s.id === id);
+        if (section) {
+          batch.update(doc(db, 'cms_page_sections', id), {
+            publishedContent: section.content
+          });
+        }
+      });
+      
+      await batch.commit();
+      toast({ title: "Site Published", description: "All changes are now live for visitors." });
+    } catch (e) {
+      console.error("Publish Error:", e);
+      toast({ variant: "destructive", title: "Publish Failed", description: "Could not sync draft to live." });
+    } finally {
+      setIsPublishing(false);
+    }
   }
 
   function handleAddSection(type: string) {
@@ -181,10 +218,15 @@ export default function PagesEditor() {
             <Library className="w-4 h-4 mr-2 text-primary" /> Section Library
           </Button>
           <Button variant="outline" asChild>
-            <a href={`/${currentPageId === 'home' ? '' : currentPageId}`} target="_blank"><Eye className="w-4 h-4 mr-2" /> Live Preview</a>
+            <a href={`/${currentPageId === 'home' ? '' : currentPageId}`} target="_blank"><Eye className="w-4 h-4 mr-2" /> View Public Site</a>
           </Button>
-          <Button className="bg-primary hover:bg-primary/90" onClick={() => toast({ title: "System Synced", description: "Changes are live." })}>
-            <Save className="w-4 h-4 mr-2" /> Publish Site
+          <Button 
+            className="bg-primary hover:bg-primary/90 min-w-[160px]" 
+            onClick={handlePublish}
+            disabled={isPublishing}
+          >
+            {isPublishing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+            Publish Changes
           </Button>
         </div>
       </div>
@@ -512,7 +554,7 @@ export default function PagesEditor() {
 
               <div className="p-6 border-t bg-white">
                 <Button className="w-full bg-primary rounded-none h-14 text-[11px] font-bold uppercase tracking-[0.2em]" onClick={handleSaveSection}>
-                  <Save className="w-4 h-4 mr-2" /> Apply & Save Section
+                  <Save className="w-4 h-4 mr-2" /> Update Draft
                 </Button>
               </div>
             </div>
@@ -533,8 +575,8 @@ export default function PagesEditor() {
               <div className="flex-grow overflow-y-auto flex items-center justify-center p-12">
                 <div className="max-w-2xl w-full aspect-video bg-white shadow-2xl rounded-sm border border-slate-200 flex flex-col items-center justify-center text-center p-8 space-y-4">
                   <Sparkles className="w-8 h-8 text-accent animate-pulse" />
-                  <h4 className="font-headline text-2xl font-light">Visualizing Live Changes</h4>
-                  <p className="text-muted-foreground text-sm font-light">Your changes are being synchronized with the database in real-time. Close this editor to see the full page impact.</p>
+                  <h4 className="font-headline text-2xl font-light">Visualizing Draft Layout</h4>
+                  <p className="text-muted-foreground text-sm font-light">These changes are currently in DRAFT mode. Visitors cannot see them yet. Use the "Publish Changes" button in the header to take them live.</p>
                 </div>
               </div>
             </div>
