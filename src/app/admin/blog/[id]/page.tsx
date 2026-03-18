@@ -35,7 +35,7 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
     excerpt: '',
     content: '',
     author: 'Elena Verde',
-    publishedAt: new Date().toISOString(),
+    publishedAt: '', // Initialize empty to avoid hydration mismatch
     isPublished: false,
     imageUrl: 'https://picsum.photos/seed/blog/800/600',
     seo: {
@@ -48,8 +48,11 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
   useEffect(() => {
     if (existingPost) {
       setPost(existingPost);
+    } else if (isNew) {
+      // Set the date only on the client side
+      setPost((prev: any) => ({ ...prev, publishedAt: new Date().toISOString() }));
     }
-  }, [existingPost]);
+  }, [existingPost, isNew]);
 
   function handleSave() {
     const blogId = isNew ? doc(collection(db, 'blog_posts')).id : id;
