@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -15,7 +16,9 @@ import {
   Eye,
   LogOut,
   ChevronRight,
-  Inbox
+  Inbox,
+  ShieldCheck,
+  Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -47,13 +50,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const adminLinks = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-    { name: 'Inquiries', href: '/admin/submissions', icon: Inbox },
+    { name: 'Leads & CRM', href: '/admin/submissions', icon: Inbox },
     { name: 'Pages & Content', href: '/admin/pages', icon: FileText },
     { name: 'Services Menu', href: '/admin/services', icon: Scissors },
-    { name: 'Blog Posts', href: '/admin/blog', icon: FileText },
-    { name: 'Testimonials', href: '/admin/testimonials', icon: MessageSquare },
+    { name: 'Blog Journal', href: '/admin/blog', icon: FileText },
+    { name: 'Client Voices', href: '/admin/testimonials', icon: MessageSquare },
     { name: 'FAQs', href: '/admin/faq', icon: HelpCircle },
-    { name: 'Branding & Theme', href: '/admin/branding', icon: Settings },
+    { name: 'Identity & Logo', href: '/admin/branding', icon: Settings },
+    { name: 'SEO & Config', href: '/admin/seo', icon: Zap },
   ];
 
   async function handleLogout() {
@@ -71,11 +75,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </Link>
           <div className="flex items-center mt-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">
             <span className="w-2 h-2 rounded-full bg-accent mr-2" />
-            Active Editor
+            Control Hub
           </div>
         </div>
         
-        <nav className="flex-grow p-6 space-y-2">
+        <nav className="flex-grow p-6 space-y-2 overflow-y-auto custom-scrollbar">
           {adminLinks.map((link) => (
             <Link 
               key={link.name} 
@@ -104,7 +108,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           >
             <Link href="/" target="_blank">
               <Eye className="w-4 h-4" />
-              <span>View Live Site</span>
+              <span>View Site</span>
             </Link>
           </Button>
           <Button 
@@ -119,7 +123,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main Content */}
-      <main className="flex-grow p-10 bg-muted/10">
+      <main className="flex-grow p-10 bg-muted/10 overflow-y-auto">
         <div className="max-w-6xl mx-auto">
           {children}
         </div>
