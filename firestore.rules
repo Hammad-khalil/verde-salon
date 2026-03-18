@@ -4,9 +4,9 @@ rules_version = '2';
  * Verde Salon CMS Security Rules
  *
  * Core Philosophy:
- * 1. Public content (Blogs, Services, Pages, etc.) is globally readable to ensure SEO and site functionality.
+ * 1. Public content (Blogs, Services, Pages, etc.) is globally readable (get and list).
  * 2. Administrative actions (Create, Update, Delete) are restricted to authenticated administrators.
- * 3. In this prototype, any user signed in via the 'password' provider is granted admin rights.
+ * 3. Any user signed in via the 'password' provider is granted admin rights for the prototype.
  */
 
 service cloud.firestore {
@@ -19,8 +19,9 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      // Allow access if the user has an explicit admin role document 
-      // OR if they are signed in with a password (standard for CMS users).
+      // Allow access if the user is signed in AND:
+      // 1. They used the 'password' provider (CMS standard)
+      // 2. OR they have an explicit record in the roles_admin collection
       return isSignedIn() && (
         request.auth.token.firebase.sign_in_provider == 'password' ||
         exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))
@@ -40,8 +41,7 @@ service cloud.firestore {
     }
 
     match /admin_users/{adminUserId} {
-      allow get: if isAdmin() || isOwner(adminUserId);
-      allow list: if isAdmin();
+      allow get, list: if isAdmin() || isOwner(adminUserId);
       allow create: if (isAdmin() || isOwner(adminUserId)) && request.resource.data.id == adminUserId;
       allow update: if (isAdmin() || (resource != null && isOwner(adminUserId))) && request.resource.data.id == resource.data.id;
       allow delete: if isAdmin() || (resource != null && isOwner(adminUserId));
@@ -49,69 +49,69 @@ service cloud.firestore {
 
     // Global Settings
     match /settings/global {
-      allow read: if true;
+      allow get, list: if true;
       allow write: if isAdmin();
     }
 
-    // CMS Content - Publicly readable, admin writable
+    // CMS Content - Publicly readable (get and list), admin writable
     match /cms_pages/{pageId} {
-      allow read: if true;
+      allow get, list: if true;
       allow write: if isAdmin();
     }
 
     match /cms_page_sections/{sectionId} {
-      allow read: if true; 
+      allow get, list: if true; 
       allow write: if isAdmin();
     }
 
     match /services/{serviceId} {
-      allow read: if true;
+      allow get, list: if true;
       allow write: if isAdmin();
     }
     
     match /service_categories/{categoryId} {
-      allow read: if true;
+      allow get, list: if true;
       allow write: if isAdmin();
     }
 
     match /blog_posts/{postId} {
-      allow read: if true;
+      allow get, list: if true;
       allow write: if isAdmin();
     }
     
     match /blog_categories/{categoryId} {
-      allow read: if true;
+      allow get, list: if true;
       allow write: if isAdmin();
     }
     
     match /blog_tags/{tagId} {
-      allow read: if true;
+      allow get, list: if true;
       allow write: if isAdmin();
     }
 
     match /testimonials/{testimonialId} {
-      allow read: if true;
+      allow get, list: if true;
       allow write: if isAdmin();
     }
 
     match /gallery_images/{imageId} {
-      allow read: if true;
+      allow get, list: if true;
       allow write: if isAdmin();
     }
 
     match /gallery_categories/{categoryId} {
-      allow read: if true;
+      allow get, list: if true;
       allow write: if isAdmin();
     }
 
     match /faqs/{faqId} {
-      allow read: if true;
+      allow get, list: if true;
       allow write: if isAdmin();
     }
 
-    // Form Submissions - Admin only
+    // Form Submissions - Admin only for reading, public for creating
     match /form_submissions/{submissionId} {
-      allow create: if true; // Allow anyone to submit a form
+      allow create: if true; 
       allow get, list, update, delete: if isAdmin();
     }
   }
