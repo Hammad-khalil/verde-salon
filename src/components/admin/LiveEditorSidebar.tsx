@@ -23,7 +23,9 @@ import {
   CheckCircle2,
   Video,
   Layout as LayoutIcon,
-  Palette
+  Palette,
+  Link as LinkIcon,
+  Timer
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -152,6 +154,29 @@ export default function LiveEditorSidebar() {
                   })}
                 </div>
 
+                {/* Navigation / Links Group */}
+                {['ctaUrl', 'buttonUrl', 'linkUrl'].some(k => editingData.parsedContent[k] !== undefined) && (
+                  <div className="space-y-4 pt-6 border-t border-slate-100">
+                    <div className="flex items-center text-primary font-bold text-[10px] uppercase tracking-[0.2em] mb-4">
+                      <LinkIcon className="w-3 h-3 mr-2 text-accent" /> Navigation
+                    </div>
+                    {['ctaUrl', 'buttonUrl', 'linkUrl'].map((key) => {
+                      if (editingData.parsedContent[key] === undefined) return null;
+                      return (
+                        <div key={key} className="space-y-2">
+                          <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">{key.replace(/([A-Z])/g, ' $1')}</Label>
+                          <Input 
+                            placeholder="/services or https://..."
+                            className="rounded-none h-11 text-sm border-slate-200"
+                            value={editingData.parsedContent[key]} 
+                            onChange={(e) => updateValue(key, e.target.value)}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
                 {/* Video & Media Group */}
                 <div className="space-y-6 pt-6 border-t border-slate-100">
                   <div className="flex items-center text-primary font-bold text-[10px] uppercase tracking-[0.2em] mb-4">
@@ -172,6 +197,34 @@ export default function LiveEditorSidebar() {
                       </div>
                     );
                   })}
+
+                  {/* YouTube Specific Timing */}
+                  {(editingData.parsedContent.videoUrl?.includes('youtube.com') || editingData.parsedContent.videoUrl?.includes('youtu.be')) && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-[9px] uppercase font-bold opacity-60 flex items-center">
+                          <Timer className="w-2 h-2 mr-1" /> Start (s)
+                        </Label>
+                        <Input 
+                          type="number" 
+                          className="h-9 rounded-none text-xs" 
+                          value={editingData.parsedContent.startTime || editingData.parsedContent.videoStartTime || ''} 
+                          onChange={(e) => updateValue(editingData.parsedContent.videoStartTime !== undefined ? 'videoStartTime' : 'startTime', parseInt(e.target.value))} 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[9px] uppercase font-bold opacity-60 flex items-center">
+                          <Timer className="w-2 h-2 mr-1" /> End (s)
+                        </Label>
+                        <Input 
+                          type="number" 
+                          className="h-9 rounded-none text-xs" 
+                          value={editingData.parsedContent.endTime || editingData.parsedContent.videoEndTime || ''} 
+                          onChange={(e) => updateValue(editingData.parsedContent.videoEndTime !== undefined ? 'videoEndTime' : 'endTime', parseInt(e.target.value))} 
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   {/* Standardized Video Controls */}
                   {(editingData.parsedContent.videoUrl || editingData.parsedContent.backgroundType === 'video') && (

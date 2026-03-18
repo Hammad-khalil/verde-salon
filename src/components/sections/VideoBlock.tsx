@@ -9,6 +9,8 @@ interface VideoBlockProps {
   loop?: boolean;
   muted?: boolean;
   showControls?: boolean;
+  startTime?: number;
+  endTime?: number;
   styles?: any;
 }
 
@@ -17,13 +19,15 @@ export default function VideoBlock({
   subtitle, 
   videoUrl, 
   isFullWidth = true,
-  autoplay = false,
+  autoplay = true,
   loop = true,
   muted = true,
   showControls = false,
+  startTime,
+  endTime,
   styles
 }: VideoBlockProps) {
-  // Browser policies require muted = true for autoplay to function
+  // Force muted/playsinline for autoplay compatibility
   const effectiveMuted = autoplay ? true : (muted ?? true);
   const effectiveControls = showControls ?? false;
   
@@ -32,15 +36,29 @@ export default function VideoBlock({
   let finalUrl = videoUrl;
   if (isYouTube && videoUrl) {
     const videoId = videoUrl.includes('watch?v=') ? videoUrl.split('v=')[1]?.split('&')[0] : videoUrl.split('/').pop();
-    // mute=1, playsinline=1, controls=0/1
-    finalUrl = `https://www.youtube.com/embed/${videoId}?autoplay=${autoplay ? 1 : 0}&mute=${effectiveMuted ? 1 : 0}&loop=${loop ? 1 : 0}&playlist=${videoId}&playsinline=1&controls=${effectiveControls ? 1 : 0}`;
+    
+    const params = new URLSearchParams({
+      autoplay: autoplay ? '1' : '0',
+      mute: effectiveMuted ? '1' : '0',
+      loop: loop ? '1' : '0',
+      playlist: videoId || '',
+      playsinline: '1',
+      controls: effectiveControls ? '1' : '0',
+      modestbranding: '1',
+      rel: '0'
+    });
+
+    if (startTime) params.append('start', startTime.toString());
+    if (endTime) params.append('end', endTime.toString());
+
+    finalUrl = `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
   }
 
   const paddingVal = styles?.paddingVertical || '96';
 
   return (
     <section 
-      className={`bg-background ${isFullWidth ? '' : 'container mx-auto px-6'}`}
+      className={`bg-background relative ${isFullWidth ? '' : 'container mx-auto px-6'}`}
       style={{ 
         paddingTop: `${paddingVal}px`, 
         paddingBottom: `${paddingVal}px`,
@@ -54,7 +72,7 @@ export default function VideoBlock({
             {subtitle && <p className="text-muted-foreground font-light text-lg" style={{ color: styles?.subtitleColor || 'inherit' }}>{subtitle}</p>}
           </div>
         )}
-        <div className={`relative aspect-video overflow-hidden bg-black ${isFullWidth ? '' : 'rounded-sm shadow-2xl'}`}>
+        <div className={`relative aspect-video overflow-hidden bg-black ${isFullWidth ? '' : 'rounded-sm shadow-2xl'} ${!effectiveControls ? 'pointer-events-none' : ''}`}>
           {isYouTube ? (
             <iframe
               src={finalUrl}

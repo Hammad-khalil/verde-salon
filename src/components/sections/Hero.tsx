@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -8,8 +9,11 @@ interface HeroProps {
   title?: string;
   subtitle?: string;
   ctaText?: string;
+  ctaUrl?: string;
   imageUrl?: string;
   videoUrl?: string;
+  videoStartTime?: number;
+  videoEndTime?: number;
   backgroundType?: 'image' | 'video' | 'color';
   styles?: {
     backgroundColor?: string;
@@ -26,8 +30,11 @@ export default function Hero({
   title = "Elevate Your Natural Beauty", 
   subtitle = "Premium hair, skin, and wellness treatments tailored for you.", 
   ctaText = "Book Appointment", 
+  ctaUrl = "/services",
   imageUrl = "https://picsum.photos/seed/verde-hero-main/1920/1080", 
   videoUrl,
+  videoStartTime,
+  videoEndTime,
   backgroundType = 'image',
   styles
 }: HeroProps) {
@@ -35,23 +42,51 @@ export default function Hero({
   const overlayOpacity = (styles?.overlayOpacity ?? 20) / 100;
   const overlayColor = styles?.overlayColor || '#000000';
 
+  const isYouTube = videoUrl?.includes('youtube.com') || videoUrl?.includes('youtu.be');
+  let finalVideoUrl = videoUrl;
+
+  if (isYouTube && videoUrl) {
+    const videoId = videoUrl.includes('watch?v=') ? videoUrl.split('v=')[1]?.split('&')[0] : videoUrl.split('/').pop();
+    const params = new URLSearchParams({
+      autoplay: '1',
+      mute: '1',
+      loop: '1',
+      playlist: videoId || '',
+      playsinline: '1',
+      controls: '0',
+      modestbranding: '1',
+      rel: '0'
+    });
+    if (videoStartTime) params.append('start', videoStartTime.toString());
+    if (videoEndTime) params.append('end', videoEndTime.toString());
+    finalVideoUrl = `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
+  }
+
   return (
     <section 
       className="relative h-[100vh] w-full overflow-hidden flex items-center justify-center"
       style={{ backgroundColor: styles?.backgroundColor || 'var(--primary)' }}
     >
       {/* Background Layer */}
-      <div className="absolute inset-0 z-0">
-        {backgroundType === 'video' && videoUrl ? (
-          <video 
-            autoPlay 
-            muted 
-            loop 
-            playsInline 
-            className="w-full h-full object-cover"
-          >
-            <source src={videoUrl} type="video/mp4" />
-          </video>
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        {backgroundType === 'video' && finalVideoUrl ? (
+          isYouTube ? (
+            <iframe
+              src={finalVideoUrl}
+              className="w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-none"
+              allow="autoplay; fullscreen"
+            ></iframe>
+          ) : (
+            <video 
+              autoPlay 
+              muted 
+              loop 
+              playsInline 
+              className="w-full h-full object-cover"
+            >
+              <source src={videoUrl} type="video/mp4" />
+            </video>
+          )
         ) : backgroundType === 'image' ? (
           <Image 
             src={imageUrl || "https://picsum.photos/seed/verde-hero-main/1920/1080"} 
@@ -96,6 +131,7 @@ export default function Hero({
           </p>
           <div className="pt-8">
             <Button 
+              asChild
               className={cn(
                 "rounded-none px-16 py-8 text-[12px] font-bold tracking-[0.4em] uppercase transition-all duration-700 shadow-2xl group relative overflow-hidden",
                 styles?.buttonType === 'outline' 
@@ -103,7 +139,9 @@ export default function Hero({
                   : 'bg-accent text-primary hover:bg-white hover:text-primary'
               )}
             >
-              <span className="relative z-10">{ctaText}</span>
+              <Link href={ctaUrl || '/services'}>
+                <span className="relative z-10">{ctaText}</span>
+              </Link>
             </Button>
           </div>
         </div>

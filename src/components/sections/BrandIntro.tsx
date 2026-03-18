@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -11,6 +12,7 @@ interface BrandIntroProps {
   imageUrl?: string;
   subtitle?: string;
   buttonText?: string;
+  buttonUrl?: string;
   styles?: any;
 }
 
@@ -20,6 +22,7 @@ export default function BrandIntro({
   imageUrl = "https://picsum.photos/seed/verde-about/800/1000",
   subtitle = "The Essence of Luxury",
   buttonText = "Discover Our Story",
+  buttonUrl = "/blog",
   styles
 }: BrandIntroProps) {
   const paddingVal = styles?.paddingVertical || '128';
@@ -59,16 +62,19 @@ export default function BrandIntro({
 
             <div className="pt-6">
               <Button 
+                asChild
                 variant="outline" 
                 className={cn(
                   "group relative overflow-hidden rounded-none border-primary/20 px-10 py-7 text-[11px] font-bold uppercase tracking-[0.3em] transition-all duration-500 hover:border-primary hover:bg-primary hover:text-white",
                   styles?.buttonType === 'primary' && 'bg-primary text-white hover:bg-accent'
                 )}
               >
-                <span className="relative z-10 flex items-center">
-                  {buttonText} 
-                  <ArrowRight className="ml-3 w-4 h-4 transition-transform duration-500 group-hover:translate-x-2" />
-                </span>
+                <Link href={buttonUrl || '/blog'}>
+                  <span className="relative z-10 flex items-center">
+                    {buttonText} 
+                    <ArrowRight className="ml-3 w-4 h-4 transition-transform duration-500 group-hover:translate-x-2" />
+                  </span>
+                </Link>
               </Button>
             </div>
           </div>
