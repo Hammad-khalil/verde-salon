@@ -11,9 +11,14 @@ interface HeroProps {
   ctaText?: string;
   ctaUrl?: string;
   imageUrl?: string;
+  altText?: string;
   videoUrl?: string;
   videoStartTime?: number;
   videoEndTime?: number;
+  autoplay?: boolean;
+  loop?: boolean;
+  muted?: boolean;
+  showControls?: boolean;
   backgroundType?: 'image' | 'video' | 'color';
   styles?: {
     backgroundColor?: string;
@@ -23,6 +28,7 @@ interface HeroProps {
     overlayOpacity?: number;
     overlayColor?: string;
     buttonType?: 'primary' | 'outline';
+    objectFit?: 'cover' | 'contain';
   };
 }
 
@@ -31,16 +37,22 @@ export default function Hero({
   subtitle = "Premium hair, skin, and wellness treatments tailored for you.", 
   ctaText = "Book Appointment", 
   ctaUrl = "/services",
-  imageUrl = "https://picsum.photos/seed/verde-hero-main/1920/1080", 
+  imageUrl,
+  altText = "Verde Salon Atmosphere",
   videoUrl,
   videoStartTime,
   videoEndTime,
+  autoplay = true,
+  loop = true,
+  muted = true,
+  showControls = false,
   backgroundType = 'image',
   styles
 }: HeroProps) {
   const alignmentClass = styles?.alignment === 'left' ? 'text-left items-start' : 'text-center items-center';
   const overlayOpacity = (styles?.overlayOpacity ?? 20) / 100;
   const overlayColor = styles?.overlayColor || '#000000';
+  const objectFit = styles?.objectFit || 'cover';
 
   const isYouTube = videoUrl?.includes('youtube.com') || videoUrl?.includes('youtu.be');
   let finalVideoUrl = videoUrl;
@@ -48,17 +60,15 @@ export default function Hero({
   if (isYouTube && videoUrl) {
     const videoId = videoUrl.includes('watch?v=') ? videoUrl.split('v=')[1]?.split('&')[0] : videoUrl.split('/').pop();
     const params = new URLSearchParams({
-      autoplay: '1',
-      mute: '1',
-      loop: '1',
+      autoplay: autoplay ? '1' : '0',
+      mute: (autoplay || muted) ? '1' : '0',
+      loop: loop ? '1' : '0',
       playlist: videoId || '',
       playsinline: '1',
-      controls: '0',
+      controls: showControls ? '1' : '0',
       modestbranding: '1',
       rel: '0',
-      iv_load_policy: '3',
-      enablejsapi: '1',
-      widget_referrer: window.location.href
+      iv_load_policy: '3'
     });
     if (videoStartTime) params.append('start', videoStartTime.toString());
     if (videoEndTime) params.append('end', videoEndTime.toString());
@@ -71,23 +81,26 @@ export default function Hero({
       style={{ backgroundColor: styles?.backgroundColor || '#0F2F2F' }}
     >
       {/* Background Layer */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+      <div className="absolute inset-0 z-0 overflow-hidden">
         {backgroundType === 'video' && finalVideoUrl ? (
           isYouTube ? (
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[115%] h-[115%]">
+            <div className={cn(
+              "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[115%] h-[115%]",
+              !showControls && "pointer-events-none"
+            )}>
               <iframe
                 src={finalVideoUrl}
-                className="w-full h-full border-none pointer-events-none"
+                className="w-full h-full border-none"
                 allow="autoplay; fullscreen"
               ></iframe>
             </div>
           ) : (
             <video 
-              autoPlay 
-              muted 
-              loop 
+              autoPlay={autoplay} 
+              muted={autoplay || muted} 
+              loop={loop} 
               playsInline 
-              className="w-full h-full object-cover"
+              className={cn("w-full h-full", objectFit === 'cover' ? "object-cover" : "object-contain")}
             >
               <source src={videoUrl} type="video/mp4" />
             </video>
@@ -95,25 +108,21 @@ export default function Hero({
         ) : backgroundType === 'image' ? (
           <Image 
             src={imageUrl || "https://picsum.photos/seed/verde-hero-main/1920/1080"} 
-            alt="Verde Salon Luxury Atmosphere" 
+            alt={altText} 
             fill 
             priority
-            className="object-cover scale-[1.02]"
-            data-ai-hint="luxury salon"
+            className={cn("transition-transform duration-[3s] scale-[1.02]", objectFit === 'cover' ? "object-cover" : "object-contain")}
           />
         ) : null}
         
         {/* Overlay Layer */}
         <div 
-          className="absolute inset-0 z-1" 
+          className="absolute inset-0 z-1 pointer-events-none" 
           style={{ 
             backgroundColor: overlayColor,
             opacity: overlayOpacity
           }} 
         />
-        
-        {/* Subtle Gradient Shadow */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent z-2" />
       </div>
       
       {/* Content Layer */}
@@ -138,7 +147,7 @@ export default function Hero({
             <Button 
               asChild
               className={cn(
-                "rounded-none px-16 py-8 text-[12px] font-bold tracking-[0.4em] uppercase transition-all duration-700 shadow-2xl group relative overflow-hidden",
+                "rounded-none px-16 py-8 text-[12px] font-bold tracking-[0.4em] uppercase transition-all duration-700 shadow-2xl group",
                 styles?.buttonType === 'outline' 
                   ? 'bg-transparent border border-white text-white hover:bg-white hover:text-primary' 
                   : 'bg-accent text-primary hover:bg-white hover:text-primary'
@@ -152,7 +161,7 @@ export default function Hero({
         </div>
       </div>
 
-      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center space-y-4 opacity-30 z-10">
+      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center space-y-4 opacity-30 z-10 pointer-events-none">
         <span className="text-[10px] uppercase tracking-[0.4em] text-white font-bold rotate-90 translate-y-8">Scroll</span>
         <div className="w-[1px] h-20 bg-gradient-to-b from-white to-transparent" />
       </div>

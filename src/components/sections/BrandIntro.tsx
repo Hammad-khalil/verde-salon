@@ -10,6 +10,7 @@ interface BrandIntroProps {
   title: string;
   content: string;
   imageUrl?: string;
+  altText?: string;
   subtitle?: string;
   buttonText?: string;
   buttonUrl?: string;
@@ -20,12 +21,14 @@ export default function BrandIntro({
   title = "About Verde Salon", 
   content, 
   imageUrl = "https://picsum.photos/seed/verde-about/800/1000",
+  altText = "Verde Salon Interior",
   subtitle = "The Essence of Luxury",
   buttonText = "Discover Our Story",
   buttonUrl = "/blog",
   styles
 }: BrandIntroProps) {
   const paddingVal = styles?.paddingVertical || '128';
+  const objectFit = styles?.objectFit || 'cover';
   
   return (
     <section 
@@ -57,7 +60,7 @@ export default function BrandIntro({
             </div>
             
             <p className="text-lg md:text-xl font-light leading-relaxed text-muted-foreground tracking-wide max-w-xl">
-              {content || "At Verde Salon, we blend modern beauty techniques with natural care. Our mission is to enhance your beauty while maintaining the health of your hair and skin."}
+              {content}
             </p>
 
             <div className="pt-6">
@@ -84,13 +87,15 @@ export default function BrandIntro({
             <div className="relative aspect-[4/5] overflow-hidden shadow-2xl">
               <Image 
                 src={imageUrl} 
-                alt="Verde Salon Interior" 
+                alt={altText} 
                 fill 
-                className="object-cover transition-transform duration-[2s] ease-out group-hover:scale-105 grayscale-[0.2] group-hover:grayscale-0"
+                className={cn(
+                  "transition-transform duration-[2s] ease-out group-hover:scale-105 grayscale-[0.2] group-hover:grayscale-0",
+                  objectFit === 'cover' ? "object-cover" : "object-contain"
+                )}
                 sizes="(max-width: 1024px) 100vw, 50vw"
-                data-ai-hint="luxury salon"
               />
-              <div className="absolute inset-0 bg-primary/5 group-hover:bg-transparent transition-colors duration-700" />
+              <div className="absolute inset-0 bg-primary/5 group-hover:bg-transparent transition-colors duration-700 pointer-events-none" />
             </div>
             <div className="absolute -bottom-8 -left-8 w-32 h-32 border-l border-b border-accent/20 hidden md:block" />
           </div>
