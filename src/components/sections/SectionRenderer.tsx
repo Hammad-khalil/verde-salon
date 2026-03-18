@@ -78,7 +78,6 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
     const pageId = pathname === '/' ? 'home' : pathname.replace('/', '');
     const newId = doc(collection(db, 'cms_page_sections')).id;
     
-    // Default data for new sections
     const defaults: Record<string, any> = {
       Hero: { title: 'New Story Begins', subtitle: 'Experience luxury.', ctaText: 'Explore', backgroundType: 'image' },
       TextBlock: { title: 'Heading', content: 'Sample text content...', alignment: 'center' },
@@ -94,10 +93,8 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       content: JSON.stringify(defaults[type] || { title: `New ${type}` })
     };
 
-    // 1. Create the section
     setDocumentNonBlocking(doc(db, 'cms_page_sections', newId), newSection, { merge: true });
 
-    // 2. Update the page array
     const pageRef = doc(db, 'cms_pages', pageId);
     const pageSnap = await getDoc(pageRef);
     if (pageSnap.exists()) {
@@ -111,9 +108,7 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
 
   const AddButton = ({ index }: { index: number }) => (
     <div className="relative group/add h-4 flex items-center justify-center -my-2 z-[70] opacity-0 hover:opacity-100 transition-opacity">
-      {/* Visual Placement Line */}
       <div className="absolute left-0 right-0 h-[2px] bg-accent/40 w-full" />
-      
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button size="icon" className="rounded-full bg-accent hover:bg-accent/90 shadow-xl border-4 border-white h-10 w-10 relative z-10 transition-transform hover:scale-110">
@@ -137,7 +132,7 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
   );
 
   return (
-    <div className={cn("relative group/builder", isEditMode && "pr-0")}>
+    <div className={cn("relative group/builder", isEditMode && "pb-20")}>
       {isEditMode && <AddButton index={0} />}
       
       {orderedSections.map((section: any, idx: number) => {
@@ -162,26 +157,34 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
         return (
           <div key={section.id}>
             <div 
-              onClick={() => handleSectionClick(section.id)}
               className={cn(
                 "relative group/section transition-all duration-300",
-                isEditMode && "cursor-pointer hover:ring-4 hover:ring-primary/20",
+                isEditMode && "cursor-pointer hover:ring-4 hover:ring-accent/50",
                 isEditMode && activeSectionId === section.id && "ring-4 ring-accent"
               )}
+              onClick={() => handleSectionClick(section.id)}
             >
               {/* Element Controls */}
               {isEditMode && (
                 <div className="absolute top-4 right-4 z-[60] flex space-x-2 opacity-0 group-hover/section:opacity-100 transition-opacity">
-                  <div className="bg-accent text-white px-3 py-1 text-[9px] font-bold uppercase tracking-widest flex items-center shadow-lg">
+                  <div className="bg-accent text-primary px-3 py-1 text-[9px] font-bold uppercase tracking-widest flex items-center shadow-lg">
                     {section.type}
                   </div>
+                  <Button 
+                    size="icon" 
+                    variant="secondary"
+                    className="h-8 w-8 rounded-none shadow-lg bg-white hover:bg-slate-50"
+                    onClick={(e) => { e.stopPropagation(); handleSectionClick(section.id); }}
+                  >
+                    <Edit2 className="w-3.5 h-3.5 text-primary" />
+                  </Button>
                   <Button 
                     size="icon" 
                     variant="destructive" 
                     className="h-8 w-8 rounded-none shadow-lg"
                     onClick={(e) => { e.stopPropagation(); handleDeleteSection(section.id); }}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </Button>
                 </div>
               )}

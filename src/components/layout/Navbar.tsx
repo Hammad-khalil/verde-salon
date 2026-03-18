@@ -36,7 +36,7 @@ export default function Navbar() {
   ];
 
   // Helper to persist edit mode across navigation
-  const getHref = (path: string) => isEditMode ? `${path}?edit=true` : path;
+  const getHref = (path: string) => isEditMode ? `${path}${path.includes('?') ? '&' : '?'}edit=true` : path;
 
   const logoSettings = settings?.logo;
   const siteName = settings?.siteName || 'VERDE SALON';
