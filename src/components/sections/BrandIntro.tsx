@@ -43,13 +43,13 @@ export default function BrandIntro({
             <div className="space-y-6">
               <span 
                 className="font-bold uppercase tracking-[0.5em] text-[11px] block animate-fade-in opacity-70"
-                style={{ color: styles?.subtitleColor || 'var(--primary)' }}
+                style={{ color: styles?.subtitleColor || '#0F2F2F' }}
               >
                 {subtitle}
               </span>
               <h2 
                 className="text-4xl md:text-6xl lg:text-7xl font-headline font-light leading-[1.1] tracking-tight"
-                style={{ color: styles?.titleColor || 'var(--foreground)' }}
+                style={{ color: styles?.titleColor || '#0F2F2F' }}
               >
                 {title}
               </h2>
@@ -66,7 +66,7 @@ export default function BrandIntro({
                 variant="outline" 
                 className={cn(
                   "group relative overflow-hidden rounded-none border-primary/20 px-10 py-7 text-[11px] font-bold uppercase tracking-[0.3em] transition-all duration-500 hover:border-primary hover:bg-primary hover:text-white",
-                  styles?.buttonType === 'primary' && 'bg-primary text-white hover:bg-accent'
+                  styles?.buttonType === 'primary' && 'bg-primary text-white hover:bg-accent border-primary'
                 )}
               >
                 <Link href={buttonUrl || '/blog'}>

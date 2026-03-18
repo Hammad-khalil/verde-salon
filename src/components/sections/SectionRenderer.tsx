@@ -16,7 +16,7 @@ import { collection, query, doc, getDoc } from 'firebase/firestore';
 import { useSearchParams, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
-import { Plus, Trash2, Edit2 } from 'lucide-react';
+import { Plus, Trash2, Edit2, Layout } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
@@ -45,7 +45,7 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
 
   const { data: allSections, isLoading } = useCollection(sectionsQuery);
 
-  if (isLoading) return <div className="py-20 text-center animate-pulse font-headline text-primary uppercase tracking-widest">Assembling your experience...</div>;
+  if (isLoading) return <div className="py-20 text-center animate-pulse font-headline text-primary uppercase tracking-widest">Assembling Sanctuary...</div>;
   if (!allSections) return null;
 
   const orderedSections = sectionIds
@@ -60,7 +60,7 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
   };
 
   async function handleDeleteSection(id: string) {
-    if (!confirm('Are you sure you want to remove this section from this page?')) return;
+    if (!confirm('Permanently remove this element from this sanctuary page?')) return;
     
     const pageId = pathname === '/' ? 'home' : pathname.replace('/', '');
     const pageRef = doc(db, 'cms_pages', pageId);
@@ -70,7 +70,7 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       const data = pageSnap.data();
       const currentIds = (data.sectionIds || []).filter((sid: string) => sid !== id);
       setDocumentNonBlocking(pageRef, { ...data, sectionIds: currentIds }, { merge: true });
-      toast({ title: "Section Removed", description: "The element has been deleted from this page." });
+      toast({ title: "Blueprint Removed", description: "The element has been archived from this view." });
     }
   }
 
@@ -79,12 +79,12 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
     const newId = doc(collection(db, 'cms_page_sections')).id;
     
     const defaults: Record<string, any> = {
-      Hero: { title: 'New Story Begins', subtitle: 'Experience luxury.', ctaText: 'Explore', backgroundType: 'image' },
-      TextBlock: { title: 'Heading', content: 'Sample text content...', alignment: 'center' },
-      CTA: { title: 'Call to Action', subtitle: 'Join us today.', buttonText: 'Contact' },
-      VideoBlock: { title: 'Video', videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
-      FAQSection: { title: 'Common Queries', subtitle: 'Information' },
-      BrandIntro: { title: 'About Our Sanctuary', subtitle: 'Luxury Defined', content: 'Our story is one of natural elegance...', buttonText: 'Read More' }
+      Hero: { title: 'A New Awakening', subtitle: 'Experience true luxury.', ctaText: 'Explore', backgroundType: 'image', styles: { paddingVertical: '0', buttonType: 'primary' } },
+      TextBlock: { title: 'Our Narrative', content: 'Share the soul of your brand...', alignment: 'center', styles: { paddingVertical: '128' } },
+      CTA: { title: 'Join the Sanctuary', subtitle: 'Reserve your next ritual.', buttonText: 'Contact Us', styles: { paddingVertical: '96' } },
+      VideoBlock: { title: 'Visual Motion', videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', styles: { paddingVertical: '96' } },
+      FAQSection: { title: 'Ritual Knowledge', subtitle: 'Preparation' },
+      BrandIntro: { title: 'Our Philosophy', subtitle: 'Pure. Conscious.', content: 'Beauty refined through natural elegance...', buttonText: 'Discover', styles: { paddingVertical: '128' } }
     };
 
     const newSection = {
@@ -102,25 +102,25 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       const currentIds = [...(data.sectionIds || [])];
       currentIds.splice(index, 0, newId);
       setDocumentNonBlocking(pageRef, { ...data, sectionIds: currentIds }, { merge: true });
-      toast({ title: "Section Added", description: `A new ${type} has been placed.` });
+      toast({ title: "Blueprint Placed", description: `A new ${type} has been integrated.` });
     }
   }
 
   const AddButton = ({ index }: { index: number }) => (
     <div className="relative group/add h-4 flex items-center justify-center -my-2 z-[70] opacity-0 hover:opacity-100 transition-opacity">
-      <div className="absolute left-0 right-0 h-[2px] bg-accent/40 w-full" />
+      <div className="absolute left-0 right-0 h-[2px] bg-accent/60 w-full" />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button size="icon" className="rounded-full bg-accent hover:bg-accent/90 shadow-xl border-4 border-white h-10 w-10 relative z-10 transition-transform hover:scale-110">
+          <Button size="icon" className="rounded-full bg-accent hover:bg-white shadow-2xl border-4 border-white h-10 w-10 relative z-10 transition-all hover:scale-110">
             <Plus className="w-5 h-5 text-primary" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center" className="w-56 p-2 rounded-none border-2 shadow-2xl">
-          <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-50">Select Element</div>
+          <div className="px-2 py-1.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground opacity-50">Select Blueprint</div>
           {['Hero', 'TextBlock', 'BrandIntro', 'CTA', 'VideoBlock', 'FAQSection', 'ServicesPreview', 'FeaturedWork', 'Testimonials'].map(type => (
             <DropdownMenuItem 
               key={type} 
-              className="rounded-none text-xs font-bold uppercase tracking-wider py-3 cursor-pointer hover:bg-primary hover:text-white"
+              className="rounded-none text-[10px] font-bold uppercase tracking-wider py-3 cursor-pointer hover:bg-primary hover:text-white"
               onClick={() => handleAddSectionAt(index, type)}
             >
               {type.replace(/([A-Z])/g, ' $1')}
@@ -164,19 +164,23 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
               )}
               onClick={() => handleSectionClick(section.id)}
             >
+              {/* Element Label Overlay */}
+              {isEditMode && (
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 z-[60] bg-accent text-primary px-4 py-1 text-[9px] font-bold uppercase tracking-[0.3em] shadow-lg opacity-0 group-hover/section:opacity-100 transition-opacity">
+                  Blueprint: {section.type}
+                </div>
+              )}
+
               {/* Element Controls */}
               {isEditMode && (
                 <div className="absolute top-4 right-4 z-[60] flex space-x-2 opacity-0 group-hover/section:opacity-100 transition-opacity">
-                  <div className="bg-accent text-primary px-3 py-1 text-[9px] font-bold uppercase tracking-widest flex items-center shadow-lg">
-                    {section.type}
-                  </div>
                   <Button 
                     size="icon" 
                     variant="secondary"
-                    className="h-8 w-8 rounded-none shadow-lg bg-white hover:bg-slate-50"
+                    className="h-8 w-8 rounded-none shadow-lg bg-white hover:bg-accent hover:text-white transition-all"
                     onClick={(e) => { e.stopPropagation(); handleSectionClick(section.id); }}
                   >
-                    <Edit2 className="w-3.5 h-3.5 text-primary" />
+                    <Edit2 className="w-3.5 h-3.5" />
                   </Button>
                   <Button 
                     size="icon" 

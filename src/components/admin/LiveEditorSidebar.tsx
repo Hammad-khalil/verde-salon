@@ -25,7 +25,9 @@ import {
   Layout as LayoutIcon,
   Palette,
   Link as LinkIcon,
-  Timer
+  Timer,
+  Layers,
+  Component
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -62,6 +64,7 @@ export default function LiveEditorSidebar() {
   useEffect(() => {
     if (sectionData) {
       const parsed = JSON.parse(sectionData.content || '{}');
+      if (!parsed.styles) parsed.styles = {};
       setEditingData({ ...sectionData, parsedContent: parsed });
     }
   }, [sectionData]);
@@ -88,7 +91,7 @@ export default function LiveEditorSidebar() {
     delete finalSection.parsedContent;
     
     setDocumentNonBlocking(doc(db, 'cms_page_sections', selectedSectionId), finalSection, { merge: true });
-    toast({ title: "Updated", description: "Design synced successfully." });
+    toast({ title: "Design Synced", description: "Changes are now live across Pakistan." });
   }
 
   function handleExitEditor() {
@@ -103,10 +106,12 @@ export default function LiveEditorSidebar() {
       {/* Header */}
       <div className="p-6 border-b flex items-center justify-between bg-primary text-white shrink-0">
         <div className="flex items-center space-x-3">
-          <Settings2 className="w-5 h-5 text-accent" />
+          <div className="p-2 bg-accent rounded-sm shadow-inner">
+            <Component className="w-5 h-5 text-primary" />
+          </div>
           <div>
             <h3 className="font-headline font-bold text-lg">{editingData?.type || 'Element Editor'}</h3>
-            <p className="text-[10px] uppercase tracking-widest opacity-60">Visual Architect Pro</p>
+            <p className="text-[9px] uppercase tracking-[0.2em] text-accent font-bold">Element ID: {selectedSectionId?.slice(0,8)}</p>
           </div>
         </div>
         <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10" onClick={() => setSelectedSectionId(null)}>
@@ -126,6 +131,12 @@ export default function LiveEditorSidebar() {
 
             <div className="p-8 space-y-10 pb-32">
               <TabsContent value="content" className="mt-0 space-y-8">
+                {/* Identification Display */}
+                <div className="p-4 bg-primary/5 border border-primary/10 rounded-sm space-y-1">
+                  <span className="text-[9px] font-bold text-primary/40 uppercase tracking-widest">Active Blueprint</span>
+                  <p className="text-xs font-headline font-bold text-primary">{editingData.type} Section</p>
+                </div>
+
                 {/* Text Group */}
                 <div className="space-y-4">
                   <div className="flex items-center text-primary font-bold text-[10px] uppercase tracking-[0.2em] mb-4">
@@ -154,7 +165,7 @@ export default function LiveEditorSidebar() {
                   })}
                 </div>
 
-                {/* Navigation / Links Group */}
+                {/* Navigation Group */}
                 {['ctaUrl', 'buttonUrl', 'linkUrl'].some(k => editingData.parsedContent[k] !== undefined) && (
                   <div className="space-y-4 pt-6 border-t border-slate-100">
                     <div className="flex items-center text-primary font-bold text-[10px] uppercase tracking-[0.2em] mb-4">
@@ -177,7 +188,7 @@ export default function LiveEditorSidebar() {
                   </div>
                 )}
 
-                {/* Video & Media Group */}
+                {/* Media Configuration */}
                 <div className="space-y-6 pt-6 border-t border-slate-100">
                   <div className="flex items-center text-primary font-bold text-[10px] uppercase tracking-[0.2em] mb-4">
                     <Video className="w-3 h-3 mr-2 text-accent" /> Media Configuration
@@ -198,56 +209,13 @@ export default function LiveEditorSidebar() {
                     );
                   })}
 
-                  {/* YouTube Specific Timing */}
-                  {(editingData.parsedContent.videoUrl?.includes('youtube.com') || editingData.parsedContent.videoUrl?.includes('youtu.be')) && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-[9px] uppercase font-bold opacity-60 flex items-center">
-                          <Timer className="w-2 h-2 mr-1" /> Start (s)
-                        </Label>
-                        <Input 
-                          type="number" 
-                          className="h-9 rounded-none text-xs" 
-                          value={editingData.parsedContent.startTime || editingData.parsedContent.videoStartTime || ''} 
-                          onChange={(e) => updateValue(editingData.parsedContent.videoStartTime !== undefined ? 'videoStartTime' : 'startTime', parseInt(e.target.value))} 
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[9px] uppercase font-bold opacity-60 flex items-center">
-                          <Timer className="w-2 h-2 mr-1" /> End (s)
-                        </Label>
-                        <Input 
-                          type="number" 
-                          className="h-9 rounded-none text-xs" 
-                          value={editingData.parsedContent.endTime || editingData.parsedContent.videoEndTime || ''} 
-                          onChange={(e) => updateValue(editingData.parsedContent.videoEndTime !== undefined ? 'videoEndTime' : 'endTime', parseInt(e.target.value))} 
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Standardized Video Controls */}
                   {(editingData.parsedContent.videoUrl || editingData.parsedContent.backgroundType === 'video') && (
-                    <div className="grid grid-cols-2 gap-6 bg-white p-4 border rounded-sm">
+                    <div className="grid grid-cols-2 gap-4 bg-white p-4 border rounded-sm">
                       <div className="flex items-center justify-between space-x-2">
                         <Label className="text-[9px] uppercase font-bold opacity-60">Autoplay</Label>
                         <Switch 
                           checked={editingData.parsedContent.autoplay ?? true}
                           onCheckedChange={(val) => updateValue('autoplay', val)}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between space-x-2">
-                        <Label className="text-[9px] uppercase font-bold opacity-60">Loop</Label>
-                        <Switch 
-                          checked={editingData.parsedContent.loop ?? true}
-                          onCheckedChange={(val) => updateValue('loop', val)}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between space-x-2">
-                        <Label className="text-[9px] uppercase font-bold opacity-60">Mute</Label>
-                        <Switch 
-                          checked={editingData.parsedContent.muted ?? true}
-                          onCheckedChange={(val) => updateValue('muted', val)}
                         />
                       </div>
                       <div className="flex items-center justify-between space-x-2">
@@ -263,28 +231,37 @@ export default function LiveEditorSidebar() {
               </TabsContent>
 
               <TabsContent value="style" className="mt-0 space-y-10">
+                {/* Background Engine */}
                 <div className="space-y-4">
                   <div className="flex items-center text-primary font-bold text-[10px] uppercase tracking-[0.2em] mb-4">
-                    <LayoutIcon className="w-3 h-3 mr-2 text-accent" /> Background Engine
+                    <Layers className="w-3 h-3 mr-2 text-accent" /> Styling Strategy
                   </div>
                   <Select 
-                    value={editingData.parsedContent.backgroundType || 'image'} 
+                    value={editingData.parsedContent.backgroundType || 'color'} 
                     onValueChange={(val) => updateValue('backgroundType', val)}
                   >
                     <SelectTrigger className="rounded-none h-11 border-slate-200"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="color">Solid Color</SelectItem>
+                      <SelectItem value="color">Solid Background</SelectItem>
                       <SelectItem value="image">High-Res Image</SelectItem>
                       <SelectItem value="video">Cinematic Video</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
+                {/* Color Palette */}
                 <div className="space-y-6 pt-6 border-t border-slate-100">
                   <div className="flex items-center text-primary font-bold text-[10px] uppercase tracking-[0.2em] mb-4">
-                    <Palette className="w-3 h-3 mr-2 text-accent" /> Brand Colors
+                    <Palette className="w-3 h-3 mr-2 text-accent" /> Palette Controls
                   </div>
                   <div className="grid grid-cols-1 gap-6">
+                    <div className="space-y-3">
+                      <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">Background Color</Label>
+                      <div className="flex items-center space-x-3">
+                        <input type="color" className="w-10 h-10 border rounded-full cursor-pointer" value={editingData.parsedContent.styles?.backgroundColor || '#FFFFFF'} onChange={(e) => updateValue('backgroundColor', e.target.value, true)} />
+                        <Input className="h-11 rounded-none font-mono text-xs" value={editingData.parsedContent.styles?.backgroundColor || ''} onChange={(e) => updateValue('backgroundColor', e.target.value, true)} />
+                      </div>
+                    </div>
                     <div className="space-y-3">
                       <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">Heading Color</Label>
                       <div className="flex items-center space-x-3">
@@ -293,7 +270,7 @@ export default function LiveEditorSidebar() {
                       </div>
                     </div>
                     <div className="space-y-3">
-                      <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">Accent / Subtitle</Label>
+                      <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">Accent Color</Label>
                       <div className="flex items-center space-x-3">
                         <input type="color" className="w-10 h-10 border rounded-full cursor-pointer" value={editingData.parsedContent.styles?.subtitleColor || '#C6A15B'} onChange={(e) => updateValue('subtitleColor', e.target.value, true)} />
                         <Input className="h-11 rounded-none font-mono text-xs" value={editingData.parsedContent.styles?.subtitleColor || ''} onChange={(e) => updateValue('subtitleColor', e.target.value, true)} />
@@ -302,9 +279,10 @@ export default function LiveEditorSidebar() {
                   </div>
                 </div>
 
+                {/* Overlay Density */}
                 <div className="pt-6 border-t border-slate-100 space-y-6">
                   <div className="flex items-center justify-between">
-                    <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">Overlay Density</Label>
+                    <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">Overlay Intensity</Label>
                     <span className="text-[10px] font-mono bg-slate-100 px-2 py-1 rounded">{editingData.parsedContent.styles?.overlayOpacity || 20}%</span>
                   </div>
                   <Slider 
@@ -318,7 +296,7 @@ export default function LiveEditorSidebar() {
               <TabsContent value="advanced" className="mt-0 space-y-8">
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
-                    <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">Section Height (Padding)</Label>
+                    <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">Section Padding (Vertical)</Label>
                     <span className="text-[10px] font-mono bg-slate-100 px-2 py-1 rounded">{editingData.parsedContent.styles?.paddingVertical || '128'}px</span>
                   </div>
                   <Slider 
@@ -330,7 +308,7 @@ export default function LiveEditorSidebar() {
                 </div>
 
                 <div className="space-y-4 pt-6 border-t border-slate-100">
-                  <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">Alignment Strategy</Label>
+                  <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">Content Alignment</Label>
                   <div className="grid grid-cols-2 gap-2">
                     {['left', 'center'].map(align => (
                       <Button 
@@ -344,42 +322,57 @@ export default function LiveEditorSidebar() {
                     ))}
                   </div>
                 </div>
+
+                {['ctaText', 'buttonText'].some(k => editingData.parsedContent[k] !== undefined) && (
+                  <div className="space-y-4 pt-6 border-t border-slate-100">
+                    <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">Button Preset</Label>
+                    <Select 
+                      value={editingData.parsedContent.styles?.buttonType || 'primary'} 
+                      onValueChange={(val) => updateValue('buttonType', val, true)}
+                    >
+                      <SelectTrigger className="rounded-none"><SelectValue placeholder="Button Style" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="primary">Solid Gold (Signature)</SelectItem>
+                        <SelectItem value="outline">Luxury Outline (Minimal)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </TabsContent>
             </div>
           </Tabs>
         )}
       </div>
 
-      {/* Footer Actions - Always Visible */}
+      {/* Footer Actions */}
       <div className="p-6 border-t bg-white flex flex-col space-y-3 shrink-0">
         <Button className="w-full bg-primary hover:bg-primary/90 rounded-none h-14 uppercase tracking-[0.2em] text-[10px] font-bold shadow-xl" onClick={handleSave}>
-          <Save className="w-4 h-4 mr-2" /> Save & Sync Changes
+          <Save className="w-4 h-4 mr-2" /> Sync Design Settings
         </Button>
         <div className="flex space-x-2">
           <Button variant="outline" className="flex-grow rounded-none h-12 uppercase tracking-widest text-[9px] font-bold" onClick={handleExitEditor}>
             <CheckCircle2 className="w-4 h-4 mr-2 text-green-600" /> Publish & Exit
           </Button>
-          <Button variant="outline" className="rounded-none h-12 px-4" onClick={() => setSelectedSectionId(null)} title="Back to Builder">
+          <Button variant="outline" className="rounded-none h-12 px-4" onClick={() => setSelectedSectionId(null)} title="Back to Overview">
             <ChevronLeft className="w-4 h-4" />
           </Button>
         </div>
       </div>
 
-      {/* Global Builder Active Overlay */}
+      {/* Builder Overlay */}
       {!selectedSectionId && (
         <div className="absolute inset-0 bg-white/95 backdrop-blur-md flex flex-col items-center justify-center p-12 text-center space-y-8 animate-fade-in">
           <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center">
             <Sparkles className="w-10 h-10 text-accent animate-pulse" />
           </div>
           <div>
-            <h4 className="font-headline text-3xl font-bold text-primary">Builder Active</h4>
+            <h4 className="font-headline text-3xl font-bold text-primary">Sanctuary Mode</h4>
             <p className="text-muted-foreground text-sm mt-4 font-light leading-relaxed">
-              Navigate freely across your sanctuary. Hover over any section to Edit or Remove. 
-              Use the placement lines to add new luxury elements.
+              You are navigating the live sanctuary. Hover over any blueprint to refine its aesthetic or reorder elements.
             </p>
           </div>
           <Button variant="outline" className="rounded-none px-10 h-12 uppercase tracking-widest text-[10px] font-bold border-primary/20" onClick={handleExitEditor}>
-            Exit Visual Architect
+            Exit Architect Mode
           </Button>
         </div>
       )}

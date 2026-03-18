@@ -55,7 +55,10 @@ export default function Hero({
       playsinline: '1',
       controls: '0',
       modestbranding: '1',
-      rel: '0'
+      rel: '0',
+      iv_load_policy: '3',
+      enablejsapi: '1',
+      widget_referrer: window.location.href
     });
     if (videoStartTime) params.append('start', videoStartTime.toString());
     if (videoEndTime) params.append('end', videoEndTime.toString());
@@ -65,17 +68,19 @@ export default function Hero({
   return (
     <section 
       className="relative h-[100vh] w-full overflow-hidden flex items-center justify-center"
-      style={{ backgroundColor: styles?.backgroundColor || 'var(--primary)' }}
+      style={{ backgroundColor: styles?.backgroundColor || '#0F2F2F' }}
     >
       {/* Background Layer */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         {backgroundType === 'video' && finalVideoUrl ? (
           isYouTube ? (
-            <iframe
-              src={finalVideoUrl}
-              className="w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-none"
-              allow="autoplay; fullscreen"
-            ></iframe>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[115%] h-[115%]">
+              <iframe
+                src={finalVideoUrl}
+                className="w-full h-full border-none pointer-events-none"
+                allow="autoplay; fullscreen"
+              ></iframe>
+            </div>
           ) : (
             <video 
               autoPlay 
@@ -116,7 +121,7 @@ export default function Hero({
         <div className={cn("max-w-4xl space-y-10 animate-fade-in", alignmentClass)}>
           <span 
             className="text-[12px] font-bold tracking-[0.6em] uppercase block"
-            style={{ color: styles?.subtitleColor || 'var(--accent)' }}
+            style={{ color: styles?.subtitleColor || '#C6A15B' }}
           >
             The Art of Transformation
           </span>

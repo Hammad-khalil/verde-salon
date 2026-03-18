@@ -45,7 +45,8 @@ export default function VideoBlock({
       playsinline: '1',
       controls: effectiveControls ? '1' : '0',
       modestbranding: '1',
-      rel: '0'
+      rel: '0',
+      iv_load_policy: '3'
     });
 
     if (startTime) params.append('start', startTime.toString());
@@ -74,13 +75,15 @@ export default function VideoBlock({
         )}
         <div className={`relative aspect-video overflow-hidden bg-black ${isFullWidth ? '' : 'rounded-sm shadow-2xl'} ${!effectiveControls ? 'pointer-events-none' : ''}`}>
           {isYouTube ? (
-            <iframe
-              src={finalUrl}
-              className="absolute inset-0 w-full h-full border-none"
-              allow="autoplay; fullscreen; picture-in-picture"
-              allowFullScreen
-              title={title || "Video content"}
-            ></iframe>
+            <div className={!effectiveControls ? 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[115%] h-[115%]' : 'absolute inset-0 w-full h-full'}>
+              <iframe
+                src={finalUrl}
+                className="w-full h-full border-none"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+                title={title || "Video content"}
+              ></iframe>
+            </div>
           ) : (
             <video 
               src={videoUrl} 
