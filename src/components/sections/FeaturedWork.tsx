@@ -1,5 +1,8 @@
+
 'use client';
 
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
@@ -16,17 +19,33 @@ export default function FeaturedWork({
   images = [],
   styles
 }: FeaturedWorkProps) {
+  const db = useFirestore();
   const paddingVal = styles?.paddingVertical || '128';
   const objectFit = styles?.objectFit || 'cover';
 
-  const galleryImages = (Array.isArray(images) && images.length > 0) ? images : [
-    'https://picsum.photos/seed/verde-work-1/600/800',
-    'https://picsum.photos/seed/verde-work-2/600/800',
-    'https://picsum.photos/seed/verde-work-3/600/800',
-    'https://picsum.photos/seed/verde-work-4/600/800',
-    'https://picsum.photos/seed/verde-work-5/600/800',
-    'https://picsum.photos/seed/verde-work-6/600/800',
-  ];
+  // Dynamic Linkage: Fetch images from Services if no manual images exist
+  const servicesQuery = useMemoFirebase(() => collection(db, 'services'), [db]);
+  const { data: services } = useCollection(servicesQuery);
+
+  const displayImages = useMemo(() => {
+    // 1. Priority: User-provided images in Page Builder
+    if (Array.isArray(images) && images.length > 0) return images;
+    
+    // 2. Dynamic: Service Images from CMS
+    if (services && services.length > 0) {
+      return services.map(s => s.imageUrl).filter(Boolean);
+    }
+
+    // 3. Fallback: Aesthetic Placeholders
+    return [
+      'https://picsum.photos/seed/verde-work-1/600/800',
+      'https://picsum.photos/seed/verde-work-2/600/800',
+      'https://picsum.photos/seed/verde-work-3/600/800',
+      'https://picsum.photos/seed/verde-work-4/600/800',
+      'https://picsum.photos/seed/verde-work-5/600/800',
+      'https://picsum.photos/seed/verde-work-6/600/800',
+    ];
+  }, [images, services]);
 
   return (
     <section 
@@ -54,7 +73,7 @@ export default function FeaturedWork({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {galleryImages.map((img, i) => (
+          {displayImages.map((img, i) => (
             <div key={i} className="group relative aspect-[3/4] overflow-hidden bg-muted shadow-2xl">
               <Image 
                 src={typeof img === 'string' ? img : (img as any).imageUrl || 'https://picsum.photos/seed/missing/600/800'} 

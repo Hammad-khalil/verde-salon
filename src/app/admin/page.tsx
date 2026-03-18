@@ -2,7 +2,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
-import { collection, query, limit, orderBy, doc } from 'firebase/firestore';
+import { collection, query, limit, orderBy, doc, getDoc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -19,7 +19,6 @@ import {
   Eye
 } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useMemo } from 'react';
@@ -36,7 +35,7 @@ export default function AdminDashboard() {
   const testimonialsQuery = useMemoFirebase(() => collection(db, 'testimonials'), [db]);
 
   const { data: pages, isLoading: pagesLoading } = useCollection(pagesQuery);
-  const { data: posts, isLoading: postsLoading } = useCollection(blogQuery);
+  const { data: posts } = useCollection(blogQuery);
   const { data: services } = useCollection(servicesQuery);
   const { data: testimonials } = useCollection(testimonialsQuery);
 
@@ -51,20 +50,25 @@ export default function AdminDashboard() {
   async function handleSeedSanctuary() {
     setIsSeeding(true);
     try {
-      // 1. Seed Global Settings
-      setDocumentNonBlocking(doc(db, 'settings', 'global'), {
-        siteName: 'VERDE SALON',
-        colors: { primary: '#0F2F2F', background: '#F5F3EF', accent: '#C6A15B' },
-        typography: { headline: 'Playfair Display', body: 'Inter' },
-        logo: { placement: 'left', height: 40 }
-      }, { merge: true });
+      // 1. Safe Global Settings (Only if missing)
+      const settingsRef = doc(db, 'settings', 'global');
+      const settingsSnap = await getDoc(settingsRef);
+      if (!settingsSnap.exists()) {
+        setDocumentNonBlocking(settingsRef, {
+          siteName: 'VERDE SALON',
+          colors: { primary: '#0F2F2F', background: '#F5F3EF', accent: '#C6A15B' },
+          typography: { headline: 'Playfair Display', body: 'Inter' },
+          logo: { placement: 'left', height: 40 }
+        }, { merge: true });
+      }
 
-      // 2. Seed Common Page Sections
+      // 2. Define Essential Sections
       const heroId = 'initial-hero';
       const introId = 'initial-intro';
       const craftId = 'initial-craft';
       const blogListId = 'initial-blog-list';
       const servicesListId = 'initial-services-list';
+      const galleryId = 'initial-gallery';
       
       const sections = [
         {
@@ -92,10 +96,12 @@ export default function AdminDashboard() {
         {
           id: craftId,
           type: 'ServicesPreview',
-          content: JSON.stringify({ 
-            title: 'Signature Rituals', 
-            subtitle: 'Our Craft'
-          })
+          content: JSON.stringify({ title: 'Signature Rituals', subtitle: 'Our Craft' })
+        },
+        {
+          id: galleryId,
+          type: 'FeaturedWork',
+          content: JSON.stringify({ title: 'Our Work', subtitle: 'The Verde Aesthetic', images: [] })
         },
         {
           id: blogListId,
@@ -117,59 +123,55 @@ export default function AdminDashboard() {
         }
       ];
 
+      // Safe write sections (Only if ID doesn't exist)
       for (const section of sections) {
-        setDocumentNonBlocking(doc(db, 'cms_page_sections', section.id), section, { merge: true });
+        const secRef = doc(db, 'cms_page_sections', section.id);
+        const secSnap = await getDoc(secRef);
+        if (!secSnap.exists()) {
+          setDocumentNonBlocking(secRef, section, { merge: true });
+        }
       }
 
-      // 3. Seed All Pages
-      setDocumentNonBlocking(doc(db, 'cms_pages', 'home'), {
-        id: 'home',
-        title: 'Home',
-        slug: '/',
-        sectionIds: [heroId, introId, craftId],
-        isPublished: true
-      }, { merge: true });
-
-      setDocumentNonBlocking(doc(db, 'cms_pages', 'services'), {
-        id: 'services',
-        title: 'Services',
-        slug: '/services',
-        sectionIds: [servicesListId],
-        isPublished: true
-      }, { merge: true });
-
-      setDocumentNonBlocking(doc(db, 'cms_pages', 'blog'), {
-        id: 'blog',
-        title: 'Blog',
-        slug: '/blog',
-        sectionIds: [blogListId],
-        isPublished: true
-      }, { merge: true });
-
-      // 4. Seed High-Quality Blog Posts
-      const blogsToSeed = [
-        {
-          id: 'blog-balayage',
-          title: 'The Art of the Balayage: Beyond Color',
-          slug: 'art-of-balayage',
-          category: 'Hair',
-          excerpt: 'Explore why this hand-painted technique remains the ultimate luxury in hair transformation.',
-          content: `# Understanding Balayage\n\nUnlike traditional highlights, balayage is an artistic approach to hair coloring. It involves hand-painting color onto the hair to create a soft, natural-looking effect.`,
-          author: 'Elena Verde',
-          isPublished: true,
-          publishedAt: new Date().toISOString(),
-          imageUrl: 'https://picsum.photos/seed/balayage/1200/800',
-          seo: { title: 'Art of Balayage | Verde Salon', description: 'Expert insights into the balayage coloring technique.' }
-        }
+      // 3. Safe Page Construction
+      const pageDefinitions = [
+        { id: 'home', title: 'Home', slug: '/', sections: [heroId, introId, craftId, galleryId] },
+        { id: 'services', title: 'Services', slug: '/services', sections: [servicesListId] },
+        { id: 'blog', title: 'Blog', slug: '/blog', sections: [blogListId] }
       ];
 
-      for (const blog of blogsToSeed) {
-        setDocumentNonBlocking(doc(db, 'blog_posts', blog.id), blog, { merge: true });
+      for (const p of pageDefinitions) {
+        const pRef = doc(db, 'cms_pages', p.id);
+        const pSnap = await getDoc(pRef);
+        
+        if (!pSnap.exists()) {
+          // Create new page if missing
+          setDocumentNonBlocking(pRef, {
+            id: p.id,
+            title: p.title,
+            slug: p.slug,
+            sectionIds: p.sections,
+            isPublished: true,
+            createdAt: new Date().toISOString()
+          }, { merge: true });
+        } else {
+          // Ensure essential sections are present without overwriting custom ones
+          const currentData = pSnap.data();
+          const currentIds = currentData.sectionIds || [];
+          const missingIds = p.sections.filter(id => !currentIds.includes(id));
+          
+          if (missingIds.length > 0) {
+            setDocumentNonBlocking(pRef, {
+              ...currentData,
+              sectionIds: [...currentIds, ...missingIds]
+            }, { merge: true });
+          }
+        }
       }
 
-      toast({ title: "Sanctuary Initialized", description: "All pages and dynamic listings are ready." });
+      toast({ title: "Sanctuary Safeguarded", description: "Missing architecture filled without overwriting your changes." });
     } catch (e) {
-      toast({ variant: "destructive", title: "Setup Failed", description: "Could not seed initial data." });
+      console.error(e);
+      toast({ variant: "destructive", title: "Setup Failed", description: "Could not safely verify architecture." });
     } finally {
       setIsSeeding(false);
     }
@@ -210,7 +212,7 @@ export default function AdminDashboard() {
           <CardHeader className="flex flex-row items-center justify-between relative z-10">
             <div className="space-y-2">
               <CardTitle className="text-3xl font-headline font-bold">Initialize Your Sanctuary</CardTitle>
-              <CardDescription className="text-primary/70 text-base max-w-xl">Complete your architecture. This creates the Services, Blog, and Home page structures in your CMS.</CardDescription>
+              <CardDescription className="text-primary/70 text-base max-w-xl">Complete your architecture. This creates missing Services, Blog, and Home page structures in your CMS.</CardDescription>
             </div>
             <Button 
               onClick={handleSeedSanctuary} 
@@ -218,7 +220,7 @@ export default function AdminDashboard() {
               className="bg-primary text-white hover:bg-primary/90 rounded-none uppercase tracking-[0.2em] text-[11px] font-bold h-16 px-12 shadow-2xl"
             >
               {isSeeding ? <Loader2 className="w-4 h-4 animate-spin mr-3" /> : <Sparkles className="w-4 h-4 mr-3" />}
-              {isSeeding ? "Building..." : "Complete Architecture Now"}
+              {isSeeding ? "Syncing..." : "Complete Architecture Now"}
             </Button>
           </CardHeader>
         </Card>
