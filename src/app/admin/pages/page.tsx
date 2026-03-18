@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -33,7 +32,9 @@ import {
   Image as ImageIcon,
   Monitor,
   Library,
-  Search
+  Search,
+  FileText,
+  Scissors
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -423,7 +424,7 @@ export default function PagesEditor() {
                           <div className="space-y-4">
                             <div className="flex items-center justify-between">
                               <Label className="text-[9px] opacity-50">Overlay Opacity</Label>
-                              <span className="text-[10px] font-mono">{editingSection.parsedContent.styles?.overlayOpacity}%</span>
+                              <span className="text-[10px] font-mono">{editingSection.parsedContent.styles?.overlayOpacity ?? 20}%</span>
                             </div>
                             <Slider 
                               value={[editingSection.parsedContent.styles?.overlayOpacity ?? 20]} 
