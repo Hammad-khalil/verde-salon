@@ -16,7 +16,8 @@ import {
   MessageSquare,
   ArrowUpRight,
   Loader2,
-  Eye
+  Eye,
+  Layout
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -125,11 +126,13 @@ export default function AdminDashboard() {
           <p className="text-muted-foreground mt-2 font-light">Centralized management for Verde Salon.</p>
         </div>
         <div className="flex space-x-4">
+          <Button size="lg" className="bg-accent text-primary hover:bg-accent/90 rounded-none px-8 font-bold uppercase tracking-widest text-xs" asChild>
+            <Link href="/?edit=true">
+              <Layout className="w-4 h-4 mr-2" /> Edit Entire Website
+            </Link>
+          </Button>
           <Button variant="outline" className="rounded-none border-primary/20" asChild>
             <Link href="/" target="_blank"><Eye className="w-4 h-4 mr-2" /> Live Site</Link>
-          </Button>
-          <Button className="bg-primary hover:bg-primary/90 rounded-none" asChild>
-            <Link href="/admin/blog/new"><Plus className="w-4 h-4 mr-2" /> New Blog</Link>
           </Button>
         </div>
       </div>
@@ -197,11 +200,12 @@ export default function AdminDashboard() {
                 </TableHeader>
                 <TableBody>
                   {pages?.map((page: any) => {
-                    const pageUrl = page.slug ? (page.slug.startsWith('/') ? page.slug : '/' + page.slug) : '/';
+                    const pageSlug = page.slug || '/';
+                    const pageUrl = pageSlug.startsWith('/') ? pageSlug : '/' + pageSlug;
                     return (
                       <TableRow key={page.id} className="group">
                         <TableCell className="font-bold font-headline text-lg">{page.title}</TableCell>
-                        <TableCell className="font-mono text-xs opacity-60">{page.slug || '/'}</TableCell>
+                        <TableCell className="font-mono text-xs opacity-60">{pageSlug}</TableCell>
                         <TableCell>
                           <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none rounded-none text-[10px] uppercase font-bold">Live</Badge>
                         </TableCell>

@@ -9,10 +9,13 @@ import { cn } from '@/lib/utils';
 import GlobalSearch from '@/components/search/GlobalSearch';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
+import { useSearchParams } from 'next/navigation';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const isEditMode = searchParams.get('edit') === 'true';
   
   const db = useFirestore();
   const settingsRef = useMemoFirebase(() => doc(db, 'settings', 'global'), [db]);
@@ -32,6 +35,9 @@ export default function Navbar() {
     { name: 'Blogs', href: '/blog' },
   ];
 
+  // Helper to persist edit mode across navigation
+  const getHref = (path: string) => isEditMode ? `${path}?edit=true` : path;
+
   const logoSettings = settings?.logo;
   const siteName = settings?.siteName || 'VERDE SALON';
 
@@ -46,7 +52,7 @@ export default function Navbar() {
         <div className="container mx-auto flex items-center justify-between">
           {/* Logo Area */}
           <div className="flex justify-start items-center">
-            <Link href="/" className="flex items-center group transition-all duration-500">
+            <Link href={getHref('/')} className="flex items-center group transition-all duration-500">
               {logoSettings?.url ? (
                 <img 
                   src={logoSettings.url} 
@@ -71,7 +77,7 @@ export default function Navbar() {
               {navLinks.map((link) => (
                 <Link 
                   key={link.name} 
-                  href={link.href} 
+                  href={getHref(link.href)} 
                   className={cn(
                     "text-[11px] font-bold tracking-[0.3em] uppercase transition-all duration-300 relative group pb-1",
                     "text-foreground/70 hover:text-primary"
@@ -118,7 +124,7 @@ export default function Navbar() {
               </SheetTrigger>
               <SheetContent side="right" className="w-full bg-background border-none p-0">
                 <div className="flex flex-col items-center justify-center h-full space-y-12">
-                   <Link href="/" className="mb-8" onClick={() => {}}>
+                   <Link href={getHref('/')} className="mb-8" onClick={() => {}}>
                     {logoSettings?.url ? (
                       <img src={logoSettings.url} alt={siteName} style={{ height: '60px' }} />
                     ) : (
@@ -128,7 +134,7 @@ export default function Navbar() {
                   {navLinks.map((link) => (
                     <Link 
                       key={link.name} 
-                      href={link.href} 
+                      href={getHref(link.href)} 
                       className="text-4xl font-headline font-light text-foreground hover:text-primary transition-colors"
                     >
                       {link.name}

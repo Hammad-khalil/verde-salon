@@ -13,10 +13,10 @@ import VideoBlock from './VideoBlock';
 import FAQSection from './FAQSection';
 import { useCollection, useFirestore, useMemoFirebase, useUser, setDocumentNonBlocking } from '@/firebase';
 import { collection, query, doc, getDoc } from 'firebase/firestore';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2, Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
@@ -24,6 +24,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
 
 interface SectionRendererProps {
   sectionIds: string[];
@@ -32,8 +33,10 @@ interface SectionRendererProps {
 export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
   const { user } = useUser();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const isEditMode = searchParams.get('edit') === 'true' && !!user;
   const db = useFirestore();
+  const { toast } = useToast();
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   
   const sectionsQuery = useMemoFirebase(() => {
@@ -56,8 +59,23 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
     }
   };
 
+  async function handleDeleteSection(id: string) {
+    if (!confirm('Are you sure you want to remove this section from this page?')) return;
+    
+    const pageId = pathname === '/' ? 'home' : pathname.replace('/', '');
+    const pageRef = doc(db, 'cms_pages', pageId);
+    const pageSnap = await getDoc(pageRef);
+    
+    if (pageSnap.exists()) {
+      const data = pageSnap.data();
+      const currentIds = (data.sectionIds || []).filter((sid: string) => sid !== id);
+      setDocumentNonBlocking(pageRef, { ...data, sectionIds: currentIds }, { merge: true });
+      toast({ title: "Section Removed", description: "The element has been deleted from this page." });
+    }
+  }
+
   async function handleAddSectionAt(index: number, type: string) {
-    const pageId = window.location.pathname === '/' ? 'home' : window.location.pathname.replace('/', '');
+    const pageId = pathname === '/' ? 'home' : pathname.replace('/', '');
     const newId = doc(collection(db, 'cms_page_sections')).id;
     
     // Default data for new sections
@@ -66,7 +84,8 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       TextBlock: { title: 'Heading', content: 'Sample text content...', alignment: 'center' },
       CTA: { title: 'Call to Action', subtitle: 'Join us today.', buttonText: 'Contact' },
       VideoBlock: { title: 'Video', videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
-      FAQSection: { title: 'Common Queries', subtitle: 'Information' }
+      FAQSection: { title: 'Common Queries', subtitle: 'Information' },
+      BrandIntro: { title: 'About Our Sanctuary', subtitle: 'Luxury Defined', content: 'Our story is one of natural elegance...', buttonText: 'Read More' }
     };
 
     const newSection = {
@@ -86,21 +105,30 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       const currentIds = [...(data.sectionIds || [])];
       currentIds.splice(index, 0, newId);
       setDocumentNonBlocking(pageRef, { ...data, sectionIds: currentIds }, { merge: true });
+      toast({ title: "Section Added", description: `A new ${type} has been placed.` });
     }
   }
 
   const AddButton = ({ index }: { index: number }) => (
-    <div className="flex justify-center -my-4 relative z-50 opacity-0 group-hover/builder:opacity-100 transition-opacity">
+    <div className="relative group/add h-4 flex items-center justify-center -my-2 z-[70] opacity-0 hover:opacity-100 transition-opacity">
+      {/* Visual Placement Line */}
+      <div className="absolute left-0 right-0 h-[2px] bg-accent/40 w-full" />
+      
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button size="icon" className="rounded-full bg-accent hover:bg-accent/90 shadow-xl border-4 border-white h-10 w-10">
+          <Button size="icon" className="rounded-full bg-accent hover:bg-accent/90 shadow-xl border-4 border-white h-10 w-10 relative z-10 transition-transform hover:scale-110">
             <Plus className="w-5 h-5 text-primary" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="center" className="w-48">
-          {['Hero', 'TextBlock', 'BrandIntro', 'CTA', 'VideoBlock', 'FAQSection'].map(type => (
-            <DropdownMenuItem key={type} onClick={() => handleAddSectionAt(index, type)}>
-              {type}
+        <DropdownMenuContent align="center" className="w-56 p-2 rounded-none border-2 shadow-2xl">
+          <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-50">Select Element</div>
+          {['Hero', 'TextBlock', 'BrandIntro', 'CTA', 'VideoBlock', 'FAQSection', 'ServicesPreview', 'FeaturedWork', 'Testimonials'].map(type => (
+            <DropdownMenuItem 
+              key={type} 
+              className="rounded-none text-xs font-bold uppercase tracking-wider py-3 cursor-pointer hover:bg-primary hover:text-white"
+              onClick={() => handleAddSectionAt(index, type)}
+            >
+              {type.replace(/([A-Z])/g, ' $1')}
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>
@@ -109,7 +137,7 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
   );
 
   return (
-    <div className={cn("relative group/builder", isEditMode && "pr-96")}>
+    <div className={cn("relative group/builder", isEditMode && "pr-0")}>
       {isEditMode && <AddButton index={0} />}
       
       {orderedSections.map((section: any, idx: number) => {
@@ -141,9 +169,20 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
                 isEditMode && activeSectionId === section.id && "ring-4 ring-accent"
               )}
             >
+              {/* Element Controls */}
               {isEditMode && (
-                <div className="absolute top-4 left-4 z-[60] bg-accent text-white px-3 py-1 text-[9px] font-bold uppercase tracking-widest opacity-0 group-hover/section:opacity-100 transition-opacity">
-                  {section.type}
+                <div className="absolute top-4 right-4 z-[60] flex space-x-2 opacity-0 group-hover/section:opacity-100 transition-opacity">
+                  <div className="bg-accent text-white px-3 py-1 text-[9px] font-bold uppercase tracking-widest flex items-center shadow-lg">
+                    {section.type}
+                  </div>
+                  <Button 
+                    size="icon" 
+                    variant="destructive" 
+                    className="h-8 w-8 rounded-none shadow-lg"
+                    onClick={(e) => { e.stopPropagation(); handleDeleteSection(section.id); }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               )}
               {content}

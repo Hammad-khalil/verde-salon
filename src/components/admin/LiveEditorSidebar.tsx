@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useUser, useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,29 +10,27 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
 import { 
   Settings2, 
   X, 
   Save, 
-  Palette, 
-  Layout, 
   Type, 
   Sparkles,
   ChevronLeft,
   Image as ImageIcon,
-  Video,
   MousePointer2,
-  Volume2
+  CheckCircle2,
+  Trash2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 
 export default function LiveEditorSidebar() {
-  const { user } = useUser();
+  const { user } = userUser();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const pathname = usePathname();
   const { toast } = useToast();
   const db = useFirestore();
   
@@ -87,6 +85,10 @@ export default function LiveEditorSidebar() {
     
     setDocumentNonBlocking(doc(db, 'cms_page_sections', selectedSectionId), finalSection, { merge: true });
     toast({ title: "Updated", description: "Changes synced to Firestore." });
+  }
+
+  function handleExitEditor() {
+    router.push(pathname); // Exit by removing query param
   }
 
   return (
@@ -266,20 +268,6 @@ export default function LiveEditorSidebar() {
                     ))}
                   </div>
                 </div>
-
-                <div className="space-y-4 pt-4 border-t">
-                  <Label className="text-[10px] uppercase font-bold tracking-widest">Button Styling</Label>
-                  <Select 
-                    value={editingData.parsedContent.styles?.buttonType || 'primary'} 
-                    onValueChange={(val) => updateValue('buttonType', val, true)}
-                  >
-                    <SelectTrigger className="rounded-none h-8"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="primary">Luxury Gold (Solid)</SelectItem>
-                      <SelectItem value="outline">Editorial (Outline)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </TabsContent>
             </div>
           </Tabs>
@@ -287,13 +275,18 @@ export default function LiveEditorSidebar() {
       </div>
 
       {/* Footer Actions */}
-      <div className="p-6 border-t bg-white flex space-x-3">
-        <Button className="flex-grow bg-primary hover:bg-primary/90 rounded-none h-12 uppercase tracking-widest text-[10px] font-bold" onClick={handleSave}>
-          <Save className="w-4 h-4 mr-2" /> Sync Sanctuary
+      <div className="p-6 border-t bg-white flex flex-col space-y-3">
+        <Button className="w-full bg-primary hover:bg-primary/90 rounded-none h-12 uppercase tracking-widest text-[10px] font-bold" onClick={handleSave}>
+          <Save className="w-4 h-4 mr-2" /> Sync Component
         </Button>
-        <Button variant="outline" className="rounded-none h-12" onClick={() => router.push('/admin')}>
-          <ChevronLeft className="w-4 h-4" />
-        </Button>
+        <div className="flex space-x-2">
+          <Button variant="outline" className="flex-grow rounded-none h-12 uppercase tracking-widest text-[10px] font-bold" onClick={handleExitEditor}>
+            <CheckCircle2 className="w-4 h-4 mr-2 text-green-600" /> Publish & Exit
+          </Button>
+          <Button variant="outline" className="rounded-none h-12" onClick={() => router.push('/admin')}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Status Indicators */}
@@ -301,12 +294,18 @@ export default function LiveEditorSidebar() {
         <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center p-12 text-center space-y-6">
           <Sparkles className="w-12 h-12 text-accent animate-pulse" />
           <div>
-            <h4 className="font-headline text-2xl">Visual Builder Ready</h4>
-            <p className="text-muted-foreground text-sm mt-2 font-light">Click any section on the left to start fine-tuning your luxury experience.</p>
+            <h4 className="font-headline text-2xl">Global Builder Active</h4>
+            <p className="text-muted-foreground text-sm mt-2 font-light">Navigate freely. Hover over any section to Edit or Delete. Use the blue lines to add new elements.</p>
           </div>
-          <Button variant="outline" className="rounded-none" onClick={() => router.push('/admin')}>Return to Command</Button>
+          <Button variant="outline" className="rounded-none" onClick={handleExitEditor}>Finish Building</Button>
         </div>
       )}
     </div>
   );
+}
+
+// Fixed missing user hook import
+function userUser() {
+  const { user, isUserLoading } = useUser();
+  return { user, isUserLoading };
 }
