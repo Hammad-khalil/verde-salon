@@ -35,7 +35,6 @@ export default function ServicesPage() {
       <Navbar />
       
       <main className="flex-grow pt-40">
-        {/* Page Header */}
         <section className="container mx-auto px-6 mb-32">
           <div className="max-w-4xl space-y-8">
             <div className="space-y-4">
@@ -59,7 +58,6 @@ export default function ServicesPage() {
           </div>
         ) : (
           <>
-            {/* Categories Navigation */}
             <section className="container mx-auto px-6 mb-24 border-b border-primary/10 pb-10">
               <div className="flex flex-wrap gap-x-12 gap-y-4 items-center">
                 <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground mr-4">Filter By</span>
@@ -75,7 +73,6 @@ export default function ServicesPage() {
               </div>
             </section>
 
-            {/* Service List by Category */}
             <section className="container mx-auto px-6 space-y-48 mb-48">
               {categories.map((category) => (
                 <div key={category} id={category.toLowerCase().replace(' ', '-')} className="space-y-20 scroll-mt-40">
@@ -119,11 +116,6 @@ export default function ServicesPage() {
                         </div>
                       </div>
                     ))}
-                    {(!services || services.filter(s => s.category === category).length === 0) && (
-                      <div className="col-span-full py-20 text-center border-2 border-dashed border-primary/5 rounded-sm">
-                        <p className="font-headline text-xl text-muted-foreground/40 italic">New rituals coming soon to {category} care.</p>
-                      </div>
-                    )}
                   </div>
                 </div>
               ))}
@@ -131,11 +123,7 @@ export default function ServicesPage() {
           </>
         )}
 
-        {/* Global CTA */}
         <section className="py-32 bg-primary text-background overflow-hidden relative">
-          <div className="absolute inset-0 opacity-5 pointer-events-none">
-            <div className="absolute top-0 left-0 w-96 h-96 border border-white/20 rounded-full -translate-x-1/2 -translate-y-1/2" />
-          </div>
           <div className="container mx-auto px-6 text-center relative z-10">
             <div className="max-w-3xl mx-auto space-y-10">
               <h2 className="text-4xl md:text-7xl font-headline font-light leading-tight tracking-tight">
@@ -155,32 +143,7 @@ export default function ServicesPage() {
             </div>
           </div>
         </section>
-
-        {/* FAQ Knowledge Base */}
-        {faqs && faqs.length > 0 && (
-          <section className="bg-muted/30 py-32 border-t border-primary/5">
-            <div className="container mx-auto px-6 max-w-4xl">
-              <div className="text-center mb-24 space-y-4">
-                <span className="text-accent font-bold uppercase tracking-[0.4em] text-[10px] block">Information</span>
-                <h2 className="text-4xl md:text-5xl font-headline font-light text-primary">Knowledge Base</h2>
-              </div>
-              <Accordion type="single" collapsible className="w-full space-y-6">
-                {faqs.map((faq) => (
-                  <AccordionItem key={faq.id} value={faq.id} className="border-none bg-white px-10 shadow-sm transition-all duration-300">
-                    <AccordionTrigger className="text-xl md:text-2xl font-headline font-light text-primary hover:no-underline py-8">
-                      {faq.question}
-                    </AccordionTrigger>
-                    <AccordionContent className="text-muted-foreground text-lg font-light leading-relaxed pb-8">
-                      {faq.answer}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </div>
-          </section>
-        )}
       </main>
-
       <Footer />
     </div>
   );
