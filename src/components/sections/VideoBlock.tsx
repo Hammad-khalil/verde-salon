@@ -1,4 +1,3 @@
-
 'use client';
 
 interface VideoBlockProps {
@@ -20,13 +19,17 @@ export default function VideoBlock({
   loop = true,
   muted = true
 }: VideoBlockProps) {
+  // Browser policies require muted = true for autoplay to function
+  const effectiveMuted = autoplay ? true : muted;
+  
   // Simple check for Direct vs YouTube
   const isYouTube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
   
   let finalUrl = videoUrl;
   if (isYouTube) {
     const videoId = videoUrl.includes('watch?v=') ? videoUrl.split('v=')[1]?.split('&')[0] : videoUrl.split('/').pop();
-    finalUrl = `https://www.youtube.com/embed/${videoId}?autoplay=${autoplay ? 1 : 0}&mute=${muted ? 1 : 0}&loop=${loop ? 1 : 0}&playlist=${videoId}`;
+    // Added mute=1 and playsinline=1 for autoplay compatibility
+    finalUrl = `https://www.youtube.com/embed/${videoId}?autoplay=${autoplay ? 1 : 0}&mute=${effectiveMuted ? 1 : 0}&loop=${loop ? 1 : 0}&playlist=${videoId}&playsinline=1`;
   }
 
   return (
@@ -52,7 +55,8 @@ export default function VideoBlock({
               src={videoUrl} 
               autoPlay={autoplay} 
               loop={loop} 
-              muted={muted} 
+              muted={effectiveMuted} 
+              playsInline={true}
               controls={!autoplay}
               className="absolute inset-0 w-full h-full object-cover"
             />

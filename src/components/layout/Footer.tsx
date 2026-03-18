@@ -29,7 +29,7 @@ export default function Footer() {
           <ul className="space-y-5 text-[11px] font-bold uppercase tracking-[0.3em] text-background/60">
             <li><Link href="/" className="hover:text-accent transition-all duration-300">Home</Link></li>
             <li><Link href="/services" className="hover:text-accent transition-all duration-300">Rituals</Link></li>
-            <li><Link href="/blog" className="hover:text-accent transition-all duration-300">Journal</Link></li>
+            <li><Link href="/blog" className="hover:text-accent transition-all duration-300">Blogs</Link></li>
             <li><Link href="/admin" className="hover:text-accent transition-all duration-300">Staff Portal</Link></li>
           </ul>
         </div>

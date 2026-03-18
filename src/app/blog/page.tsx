@@ -38,7 +38,7 @@ export default function BlogPage() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <SEOManager 
-        title="Journal | Rituals & Reflections"
+        title="Blogs | Rituals & Reflections"
         description="Curated insights from Verde Salon on beauty, sustainability, and the art of intentional living."
       />
       <Navbar />
@@ -47,7 +47,7 @@ export default function BlogPage() {
         <section className="container mx-auto px-6 mb-32">
           <div className="max-w-4xl space-y-8">
             <span className="text-accent font-bold uppercase tracking-[0.5em] text-[11px] block animate-fade-in opacity-70">
-              The Journal
+              Blogs
             </span>
             <h1 className="text-6xl md:text-8xl font-headline font-light leading-tight text-primary tracking-tight">
               Rituals & Reflections
@@ -80,7 +80,7 @@ export default function BlogPage() {
         <section className="container mx-auto px-6 mb-48">
           {isLoading ? (
             <div className="py-20 text-center animate-pulse font-headline text-primary tracking-widest uppercase">
-              Assembling Journal...
+              Assembling Blogs...
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-24">
@@ -96,7 +96,7 @@ export default function BlogPage() {
               ))}
               {processedPosts.length === 0 && (
                 <div className="col-span-full py-40 text-center text-muted-foreground font-light italic bg-muted/20 rounded-sm">
-                  The journal is currently quiet. Check back soon for new insights.
+                  The blogs are currently quiet. Check back soon for new insights.
                 </div>
               )}
             </div>

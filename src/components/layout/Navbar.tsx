@@ -29,7 +29,7 @@ export default function Navbar() {
   const navLinks = [
     { name: 'Home', href: '/' },
     { name: 'Services', href: '/services' },
-    { name: 'Journal', href: '/blog' },
+    { name: 'Blogs', href: '/blog' },
   ];
 
   const logoSettings = settings?.logo;

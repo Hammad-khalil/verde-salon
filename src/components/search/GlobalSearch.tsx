@@ -45,14 +45,14 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
       <DialogContent className="max-w-2xl p-0 overflow-hidden border-none shadow-2xl rounded-none">
         <DialogHeader className="sr-only">
           <DialogTitle>Global Search</DialogTitle>
-          <DialogDescription>Search for rituals, journal articles, and salon information.</DialogDescription>
+          <DialogDescription>Search for rituals, blogs, and salon information.</DialogDescription>
         </DialogHeader>
         <div className="bg-white p-6 space-y-6">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               autoFocus
-              placeholder="Search rituals, journals, or expertise..."
+              placeholder="Search rituals, blogs, or expertise..."
               className="pl-12 h-16 text-xl font-headline border-0 border-b rounded-none focus-visible:ring-0 focus-visible:border-primary px-0"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -96,7 +96,7 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
                 {/* Blog Results */}
                 {filteredBlogs.length > 0 && (
                   <div className="space-y-4">
-                    <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/40 px-2">The Journal</h3>
+                    <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/40 px-2">Blogs</h3>
                     <div className="grid gap-2">
                       {filteredBlogs.map(post => (
                         <Link 

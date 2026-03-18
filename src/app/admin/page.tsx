@@ -105,14 +105,14 @@ export default function AdminDashboard() {
   }
 
   function handleDeleteBlog(id: string) {
-    if (confirm('Delete this journal entry?')) {
+    if (confirm('Delete this blog entry?')) {
       deleteDocumentNonBlocking(doc(db, 'blog_posts', id));
     }
   }
 
   const stats = [
     { name: 'Active Rituals', value: services?.length || 0, icon: Scissors, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { name: 'Journal Entries', value: posts?.length || 0, icon: FileText, color: 'text-primary', bg: 'bg-primary/10' },
+    { name: 'Blogs', value: posts?.length || 0, icon: FileText, color: 'text-primary', bg: 'bg-primary/10' },
     { name: 'Client Voices', value: testimonials?.length || 0, icon: MessageSquare, color: 'text-amber-600', bg: 'bg-amber-50' },
   ];
 
@@ -129,7 +129,7 @@ export default function AdminDashboard() {
             <Link href="/" target="_blank"><Eye className="w-4 h-4 mr-2" /> Live Site</Link>
           </Button>
           <Button className="bg-primary hover:bg-primary/90 rounded-none" asChild>
-            <Link href="/admin/blog/new"><Plus className="w-4 h-4 mr-2" /> New Article</Link>
+            <Link href="/admin/blog/new"><Plus className="w-4 h-4 mr-2" /> New Blog</Link>
           </Button>
         </div>
       </div>
@@ -227,16 +227,16 @@ export default function AdminDashboard() {
         <Card className="border-none shadow-sm rounded-none">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="text-2xl font-headline">The Journal (Blog)</CardTitle>
+              <CardTitle className="text-2xl font-headline">Blogs</CardTitle>
               <CardDescription>Manage your editorial content and SEO insights.</CardDescription>
             </div>
             <Button className="bg-primary hover:bg-primary/90" asChild>
-              <Link href="/admin/blog/new"><Plus className="w-4 h-4 mr-2" /> New Article</Link>
+              <Link href="/admin/blog/new"><Plus className="w-4 h-4 mr-2" /> New Blog</Link>
             </Button>
           </CardHeader>
           <CardContent>
             {postsLoading ? (
-              <div className="py-10 text-center animate-pulse">Loading articles...</div>
+              <div className="py-10 text-center animate-pulse">Loading blogs...</div>
             ) : (
               <Table>
                 <TableHeader>
@@ -280,7 +280,7 @@ export default function AdminDashboard() {
                   ))}
                   {posts?.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={4} className="py-10 text-center text-muted-foreground italic">No journal entries yet.</TableCell>
+                      <TableCell colSpan={4} className="py-10 text-center text-muted-foreground italic">No blogs yet.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>

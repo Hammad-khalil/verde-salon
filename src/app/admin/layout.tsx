@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -53,7 +52,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: 'Leads & CRM', href: '/admin/submissions', icon: Inbox },
     { name: 'Pages & Content', href: '/admin/pages', icon: FileText },
     { name: 'Services Menu', href: '/admin/services', icon: Scissors },
-    { name: 'Blog Journal', href: '/admin/blog', icon: FileText },
+    { name: 'Blogs', href: '/admin/blog', icon: FileText },
     { name: 'Client Voices', href: '/admin/testimonials', icon: MessageSquare },
     { name: 'FAQs', href: '/admin/faq', icon: HelpCircle },
     { name: 'Identity & Logo', href: '/admin/branding', icon: Settings },

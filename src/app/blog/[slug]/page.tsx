@@ -28,7 +28,7 @@ export default function BlogPostDetail({ params }: { params: Promise<{ slug: str
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center animate-pulse font-headline text-primary tracking-widest uppercase">
-        VERDE JOURNAL
+        VERDE BLOGS
       </div>
     );
   }
@@ -38,7 +38,7 @@ export default function BlogPostDetail({ params }: { params: Promise<{ slug: str
       <div className="min-h-screen flex flex-col items-center justify-center space-y-8 bg-background">
         <h1 className="text-4xl md:text-6xl font-headline font-light text-primary">Article Not Found</h1>
         <Button variant="outline" className="rounded-none border-primary/20 px-10" asChild>
-          <Link href="/blog">Return to Journal</Link>
+          <Link href="/blog">Return to Blogs</Link>
         </Button>
       </div>
     );
@@ -60,7 +60,7 @@ export default function BlogPostDetail({ params }: { params: Promise<{ slug: str
           {/* Header Section */}
           <div className="mb-16 space-y-12 text-center">
             <Link href="/blog" className="inline-flex items-center text-[10px] font-bold uppercase tracking-[0.4em] text-muted-foreground hover:text-accent transition-colors">
-              <ArrowLeft className="w-3 h-3 mr-3" /> Back to Journal
+              <ArrowLeft className="w-3 h-3 mr-3" /> Back to Blogs
             </Link>
             
             <div className="space-y-6">

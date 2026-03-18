@@ -29,23 +29,23 @@ export default function BlogAdmin() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-headline font-bold">Blog Management</h1>
-          <p className="text-muted-foreground mt-2">Manage your luxury insights and journals.</p>
+          <p className="text-muted-foreground mt-2">Manage your luxury blogs and insights.</p>
         </div>
         <Button className="bg-primary hover:bg-primary/90" asChild>
           <Link href="/admin/blog/new">
-            <Plus className="w-4 h-4 mr-2" /> New Article
+            <Plus className="w-4 h-4 mr-2" /> New Blog
           </Link>
         </Button>
       </div>
 
       <Card className="border-none shadow-sm">
         <CardHeader>
-          <CardTitle>All Articles</CardTitle>
+          <CardTitle>All Blogs</CardTitle>
           <CardDescription>A list of all blog posts currently in the system.</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="py-20 text-center animate-pulse text-muted-foreground">Loading articles...</div>
+            <div className="py-20 text-center animate-pulse text-muted-foreground">Loading blogs...</div>
           ) : (
             <Table>
               <TableHeader>
@@ -109,7 +109,7 @@ export default function BlogAdmin() {
                 {posts?.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className="py-20 text-center text-muted-foreground">
-                      No articles found. Start by creating a new one.
+                      No blogs found. Start by creating a new one.
                     </TableCell>
                   </TableRow>
                 )}
