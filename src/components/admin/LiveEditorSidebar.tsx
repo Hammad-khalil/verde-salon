@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -141,7 +142,6 @@ const MediaField = ({
 };
 
 export default function LiveEditorSidebar() {
-  // All hooks must be at the top level and always called in the same order
   const { user } = useUser();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -154,14 +154,14 @@ export default function LiveEditorSidebar() {
 
   const isEditMode = useMemo(() => searchParams.get('edit') === 'true' && !!user, [searchParams, user]);
 
+  const sectionRef = useMemoFirebase(() => selectedSectionId ? doc(db, 'cms_page_sections', selectedSectionId) : null, [db, selectedSectionId]);
+  const { data: sectionData } = useDoc(sectionRef);
+
   useEffect(() => {
     const handleSectionSelect = (e: any) => { if (isEditMode) setSelectedSectionId(e.detail.id); };
     window.addEventListener('verde-select-section', handleSectionSelect);
     return () => window.removeEventListener('verde-select-section', handleSectionSelect);
   }, [isEditMode]);
-
-  const sectionRef = useMemoFirebase(() => selectedSectionId ? doc(db, 'cms_page_sections', selectedSectionId) : null, [db, selectedSectionId]);
-  const { data: sectionData } = useDoc(sectionRef);
 
   useEffect(() => {
     if (sectionData) {
@@ -186,7 +186,7 @@ export default function LiveEditorSidebar() {
     setEditingData({ ...editingData, parsedContent: updated });
   };
 
-  const getDeepFields = (obj: any, path: string = '', acc: any[] = []) => {
+  const getDeepFields = useCallback((obj: any, path: string = '', acc: any[] = []) => {
     if (!obj || typeof obj !== 'object') return acc;
     Object.keys(obj).forEach(key => {
       const val = obj[key];
@@ -200,9 +200,9 @@ export default function LiveEditorSidebar() {
       }
     });
     return acc;
-  };
+  }, []);
 
-  const allFields = useMemo(() => editingData ? getDeepFields(editingData.parsedContent) : [], [editingData]);
+  const allFields = useMemo(() => editingData ? getDeepFields(editingData.parsedContent) : [], [editingData, getDeepFields]);
 
   function handleSave() {
     if (!editingData || !selectedSectionId) return;
@@ -257,16 +257,6 @@ export default function LiveEditorSidebar() {
                     </div>
                   ))}
                 </div>
-
-                <div className="space-y-6">
-                  <div className="flex items-center text-primary font-bold text-[9px] uppercase tracking-[0.2em] border-b pb-2"><LinkIcon className="w-3 h-3 mr-2 text-accent" /> Navigation</div>
-                  {allFields.filter(f => f.type === 'string' && isLinkKey(f.key)).map(f => (
-                    <div key={f.path} className="space-y-2">
-                      <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">{f.path}</Label>
-                      <Input className="rounded-none h-11 text-sm border-slate-200 font-mono" value={f.value} onChange={(e) => updateValue(f.path, e.target.value)} />
-                    </div>
-                  ))}
-                </div>
               </TabsContent>
 
               <TabsContent value="media" className="mt-0 space-y-8">
@@ -297,12 +287,6 @@ export default function LiveEditorSidebar() {
                     }
                     return null;
                   })}
-                  {['images', 'gallery', 'posts'].some(k => editingData.parsedContent[k]) && (
-                    <Button variant="outline" className="w-full border-dashed rounded-none text-[10px] uppercase font-bold" onClick={() => {
-                      const key = ['images', 'gallery', 'posts'].find(k => editingData.parsedContent[k])!;
-                      updateValue(key, [...editingData.parsedContent[key], 'https://picsum.photos/seed/new/800/600']);
-                    }}><Plus className="w-3 h-3 mr-2" /> Add Item</Button>
-                  )}
                 </div>
               </TabsContent>
 
@@ -331,22 +315,6 @@ export default function LiveEditorSidebar() {
                   <div className="space-y-4">
                     <div className="flex justify-between"><Label className="text-[10px] opacity-50 uppercase font-bold">Overlay</Label><span className="text-[10px] font-mono">{editingData.parsedContent.styles?.overlayOpacity || 20}%</span></div>
                     <Slider value={[editingData.parsedContent.styles?.overlayOpacity || 20]} max={100} onValueChange={([v]) => updateValue('styles.overlayOpacity', v)} />
-                  </div>
-                </div>
-
-                <div className="space-y-6 pt-6 border-t">
-                  <div className="flex items-center text-primary font-bold text-[9px] uppercase tracking-[0.2em]"><Layout className="w-3 h-3 mr-2 text-accent" /> Layout</div>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center"><Label className="text-[10px] uppercase font-bold opacity-50">Vertical Padding</Label><span className="text-[10px] font-mono">{editingData.parsedContent.styles?.paddingVertical || '128'}px</span></div>
-                    <Slider value={[parseInt(editingData.parsedContent.styles?.paddingVertical || '128')]} max={300} step={8} onValueChange={([val]) => updateValue('styles.paddingVertical', val.toString())} />
-                  </div>
-                  <div className="space-y-4">
-                    <Label className="text-[10px] uppercase font-bold opacity-50">Alignment</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {['left', 'center'].map(align => (
-                        <Button key={align} variant={editingData.parsedContent.styles?.alignment === align ? 'default' : 'outline'} className="rounded-none h-11 text-[10px] uppercase font-bold" onClick={() => updateValue('styles.alignment', align)}>{align}</Button>
-                      ))}
-                    </div>
                   </div>
                 </div>
               </TabsContent>

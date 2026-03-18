@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
 import { collection, query, limit, orderBy, doc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,16 +15,14 @@ import {
   Sparkles, 
   Scissors, 
   MessageSquare,
-  ArrowUpRight,
   Loader2,
-  Eye,
-  Layout
+  Eye
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 export default function AdminDashboard() {
   const db = useFirestore();
@@ -32,7 +31,7 @@ export default function AdminDashboard() {
 
   // Queries
   const pagesQuery = useMemoFirebase(() => collection(db, 'cms_pages'), [db]);
-  const blogQuery = useMemoFirebase(() => query(collection(db, 'blog_posts'), orderBy('updatedAt', 'desc'), limit(5)), [db]);
+  const blogQuery = useMemoFirebase(() => query(collection(db, 'blog_posts'), orderBy('publishedAt', 'desc'), limit(5)), [db]);
   const servicesQuery = useMemoFirebase(() => collection(db, 'services'), [db]);
   const testimonialsQuery = useMemoFirebase(() => collection(db, 'testimonials'), [db]);
 
@@ -40,6 +39,14 @@ export default function AdminDashboard() {
   const { data: posts, isLoading: postsLoading } = useCollection(blogQuery);
   const { data: services } = useCollection(servicesQuery);
   const { data: testimonials } = useCollection(testimonialsQuery);
+
+  // Logic to show seeding banner only if core architecture is missing
+  const isMissingCorePages = useMemo(() => {
+    if (pagesLoading) return false;
+    if (!pages || pages.length === 0) return true;
+    const required = ['home', 'services', 'blog'];
+    return !required.every(id => pages.find(p => p.id === id));
+  }, [pages, pagesLoading]);
 
   async function handleSeedSanctuary() {
     setIsSeeding(true);
@@ -59,58 +66,60 @@ export default function AdminDashboard() {
       const blogListId = 'initial-blog-list';
       const servicesListId = 'initial-services-list';
       
-      setDocumentNonBlocking(doc(db, 'cms_page_sections', heroId), {
-        id: heroId,
-        type: 'Hero',
-        content: JSON.stringify({ 
-          title: 'Elevate Your Natural Beauty', 
-          subtitle: 'Premium hair, skin, and wellness treatments tailored for you.', 
-          ctaText: 'Book Appointment', 
-          imageUrl: 'https://picsum.photos/seed/verde-hero-main/1920/1080',
-          backgroundType: 'image',
-          styles: { paddingVertical: '0', titleColor: '#ffffff', subtitleColor: '#C6A15B' }
-        })
-      }, { merge: true });
+      const sections = [
+        {
+          id: heroId,
+          type: 'Hero',
+          content: JSON.stringify({ 
+            title: 'Elevate Your Natural Beauty', 
+            subtitle: 'Premium hair, skin, and wellness treatments tailored for you.', 
+            ctaText: 'Book Appointment', 
+            imageUrl: 'https://picsum.photos/seed/verde-hero-main/1920/1080',
+            backgroundType: 'image',
+            styles: { paddingVertical: '0', titleColor: '#ffffff', subtitleColor: '#C6A15B' }
+          })
+        },
+        {
+          id: introId,
+          type: 'BrandIntro',
+          content: JSON.stringify({ 
+            title: 'The Verde Philosophy', 
+            subtitle: 'Pure. Elegant. Conscious.',
+            content: 'At Verde Salon, we blend modern beauty techniques with natural care. Our mission is to enhance your beauty while maintaining the health of your hair and skin.',
+            imageUrl: 'https://picsum.photos/seed/verde-about/800/1000'
+          })
+        },
+        {
+          id: craftId,
+          type: 'ServicesPreview',
+          content: JSON.stringify({ 
+            title: 'Signature Rituals', 
+            subtitle: 'Our Craft'
+          })
+        },
+        {
+          id: blogListId,
+          type: 'BlogListing',
+          content: JSON.stringify({ 
+            title: 'Rituals & Reflections', 
+            subtitle: 'The Journal',
+            description: 'Curated insights on beauty and intentional living.'
+          })
+        },
+        {
+          id: servicesListId,
+          type: 'ServicesListing',
+          content: JSON.stringify({ 
+            title: 'Signature Rituals', 
+            subtitle: 'The Menu',
+            description: 'Timeless techniques meets contemporary science.'
+          })
+        }
+      ];
 
-      setDocumentNonBlocking(doc(db, 'cms_page_sections', introId), {
-        id: introId,
-        type: 'BrandIntro',
-        content: JSON.stringify({ 
-          title: 'The Verde Philosophy', 
-          subtitle: 'Pure. Elegant. Conscious.',
-          content: 'At Verde Salon, we blend modern beauty techniques with natural care. Our mission is to enhance your beauty while maintaining the health of your hair and skin.',
-          imageUrl: 'https://picsum.photos/seed/verde-about/800/1000'
-        })
-      }, { merge: true });
-
-      setDocumentNonBlocking(doc(db, 'cms_page_sections', craftId), {
-        id: craftId,
-        type: 'ServicesPreview',
-        content: JSON.stringify({ 
-          title: 'Signature Rituals', 
-          subtitle: 'Our Craft'
-        })
-      }, { merge: true });
-
-      setDocumentNonBlocking(doc(db, 'cms_page_sections', blogListId), {
-        id: blogListId,
-        type: 'BlogListing',
-        content: JSON.stringify({ 
-          title: 'Rituals & Reflections', 
-          subtitle: 'The Journal',
-          description: 'Curated insights on beauty and intentional living.'
-        })
-      }, { merge: true });
-
-      setDocumentNonBlocking(doc(db, 'cms_page_sections', servicesListId), {
-        id: servicesListId,
-        type: 'ServicesListing',
-        content: JSON.stringify({ 
-          title: 'Signature Rituals', 
-          subtitle: 'The Menu',
-          description: 'Timeless techniques meets contemporary science.'
-        })
-      }, { merge: true });
+      for (const section of sections) {
+        setDocumentNonBlocking(doc(db, 'cms_page_sections', section.id), section, { merge: true });
+      }
 
       // 3. Seed All Pages
       setDocumentNonBlocking(doc(db, 'cms_pages', 'home'), {
@@ -145,25 +154,12 @@ export default function AdminDashboard() {
           slug: 'art-of-balayage',
           category: 'Hair',
           excerpt: 'Explore why this hand-painted technique remains the ultimate luxury in hair transformation.',
-          content: `# Understanding Balayage\n\nUnlike traditional highlights, balayage is an artistic approach to hair coloring. It involves hand-painting color onto the hair to create a soft, natural-looking effect.\n\n## Why We Love It\n\n1. Low Maintenance: The grow-out is seamless.\n2. Bespoke: Every application is tailored to your movement.\n3. Dimension: Adds depth and shine that foils can't replicate.`,
+          content: `# Understanding Balayage\n\nUnlike traditional highlights, balayage is an artistic approach to hair coloring. It involves hand-painting color onto the hair to create a soft, natural-looking effect.`,
           author: 'Elena Verde',
           isPublished: true,
           publishedAt: new Date().toISOString(),
           imageUrl: 'https://picsum.photos/seed/balayage/1200/800',
           seo: { title: 'Art of Balayage | Verde Salon', description: 'Expert insights into the balayage coloring technique.' }
-        },
-        {
-          id: 'blog-skincare',
-          title: 'Botanical Rituals for Radiant Skin',
-          slug: 'botanical-skincare-guide',
-          category: 'Skincare',
-          excerpt: 'Unlock the secrets of nature-inspired skincare for a healthier, more vibrant complexion.',
-          content: `# Nature's Secret\n\nYour skin is your largest organ, and it deserves the purest care. Botanical extracts provide powerful antioxidants without the harsh chemicals of synthetic products.\n\n## The Verde Routine\n\n* **Cleanse**: Use oil-based botanical cleansers.\n* **Tone**: Rosewater or witch hazel for balance.\n* **Nourish**: Jojoba or squalane for deep hydration.`,
-          author: 'Elena Verde',
-          isPublished: true,
-          publishedAt: new Date().toISOString(),
-          imageUrl: 'https://picsum.photos/seed/skincare/1200/800',
-          seo: { title: 'Botanical Skincare Guide | Verde Salon', description: 'Natural skincare routines for glowing skin.' }
         }
       ];
 
@@ -171,17 +167,11 @@ export default function AdminDashboard() {
         setDocumentNonBlocking(doc(db, 'blog_posts', blog.id), blog, { merge: true });
       }
 
-      toast({ title: "Sanctuary Initialized", description: "Your luxury digital space and dynamic pages are ready." });
+      toast({ title: "Sanctuary Initialized", description: "All pages and dynamic listings are ready." });
     } catch (e) {
       toast({ variant: "destructive", title: "Setup Failed", description: "Could not seed initial data." });
     } finally {
       setIsSeeding(false);
-    }
-  }
-
-  function handleDeleteBlog(id: string) {
-    if (confirm('Delete this blog entry?')) {
-      deleteDocumentNonBlocking(doc(db, 'blog_posts', id));
     }
   }
 
@@ -200,7 +190,7 @@ export default function AdminDashboard() {
           <p className="text-muted-foreground mt-2 font-light">Centralized management for Verde Salon.</p>
         </div>
         <div className="flex space-x-4">
-          <Button size="lg" className="bg-accent text-primary hover:bg-accent/90 rounded-none px-8 font-bold uppercase tracking-widest text-[10px] shadow-lg transition-all hover:-translate-y-1" asChild>
+          <Button size="lg" className="bg-accent text-primary hover:bg-accent/90 rounded-none px-8 font-bold uppercase tracking-widest text-[10px] shadow-lg" asChild>
             <Link href="/?edit=true">
               <Sparkles className="w-4 h-4 mr-2" /> Edit Entire Website
             </Link>
@@ -211,16 +201,16 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Action Banner for Beginners */}
-      {(!pages || pages.length === 0) && (
+      {/* Action Banner for Missing Architecture */}
+      {isMissingCorePages && (
         <Card className="border-none bg-accent text-primary shadow-2xl rounded-none relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
             <Sparkles className="w-32 h-32" />
           </div>
           <CardHeader className="flex flex-row items-center justify-between relative z-10">
             <div className="space-y-2">
-              <CardTitle className="text-3xl font-headline font-bold">First Step: Initialize Your Sanctuary</CardTitle>
-              <CardDescription className="text-primary/70 text-base max-w-xl">Your database is empty. Click to generate a luxury starter layout, all pages, rituals, and blogs.</CardDescription>
+              <CardTitle className="text-3xl font-headline font-bold">Initialize Your Sanctuary</CardTitle>
+              <CardDescription className="text-primary/70 text-base max-w-xl">Complete your architecture. This creates the Services, Blog, and Home page structures in your CMS.</CardDescription>
             </div>
             <Button 
               onClick={handleSeedSanctuary} 
@@ -228,7 +218,7 @@ export default function AdminDashboard() {
               className="bg-primary text-white hover:bg-primary/90 rounded-none uppercase tracking-[0.2em] text-[11px] font-bold h-16 px-12 shadow-2xl"
             >
               {isSeeding ? <Loader2 className="w-4 h-4 animate-spin mr-3" /> : <Sparkles className="w-4 h-4 mr-3" />}
-              {isSeeding ? "Building..." : "Seed Sanctuary Now"}
+              {isSeeding ? "Building..." : "Complete Architecture Now"}
             </Button>
           </CardHeader>
         </Card>
@@ -257,12 +247,8 @@ export default function AdminDashboard() {
         {/* Pages Management */}
         <Card className="border-none shadow-sm rounded-none overflow-hidden">
           <CardHeader className="bg-slate-50/50 border-b">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-2xl font-headline font-bold">Website Pages</CardTitle>
-                <CardDescription>Manage your visual identity and live content sections.</CardDescription>
-              </div>
-            </div>
+            <CardTitle className="text-2xl font-headline font-bold">Website Pages</CardTitle>
+            <CardDescription>Manage your visual identity and live content sections.</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             {pagesLoading ? (
@@ -280,8 +266,7 @@ export default function AdminDashboard() {
                 <TableBody>
                   {pages?.map((page: any) => {
                     const slug = page.slug || '/';
-                    const editUrl = `${slug.startsWith('/') ? slug : '/' + slug}?edit=true`;
-                    const previewUrl = slug.startsWith('/') ? slug : '/' + slug;
+                    const editUrl = `${slug === '/' ? '' : slug}?edit=true`;
                     
                     return (
                       <TableRow key={page.id} className="group hover:bg-slate-50/50 transition-colors">
@@ -297,7 +282,7 @@ export default function AdminDashboard() {
                             </Link>
                           </Button>
                           <Button variant="ghost" size="icon" asChild title="Preview Page" className="hover:bg-slate-100">
-                            <Link href={previewUrl} target="_blank">
+                            <Link href={slug} target="_blank">
                               <ExternalLink className="w-4 h-4 text-muted-foreground" />
                             </Link>
                           </Button>
@@ -305,72 +290,6 @@ export default function AdminDashboard() {
                       </TableRow>
                     );
                   })}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Blog Management */}
-        <Card className="border-none shadow-sm rounded-none overflow-hidden">
-          <CardHeader className="bg-slate-50/50 border-b flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl font-headline font-bold">Blogs</CardTitle>
-              <CardDescription>Manage your editorial content and SEO insights.</CardDescription>
-            </div>
-            <Button className="bg-primary hover:bg-primary/90 rounded-none text-[10px] font-bold uppercase tracking-widest px-6" asChild>
-              <Link href="/admin/blog/new"><Plus className="w-4 h-4 mr-2" /> New Blog</Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="p-0">
-            {postsLoading ? (
-              <div className="py-20 text-center animate-pulse text-muted-foreground uppercase tracking-widest text-xs">Syncing Stories...</div>
-            ) : (
-              <Table>
-                <TableHeader className="bg-slate-50/30">
-                  <TableRow>
-                    <TableHead className="px-8 h-12 uppercase tracking-widest text-[9px] font-bold">Article</TableHead>
-                    <TableHead className="h-12 uppercase tracking-widest text-[9px] font-bold">Category</TableHead>
-                    <TableHead className="h-12 uppercase tracking-widest text-[9px] font-bold">Status</TableHead>
-                    <TableHead className="text-right px-8 h-12 uppercase tracking-widest text-[9px] font-bold">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {posts?.map((post: any) => (
-                    <TableRow key={post.id} className="hover:bg-slate-50/50 transition-colors">
-                      <TableCell className="px-8 py-4">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-muted relative overflow-hidden flex-shrink-0 shadow-inner">
-                            {post.imageUrl && <Image src={post.imageUrl} alt="" fill className="object-cover grayscale" />}
-                          </div>
-                          <span className="font-medium font-headline text-base">{post.title}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="rounded-none text-[9px] uppercase font-bold tracking-widest border-slate-200">{post.category}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        {post.isPublished ? (
-                          <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none rounded-none text-[9px] uppercase font-bold px-3 py-1">Published</Badge>
-                        ) : (
-                          <Badge variant="outline" className="rounded-none text-[9px] uppercase font-bold px-3 py-1 text-slate-400">Draft</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right px-8 space-x-2">
-                        <Button variant="ghost" size="icon" asChild className="hover:bg-primary/5 text-primary">
-                          <Link href={`/admin/blog/${post.id}`}><Pencil className="w-4 h-4" /></Link>
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteBlog(post.id)} className="hover:bg-destructive/5 text-destructive">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {posts?.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={4} className="py-20 text-center text-muted-foreground italic font-light">No blog entries in your sanctuary yet.</TableCell>
-                    </TableRow>
-                  )}
                 </TableBody>
               </Table>
             )}
