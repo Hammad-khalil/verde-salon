@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy, limit } from 'firebase/firestore';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
 
 interface ServicesPreviewProps {
   title?: string;
@@ -17,17 +17,20 @@ export default function ServicesPreview({
 }: ServicesPreviewProps) {
   const db = useFirestore();
 
-  // Fetch the latest 4 published blog posts to act as "Rituals"
+  // Fetch the latest 10 blog posts. We remove the 'where' clause for 'isPublished' 
+  // to avoid the requirement for a composite index in Firestore.
   const blogQuery = useMemoFirebase(() => {
     return query(
       collection(db, 'blog_posts'), 
-      where('isPublished', '==', true),
       orderBy('publishedAt', 'desc'),
-      limit(4)
+      limit(10)
     );
   }, [db]);
 
-  const { data: blogs, isLoading, error } = useCollection(blogQuery);
+  const { data: fetchedBlogs, isLoading, error } = useCollection(blogQuery);
+
+  // Filter for published blogs and take the top 4 in memory.
+  const blogs = fetchedBlogs?.filter(blog => blog.isPublished).slice(0, 4) || [];
 
   return (
     <section className="py-32 bg-background">
@@ -45,7 +48,7 @@ export default function ServicesPreview({
             href="/blog" 
             className="group flex items-center text-[11px] font-bold uppercase tracking-[0.2em] text-primary hover:text-accent transition-all duration-300"
           >
-            Explore The Journal <ArrowRight className="ml-3 w-4 h-4 transition-transform group-hover:translate-x-2" />
+            Explore All Blogs <ArrowRight className="ml-3 w-4 h-4 transition-transform group-hover:translate-x-2" />
           </Link>
         </div>
 
@@ -59,7 +62,7 @@ export default function ServicesPreview({
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
-            {blogs?.map((blog) => (
+            {blogs.map((blog) => (
               <Link 
                 key={blog.id} 
                 href={`/blog/${blog.slug}`}
@@ -88,12 +91,12 @@ export default function ServicesPreview({
                     {blog.excerpt}
                   </p>
                   <div className="flex items-center text-[9px] font-bold uppercase tracking-[0.2em] text-accent pt-2">
-                    Read Ritual <ArrowRight className="ml-2 w-3 h-3 transition-transform group-hover:translate-x-1" />
+                    Read More <ArrowRight className="ml-2 w-3 h-3 transition-transform group-hover:translate-x-1" />
                   </div>
                 </div>
               </Link>
             ))}
-            {(!blogs || blogs.length === 0) && !isLoading && (
+            {blogs.length === 0 && !isLoading && (
               <div className="col-span-full py-20 text-center border-2 border-dashed border-primary/5 rounded-sm">
                 <p className="font-headline text-xl text-muted-foreground/40 italic">New stories are being crafted. Check back soon.</p>
               </div>
