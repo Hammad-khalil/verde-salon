@@ -11,6 +11,8 @@ import CTA from './CTA';
 import FormBlock from './FormBlock';
 import VideoBlock from './VideoBlock';
 import FAQSection from './FAQSection';
+import BlogListing from './BlogListing';
+import ServicesListing from './ServicesListing';
 import { useCollection, useFirestore, useMemoFirebase, useUser, setDocumentNonBlocking } from '@/firebase';
 import { collection, query, doc, getDoc } from 'firebase/firestore';
 import { useSearchParams, usePathname } from 'next/navigation';
@@ -60,7 +62,10 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
   };
 
   async function handleAddSectionAt(index: number, type: string) {
-    const pageId = pathname === '/' ? 'home' : pathname.replace('/', '');
+    let pageId = 'home';
+    if (pathname === '/services') pageId = 'services';
+    else if (pathname === '/blog') pageId = 'blog';
+    
     const newId = doc(collection(db, 'cms_page_sections')).id;
     
     const defaults: Record<string, any> = {
@@ -94,7 +99,7 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center" className="w-48 p-1 rounded-none">
-          {['Hero', 'TextBlock', 'BrandIntro', 'CTA', 'FeaturedWork', 'ServicesPreview', 'Testimonials'].map(type => (
+          {['Hero', 'TextBlock', 'BrandIntro', 'CTA', 'FeaturedWork', 'ServicesPreview', 'Testimonials', 'BlogListing', 'ServicesListing'].map(type => (
             <DropdownMenuItem key={type} className="text-[9px] font-bold uppercase tracking-wider py-2 cursor-pointer" onClick={() => handleAddSectionAt(index, type)}>
               {type.replace(/([A-Z])/g, ' $1')}
             </DropdownMenuItem>
@@ -112,7 +117,7 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
         try { data = JSON.parse(section.content || '{}'); } catch (e) { console.error("Parse Error:", e); }
         
         const SectionComponents: Record<string, any> = {
-          Hero, BrandIntro, TextBlock, ServicesPreview, FeaturedWork, Testimonials, InstagramPreview, CTA, FormBlock, VideoBlock, FAQSection
+          Hero, BrandIntro, TextBlock, ServicesPreview, FeaturedWork, Testimonials, InstagramPreview, CTA, FormBlock, VideoBlock, FAQSection, BlogListing, ServicesListing
         };
         const Component = SectionComponents[section.type];
 

@@ -100,8 +100,8 @@ export default function Navbar() {
               >
                 <Search className="w-4 h-4" />
               </Button>
-              <Button className="bg-primary hover:bg-accent text-white rounded-none px-10 py-6 text-[11px] font-bold tracking-[0.3em] uppercase transition-all duration-700 shadow-lg">
-                Reserve
+              <Button className="bg-primary hover:bg-accent text-white rounded-none px-10 py-6 text-[11px] font-bold tracking-[0.3em] uppercase transition-all duration-700 shadow-lg" asChild>
+                <Link href={getHref('/services')}>Reserve</Link>
               </Button>
             </div>
           </div>
@@ -124,7 +124,7 @@ export default function Navbar() {
               </SheetTrigger>
               <SheetContent side="right" className="w-full bg-background border-none p-0">
                 <div className="flex flex-col items-center justify-center h-full space-y-12">
-                   <Link href={getHref('/')} className="mb-8" onClick={() => {}}>
+                   <Link href={getHref('/')} className="mb-8">
                     {logoSettings?.url ? (
                       <img src={logoSettings.url} alt={siteName} style={{ height: '60px' }} />
                     ) : (
@@ -140,8 +140,8 @@ export default function Navbar() {
                       {link.name}
                     </Link>
                   ))}
-                  <Button className="w-full max-w-xs bg-primary hover:bg-accent text-white rounded-none py-8 text-[12px] font-bold tracking-[0.3em] uppercase transition-all duration-500">
-                    Reserve Ritual
+                  <Button className="w-full max-w-xs bg-primary hover:bg-accent text-white rounded-none py-8 text-[12px] font-bold tracking-[0.3em] uppercase transition-all duration-500" asChild>
+                    <Link href={getHref('/services')}>Reserve Ritual</Link>
                   </Button>
                 </div>
               </SheetContent>

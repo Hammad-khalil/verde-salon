@@ -52,10 +52,12 @@ export default function AdminDashboard() {
         logo: { placement: 'left', height: 40 }
       }, { merge: true });
 
-      // 2. Seed Page Sections
+      // 2. Seed Common Page Sections
       const heroId = 'initial-hero';
       const introId = 'initial-intro';
       const craftId = 'initial-craft';
+      const blogListId = 'initial-blog-list';
+      const servicesListId = 'initial-services-list';
       
       setDocumentNonBlocking(doc(db, 'cms_page_sections', heroId), {
         id: heroId,
@@ -90,12 +92,48 @@ export default function AdminDashboard() {
         })
       }, { merge: true });
 
-      // 3. Seed Home Page Layout
+      setDocumentNonBlocking(doc(db, 'cms_page_sections', blogListId), {
+        id: blogListId,
+        type: 'BlogListing',
+        content: JSON.stringify({ 
+          title: 'Rituals & Reflections', 
+          subtitle: 'The Journal',
+          description: 'Curated insights on beauty and intentional living.'
+        })
+      }, { merge: true });
+
+      setDocumentNonBlocking(doc(db, 'cms_page_sections', servicesListId), {
+        id: servicesListId,
+        type: 'ServicesListing',
+        content: JSON.stringify({ 
+          title: 'Signature Rituals', 
+          subtitle: 'The Menu',
+          description: 'Timeless techniques meets contemporary science.'
+        })
+      }, { merge: true });
+
+      // 3. Seed All Pages
       setDocumentNonBlocking(doc(db, 'cms_pages', 'home'), {
         id: 'home',
         title: 'Home',
         slug: '/',
         sectionIds: [heroId, introId, craftId],
+        isPublished: true
+      }, { merge: true });
+
+      setDocumentNonBlocking(doc(db, 'cms_pages', 'services'), {
+        id: 'services',
+        title: 'Services',
+        slug: '/services',
+        sectionIds: [servicesListId],
+        isPublished: true
+      }, { merge: true });
+
+      setDocumentNonBlocking(doc(db, 'cms_pages', 'blog'), {
+        id: 'blog',
+        title: 'Blog',
+        slug: '/blog',
+        sectionIds: [blogListId],
         isPublished: true
       }, { merge: true });
 
@@ -126,19 +164,6 @@ export default function AdminDashboard() {
           publishedAt: new Date().toISOString(),
           imageUrl: 'https://picsum.photos/seed/skincare/1200/800',
           seo: { title: 'Botanical Skincare Guide | Verde Salon', description: 'Natural skincare routines for glowing skin.' }
-        },
-        {
-          id: 'blog-barbering',
-          title: 'The Return of the Artisan Barber',
-          slug: 'artisan-barbering-trends',
-          category: 'Trends',
-          excerpt: 'Modern grooming meets old-world craftsmanship in our latest men\'s ritual series.',
-          content: `# The Modern Gentleman\n\nBarbering is undergoing a renaissance. It's no longer just about a quick trim; it's about the experience, the precision, and the ritual.\n\n## Our Signature Cut\n\nEvery session starts with a consultation, followed by a hot towel treatment and a precision cut using hand-forged tools.`,
-          author: 'Julian Thorne',
-          isPublished: true,
-          publishedAt: new Date().toISOString(),
-          imageUrl: 'https://picsum.photos/seed/barber/1200/800',
-          seo: { title: 'Modern Barbering Trends | Verde Salon', description: 'Exploring the artisan approach to men\'s grooming.' }
         }
       ];
 
@@ -146,7 +171,7 @@ export default function AdminDashboard() {
         setDocumentNonBlocking(doc(db, 'blog_posts', blog.id), blog, { merge: true });
       }
 
-      toast({ title: "Sanctuary Initialized", description: "Your luxury digital space and dynamic blogs are ready." });
+      toast({ title: "Sanctuary Initialized", description: "Your luxury digital space and dynamic pages are ready." });
     } catch (e) {
       toast({ variant: "destructive", title: "Setup Failed", description: "Could not seed initial data." });
     } finally {
@@ -195,7 +220,7 @@ export default function AdminDashboard() {
           <CardHeader className="flex flex-row items-center justify-between relative z-10">
             <div className="space-y-2">
               <CardTitle className="text-3xl font-headline font-bold">First Step: Initialize Your Sanctuary</CardTitle>
-              <CardDescription className="text-primary/70 text-base max-w-xl">Your database is empty. Click to generate a luxury starter layout, sample rituals, and your first blog post.</CardDescription>
+              <CardDescription className="text-primary/70 text-base max-w-xl">Your database is empty. Click to generate a luxury starter layout, all pages, rituals, and blogs.</CardDescription>
             </div>
             <Button 
               onClick={handleSeedSanctuary} 
