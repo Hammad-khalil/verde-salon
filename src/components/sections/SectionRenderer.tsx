@@ -79,12 +79,12 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
     const newId = doc(collection(db, 'cms_page_sections')).id;
     
     const defaults: Record<string, any> = {
-      Hero: { title: 'A New Awakening', subtitle: 'Experience true luxury.', ctaText: 'Explore', backgroundType: 'image', styles: { paddingVertical: '0', buttonType: 'primary' } },
+      Hero: { title: 'A New Awakening', subtitle: 'Experience true luxury.', ctaText: 'Explore', imageUrl: 'https://picsum.photos/seed/verde-luxury-hero/1920/1080', backgroundType: 'image', styles: { paddingVertical: '0', buttonType: 'primary' } },
       TextBlock: { title: 'Our Narrative', content: 'Share the soul of your brand...', alignment: 'center', styles: { paddingVertical: '128' } },
       CTA: { title: 'Join the Sanctuary', subtitle: 'Reserve your next ritual.', buttonText: 'Contact Us', styles: { paddingVertical: '96' } },
       VideoBlock: { title: 'Visual Motion', videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', styles: { paddingVertical: '96' } },
       FAQSection: { title: 'Ritual Knowledge', subtitle: 'Preparation' },
-      BrandIntro: { title: 'Our Philosophy', subtitle: 'Pure. Conscious.', content: 'Beauty refined through natural elegance...', buttonText: 'Discover', styles: { paddingVertical: '128' } }
+      BrandIntro: { title: 'Our Philosophy', subtitle: 'Pure. Conscious.', content: 'Beauty refined through natural elegance...', buttonText: 'Discover', imageUrl: 'https://picsum.photos/seed/verde-about/800/1000', styles: { paddingVertical: '128' } }
     };
 
     const newSection = {
@@ -136,7 +136,12 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       {isEditMode && <AddButton index={0} />}
       
       {orderedSections.map((section: any, idx: number) => {
-        const data = JSON.parse(section.content || '{}');
+        let data = {};
+        try {
+          data = JSON.parse(section.content || '{}');
+        } catch (e) {
+          console.error("Renderer: Failed to parse section content", e);
+        }
         
         let content;
         switch (section.type) {

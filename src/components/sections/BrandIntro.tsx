@@ -20,7 +20,7 @@ interface BrandIntroProps {
 export default function BrandIntro({ 
   title = "About Verde Salon", 
   content, 
-  imageUrl = "https://picsum.photos/seed/verde-about/800/1000",
+  imageUrl,
   altText = "Verde Salon Interior",
   subtitle = "The Essence of Luxury",
   buttonText = "Discover Our Story",
@@ -30,6 +30,9 @@ export default function BrandIntro({
   const paddingVal = styles?.paddingVertical || '128';
   const objectFit = styles?.objectFit || 'cover';
   
+  // Safe image fallback
+  const safeImageUrl = imageUrl || "https://picsum.photos/seed/verde-about/800/1000";
+
   return (
     <section 
       className="overflow-hidden"
@@ -86,7 +89,7 @@ export default function BrandIntro({
           <div className="relative order-1 lg:order-2 group">
             <div className="relative aspect-[4/5] overflow-hidden shadow-2xl">
               <Image 
-                src={imageUrl} 
+                src={safeImageUrl} 
                 alt={altText} 
                 fill 
                 className={cn(

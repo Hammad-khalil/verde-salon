@@ -24,7 +24,8 @@ import {
   Layers,
   Component,
   Upload,
-  Search
+  Search,
+  AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -36,15 +37,41 @@ import { useToast } from '@/hooks/use-toast';
  */
 const MediaField = ({ label, value, onChange, type = 'image' }: { label: string, value: string, onChange: (val: string) => void, type?: 'image' | 'video' }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const { toast } = useToast();
 
   const handleFile = (file: File) => {
     if (!file) return;
+    
+    // Firestore limit is 1MB. Base64 adds ~33% overhead. 
+    // We restrict to ~700KB to be safe and prevent browser memory crashes.
+    if (file.size > 700000) {
+      toast({
+        variant: "destructive",
+        title: "File too large",
+        description: "Please use an asset under 700KB for real-time synchronization.",
+      });
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
-      onChange(e.target?.result as string);
+      const result = e.target?.result;
+      if (typeof result === 'string') {
+        onChange(result);
+      }
+    };
+    reader.onerror = () => {
+      toast({
+        variant: "destructive",
+        title: "Read Error",
+        description: "Could not read the local file system.",
+      });
     };
     reader.readAsDataURL(file);
   };
+
+  const safeValue = value || '';
+  const inputId = `file-input-${label.replace(/\s+/g, '-')}-${type}`;
 
   return (
     <div className="space-y-3">
@@ -53,7 +80,7 @@ const MediaField = ({ label, value, onChange, type = 'image' }: { label: string,
         className={cn(
           "relative border-2 border-dashed rounded-lg p-6 transition-all flex flex-col items-center justify-center space-y-3 cursor-pointer group",
           isDragging ? "border-primary bg-primary/5" : "border-slate-200 hover:border-primary/50",
-          value ? "aspect-video" : "h-32"
+          safeValue ? "aspect-video" : "h-32"
         )}
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={() => setIsDragging(false)}
@@ -63,14 +90,16 @@ const MediaField = ({ label, value, onChange, type = 'image' }: { label: string,
           const file = e.dataTransfer.files[0];
           handleFile(file);
         }}
-        onClick={() => document.getElementById(`file-input-${label}`)?.click()}
+        onClick={() => document.getElementById(inputId)?.click()}
       >
-        {value ? (
+        {safeValue ? (
           <div className="relative w-full h-full">
             {type === 'image' ? (
-              <img src={value} className="w-full h-full object-contain rounded" alt="Preview" />
+              <img src={safeValue} className="w-full h-full object-contain rounded" alt="Preview" />
             ) : (
-              <video src={value} className="w-full h-full object-contain rounded" />
+              <div className="w-full h-full bg-slate-900 rounded flex items-center justify-center">
+                <Video className="w-8 h-8 text-white/20" />
+              </div>
             )}
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded">
               <p className="text-[10px] text-white font-bold uppercase tracking-widest">Replace Media</p>
@@ -87,7 +116,7 @@ const MediaField = ({ label, value, onChange, type = 'image' }: { label: string,
           </>
         )}
         <input 
-          id={`file-input-${label}`}
+          id={inputId}
           type="file" 
           className="hidden" 
           accept={type === 'image' ? "image/*" : "video/*"}
@@ -101,10 +130,10 @@ const MediaField = ({ label, value, onChange, type = 'image' }: { label: string,
         <Input 
           placeholder="Or paste external URL..."
           className="h-9 text-[10px] font-mono border-slate-200"
-          value={value?.startsWith('data:') ? '' : value}
+          value={safeValue.startsWith('data:') ? '' : safeValue}
           onChange={(e) => onChange(e.target.value)}
         />
-        {value && (
+        {safeValue && (
           <Button variant="outline" size="icon" className="h-9 w-9 shrink-0 text-destructive hover:bg-destructive/5" onClick={() => onChange('')}>
             <X className="w-3 h-3" />
           </Button>
@@ -144,9 +173,13 @@ export default function LiveEditorSidebar() {
 
   useEffect(() => {
     if (sectionData) {
-      const parsed = JSON.parse(sectionData.content || '{}');
-      if (!parsed.styles) parsed.styles = {};
-      setEditingData({ ...sectionData, parsedContent: parsed });
+      try {
+        const parsed = JSON.parse(sectionData.content || '{}');
+        if (!parsed.styles) parsed.styles = {};
+        setEditingData({ ...sectionData, parsedContent: parsed });
+      } catch (err) {
+        console.error("Editor: Failed to parse content", err);
+      }
     }
   }, [sectionData]);
 
@@ -165,14 +198,35 @@ export default function LiveEditorSidebar() {
 
   function handleSave() {
     if (!editingData || !selectedSectionId) return;
-    const finalSection = {
-      ...editingData,
-      content: JSON.stringify(editingData.parsedContent)
-    };
-    delete finalSection.parsedContent;
     
-    setDocumentNonBlocking(doc(db, 'cms_page_sections', selectedSectionId), finalSection, { merge: true });
-    toast({ title: "Design Synced", description: "Your changes are now live." });
+    try {
+      const contentString = JSON.stringify(editingData.parsedContent);
+      
+      // Safety check for Firestore write limits (1MB)
+      if (contentString.length > 1000000) {
+        toast({
+          variant: "destructive",
+          title: "Save Failed",
+          description: "This section is too large. Please reduce image sizes or use external links.",
+        });
+        return;
+      }
+
+      const finalSection = {
+        ...editingData,
+        content: contentString
+      };
+      delete finalSection.parsedContent;
+      
+      setDocumentNonBlocking(doc(db, 'cms_page_sections', selectedSectionId), finalSection, { merge: true });
+      toast({ title: "Design Synced", description: "Your changes are now live." });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to prepare data for sync.",
+      });
+    }
   }
 
   function handleExitEditor() {
@@ -195,9 +249,9 @@ export default function LiveEditorSidebar() {
             <p className="text-[9px] uppercase tracking-[0.2em] text-accent font-bold">Element ID: {selectedSectionId?.slice(0,8)}</p>
           </div>
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10" onClick={() => setSelectedSectionId(null)}>
+        <button className="p-2 hover:bg-white/10 rounded-full transition-colors" onClick={() => setSelectedSectionId(null)}>
           <X className="w-4 h-4" />
-        </Button>
+        </button>
       </div>
 
       {/* Editor Content Area */}
@@ -225,13 +279,13 @@ export default function LiveEditorSidebar() {
                         {key.includes('content') || key.includes('subtitle') ? (
                           <Textarea 
                             className="rounded-none min-h-[100px] text-sm border-slate-200 focus-visible:ring-primary/20"
-                            value={editingData.parsedContent[key]} 
+                            value={editingData.parsedContent[key] || ''} 
                             onChange={(e) => updateValue(key, e.target.value)}
                           />
                         ) : (
                           <Input 
                             className="rounded-none h-11 text-sm border-slate-200 focus-visible:ring-primary/20"
-                            value={editingData.parsedContent[key]} 
+                            value={editingData.parsedContent[key] || ''} 
                             onChange={(e) => updateValue(key, e.target.value)}
                           />
                         )}
@@ -291,7 +345,7 @@ export default function LiveEditorSidebar() {
                           <Input 
                             placeholder="/services or https://..."
                             className="rounded-none h-11 text-sm border-slate-200"
-                            value={editingData.parsedContent[key]} 
+                            value={editingData.parsedContent[key] || ''} 
                             onChange={(e) => updateValue(key, e.target.value)}
                           />
                         </div>
