@@ -4,9 +4,9 @@ rules_version = '2';
  * Verde Salon CMS Security Rules
  *
  * Core Philosophy:
- * This ruleset implements a robust administrative-access model. 
- * In this prototype, any user signed in via the 'password' provider is granted 
- * administrative privileges to allow for seamless initial setup and management.
+ * 1. Public content (Blogs, Services, Pages, etc.) is globally readable to ensure SEO and site functionality.
+ * 2. Administrative actions (Create, Update, Delete) are restricted to authenticated administrators.
+ * 3. In this prototype, any user signed in via the 'password' provider is granted admin rights.
  */
 
 service cloud.firestore {
@@ -31,20 +31,12 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isPublished() {
-      return resource != null && resource.data.isPublished == true;
-    }
-
-    function isApproved() {
-      return resource != null && resource.data.isApproved == true;
-    }
-
     // --- Rules ---
 
+    // Roles and Admin Users
     match /roles_admin/{adminUserId} {
-      allow get: if isAdmin() || isOwner(adminUserId);
-      allow list: if isAdmin();
-      allow create, update, delete: if isAdmin();
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
     match /admin_users/{adminUserId} {
@@ -55,76 +47,72 @@ service cloud.firestore {
       allow delete: if isAdmin() || (resource != null && isOwner(adminUserId));
     }
 
+    // Global Settings
     match /settings/global {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
+    // CMS Content - Publicly readable, admin writable
     match /cms_pages/{pageId} {
-      allow get: if isAdmin() || resource == null || isPublished();
-      allow list: if true; 
-      allow create, update, delete: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /cms_page_sections/{sectionId} {
-      allow get, list: if true; 
-      allow create, update, delete: if isAdmin();
+      allow read: if true; 
+      allow write: if isAdmin();
     }
 
     match /services/{serviceId} {
-      allow get: if isAdmin() || resource == null || isPublished();
-      allow list: if true;
-      allow create, update, delete: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
     
     match /service_categories/{categoryId} {
-      allow get: if isAdmin() || resource == null || isPublished();
-      allow list: if true;
-      allow create, update, delete: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /blog_posts/{postId} {
-      allow get: if isAdmin() || resource == null || isPublished();
-      allow list: if true; 
-      allow create, update, delete: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
     
     match /blog_categories/{categoryId} {
-      allow get: if isAdmin() || resource == null || isPublished();
-      allow list: if true;
-      allow create, update, delete: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
     
     match /blog_tags/{tagId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /testimonials/{testimonialId} {
-      allow get: if isAdmin() || resource == null || isApproved();
-      allow list: if true;
-      allow create, update, delete: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /gallery_images/{imageId} {
-      allow get: if isAdmin() || resource == null || isPublished();
-      allow list: if true;
-      allow create, update, delete: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /gallery_categories/{categoryId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /faqs/{faqId} {
-      allow get: if isAdmin() || resource == null || isPublished();
-      allow list: if true;
-      allow create, update, delete: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
+    // Form Submissions - Admin only
     match /form_submissions/{submissionId} {
-      allow get, list, create, update, delete: if isAdmin();
+      allow create: if true; // Allow anyone to submit a form
+      allow get, list, update, delete: if isAdmin();
     }
   }
 }
