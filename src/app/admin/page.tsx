@@ -196,27 +196,30 @@ export default function AdminDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pages?.map((page: any) => (
-                    <TableRow key={page.id} className="group">
-                      <TableCell className="font-bold font-headline text-lg">{page.title}</TableCell>
-                      <TableCell className="font-mono text-xs opacity-60">{page.slug || '/'}</TableCell>
-                      <TableCell>
-                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none rounded-none text-[10px] uppercase font-bold">Live</Badge>
-                      </TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Button variant="ghost" size="icon" asChild title="Live Visual Editor">
-                          <Link href={`${page.slug.startsWith('/') ? page.slug : '/' + page.slug}?edit=true`}>
-                            <Pencil className="w-4 h-4 text-primary" />
-                          </Link>
-                        </Button>
-                        <Button variant="ghost" size="icon" asChild title="Preview Page">
-                          <Link href={page.slug.startsWith('/') ? page.slug : '/' + page.slug} target="_blank">
-                            <ExternalLink className="w-4 h-4 text-muted-foreground" />
-                          </Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {pages?.map((page: any) => {
+                    const pageUrl = page.slug ? (page.slug.startsWith('/') ? page.slug : '/' + page.slug) : '/';
+                    return (
+                      <TableRow key={page.id} className="group">
+                        <TableCell className="font-bold font-headline text-lg">{page.title}</TableCell>
+                        <TableCell className="font-mono text-xs opacity-60">{page.slug || '/'}</TableCell>
+                        <TableCell>
+                          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none rounded-none text-[10px] uppercase font-bold">Live</Badge>
+                        </TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button variant="ghost" size="icon" asChild title="Live Visual Editor">
+                            <Link href={`${pageUrl}?edit=true`}>
+                              <Pencil className="w-4 h-4 text-primary" />
+                            </Link>
+                          </Button>
+                          <Button variant="ghost" size="icon" asChild title="Preview Page">
+                            <Link href={pageUrl} target="_blank">
+                              <ExternalLink className="w-4 h-4 text-muted-foreground" />
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             )}
