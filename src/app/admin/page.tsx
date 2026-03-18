@@ -87,6 +87,15 @@ export default function AdminDashboard() {
         isPublished: true
       }, { merge: true });
 
+      // 4. Seed Services Page
+      setDocumentNonBlocking(doc(db, 'cms_pages', 'services'), {
+        id: 'services',
+        title: 'Services',
+        slug: '/services',
+        sectionIds: [],
+        isPublished: true
+      }, { merge: true });
+
       toast({ title: "Sanctuary Initialized", description: "Your luxury digital space is ready." });
     } catch (e) {
       toast({ variant: "destructive", title: "Setup Failed", description: "Could not seed initial data." });
@@ -196,12 +205,12 @@ export default function AdminDashboard() {
                       </TableCell>
                       <TableCell className="text-right space-x-2">
                         <Button variant="ghost" size="icon" asChild title="Live Visual Editor">
-                          <Link href={`${page.slug || '/'}?edit=true`}>
+                          <Link href={`${page.slug.startsWith('/') ? page.slug : '/' + page.slug}?edit=true`}>
                             <Pencil className="w-4 h-4 text-primary" />
                           </Link>
                         </Button>
                         <Button variant="ghost" size="icon" asChild title="Preview Page">
-                          <Link href={page.slug || '/'} target="_blank">
+                          <Link href={page.slug.startsWith('/') ? page.slug : '/' + page.slug} target="_blank">
                             <ExternalLink className="w-4 h-4 text-muted-foreground" />
                           </Link>
                         </Button>
