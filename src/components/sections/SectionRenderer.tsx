@@ -43,9 +43,25 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
     return query(collection(db, 'cms_page_sections'));
   }, [db]);
 
-  const { data: allSections, isLoading } = useCollection(sectionsQuery);
+  const { data: allSections, isLoading, error } = useCollection(sectionsQuery);
 
-  if (isLoading) return <div className="py-20 text-center animate-pulse font-headline text-primary uppercase tracking-widest">Assembling Sanctuary...</div>;
+  if (isLoading) {
+    return (
+      <div className="py-40 text-center animate-pulse font-headline text-primary uppercase tracking-widest bg-background min-h-screen flex items-center justify-center">
+        Assembling Sanctuary...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-40 text-center text-muted-foreground bg-background min-h-screen flex flex-col items-center justify-center space-y-4">
+        <p className="font-headline text-xl">Sanctuary Syncing Issue</p>
+        <p className="text-sm opacity-60">The layout engine encountered an unexpected state. Please refresh or check your connection.</p>
+      </div>
+    );
+  }
+
   if (!allSections) return null;
 
   const orderedSections = sectionIds

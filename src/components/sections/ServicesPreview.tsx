@@ -27,7 +27,7 @@ export default function ServicesPreview({
     );
   }, [db]);
 
-  const { data: blogs, isLoading } = useCollection(blogQuery);
+  const { data: blogs, isLoading, error } = useCollection(blogQuery);
 
   return (
     <section className="py-32 bg-background">
@@ -53,6 +53,10 @@ export default function ServicesPreview({
           <div className="py-20 text-center animate-pulse font-headline text-primary uppercase tracking-widest">
             Gathering Insights...
           </div>
+        ) : error ? (
+          <div className="py-20 text-center border-2 border-dashed border-primary/5 rounded-sm">
+            <p className="font-headline text-xl text-muted-foreground/40 italic">We're updating our seasonal rituals. Check back shortly.</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
             {blogs?.map((blog) => (
@@ -71,9 +75,9 @@ export default function ServicesPreview({
                   />
                   <div className="absolute inset-0 bg-primary/5 group-hover:bg-transparent transition-colors duration-500" />
                   <div className="absolute top-4 left-4">
-                    <Badge className="bg-white/90 backdrop-blur-md text-primary text-[8px] font-bold uppercase tracking-widest border-none px-3 py-1">
+                    <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[8px] font-semibold transition-colors bg-white/90 backdrop-blur-md text-primary uppercase tracking-widest border-none px-3 py-1">
                       {blog.category}
-                    </Badge>
+                    </div>
                   </div>
                 </div>
                 <div className="p-8 space-y-4">
@@ -89,7 +93,7 @@ export default function ServicesPreview({
                 </div>
               </Link>
             ))}
-            {(!blogs || blogs.length === 0) && (
+            {(!blogs || blogs.length === 0) && !isLoading && (
               <div className="col-span-full py-20 text-center border-2 border-dashed border-primary/5 rounded-sm">
                 <p className="font-headline text-xl text-muted-foreground/40 italic">New stories are being crafted. Check back soon.</p>
               </div>
@@ -100,9 +104,3 @@ export default function ServicesPreview({
     </section>
   );
 }
-
-const Badge = ({ children, className }: { children: React.ReactNode, className?: string }) => (
-  <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${className}`}>
-    {children}
-  </div>
-);

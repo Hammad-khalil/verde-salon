@@ -6,7 +6,7 @@ rules_version = '2';
  * Core Philosophy:
  * 1. Public content (Blogs, Services, Pages, etc.) is globally readable (get and list).
  * 2. Administrative actions (Create, Update, Delete) are restricted to authenticated administrators.
- * 3. Any user signed in via the 'password' provider is granted admin rights for the prototype.
+ * 3. Users signed in via the 'password' provider are granted admin rights for the prototype.
  */
 
 service cloud.firestore {
@@ -19,9 +19,6 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      // Allow access if the user is signed in AND:
-      // 1. They used the 'password' provider (CMS standard)
-      // 2. OR they have an explicit record in the roles_admin collection
       return isSignedIn() && (
         request.auth.token.firebase.sign_in_provider == 'password' ||
         exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))
