@@ -4,6 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import AnalyticsManager from '@/components/analytics/AnalyticsManager';
 import ThemeManager from '@/components/theme/ThemeManager';
+import LiveEditorSidebar from '@/components/admin/LiveEditorSidebar';
+import { Suspense } from 'react';
 
 export const metadata: Metadata = {
   title: 'VERDE SALON | Timeless Beauty, Naturally Defined',
@@ -21,7 +23,12 @@ export default function RootLayout({
         <FirebaseClientProvider>
           <ThemeManager />
           <AnalyticsManager />
-          {children}
+          <div className="flex-grow flex flex-col relative">
+            {children}
+            <Suspense fallback={null}>
+              <LiveEditorSidebar />
+            </Suspense>
+          </div>
           <Toaster />
         </FirebaseClientProvider>
       </body>

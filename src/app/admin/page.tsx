@@ -1,40 +1,43 @@
 'use client';
 
-import { useState } from 'react';
-import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, query, limit, orderBy, doc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
-  TrendingUp, 
-  Users, 
-  MessageSquare, 
+  FileText, 
+  Plus, 
+  ExternalLink, 
+  Pencil, 
+  Trash2, 
+  Sparkles, 
   Scissors, 
-  FileText,
-  Plus,
+  MessageSquare,
   ArrowUpRight,
-  Sparkles,
-  Zap,
   Loader2,
-  HelpCircle,
   Eye
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 export default function AdminDashboard() {
   const db = useFirestore();
   const { toast } = useToast();
   const [isSeeding, setIsSeeding] = useState(false);
 
+  // Queries
+  const pagesQuery = useMemoFirebase(() => collection(db, 'cms_pages'), [db]);
+  const blogQuery = useMemoFirebase(() => query(collection(db, 'blog_posts'), orderBy('updatedAt', 'desc'), limit(5)), [db]);
   const servicesQuery = useMemoFirebase(() => collection(db, 'services'), [db]);
-  const blogQuery = useMemoFirebase(() => query(collection(db, 'blog_posts'), orderBy('updatedAt', 'desc'), limit(3)), [db]);
   const testimonialsQuery = useMemoFirebase(() => collection(db, 'testimonials'), [db]);
 
+  const { data: pages, isLoading: pagesLoading } = useCollection(pagesQuery);
+  const { data: posts, isLoading: postsLoading } = useCollection(blogQuery);
   const { data: services } = useCollection(servicesQuery);
-  const { data: posts } = useCollection(blogQuery);
   const { data: testimonials } = useCollection(testimonialsQuery);
 
   async function handleSeedSanctuary() {
@@ -51,10 +54,7 @@ export default function AdminDashboard() {
       // 2. Seed Page Sections
       const heroId = 'initial-hero';
       const introId = 'initial-intro';
-      const servicesId = 'initial-services';
-      const galleryId = 'initial-gallery';
-      const ctaId = 'initial-cta';
-
+      
       setDocumentNonBlocking(doc(db, 'cms_page_sections', heroId), {
         id: heroId,
         type: 'Hero',
@@ -62,7 +62,8 @@ export default function AdminDashboard() {
           title: 'Elevate Your Natural Beauty', 
           subtitle: 'Premium hair, skin, and wellness treatments tailored for you.', 
           ctaText: 'Book Appointment', 
-          imageUrl: 'https://picsum.photos/seed/verde-hero-main/1920/1080' 
+          imageUrl: 'https://picsum.photos/seed/verde-hero-main/1920/1080',
+          backgroundType: 'image'
         })
       }, { merge: true });
 
@@ -72,30 +73,8 @@ export default function AdminDashboard() {
         content: JSON.stringify({ 
           title: 'The Verde Philosophy', 
           subtitle: 'Pure. Elegant. Conscious.',
-          content: 'At Verde Salon, we blend modern beauty techniques with natural care. Our mission is to enhance your beauty while maintaining the health of your hair and skin.',
+          content: 'At Verde Salon, we blend modern beauty techniques with natural care.',
           imageUrl: 'https://picsum.photos/seed/verde-about/800/1000'
-        })
-      }, { merge: true });
-
-      setDocumentNonBlocking(doc(db, 'cms_page_sections', servicesId), {
-        id: servicesId,
-        type: 'ServicesPreview',
-        content: JSON.stringify({ title: 'Signature Rituals', subtitle: 'Our Craft' })
-      }, { merge: true });
-
-      setDocumentNonBlocking(doc(db, 'cms_page_sections', galleryId), {
-        id: galleryId,
-        type: 'FeaturedWork',
-        content: JSON.stringify({ title: 'Our Work', subtitle: 'The Verde Aesthetic' })
-      }, { merge: true });
-
-      setDocumentNonBlocking(doc(db, 'cms_page_sections', ctaId), {
-        id: ctaId,
-        type: 'CTA',
-        content: JSON.stringify({ 
-          title: 'Ready for a transformation?', 
-          subtitle: 'Book your experience today at Verde Salon.', 
-          buttonText: 'Book Your Visit' 
         })
       }, { merge: true });
 
@@ -103,29 +82,22 @@ export default function AdminDashboard() {
       setDocumentNonBlocking(doc(db, 'cms_pages', 'home'), {
         id: 'home',
         title: 'Home',
-        sectionIds: [heroId, introId, servicesId, galleryId, ctaId],
+        slug: '/',
+        sectionIds: [heroId, introId],
         isPublished: true
       }, { merge: true });
 
-      // 4. Seed Services
-      const starterServices = [
-        { id: 's1', title: 'Signature Haircut', category: 'Hair', price: '$85', duration: '60 min', description: 'A bespoke cutting experience.', isPublished: true, imageUrl: 'https://picsum.photos/seed/verde-cut/800/600' },
-        { id: 's2', title: 'Botanical Facial', category: 'Skin', price: '$120', duration: '75 min', description: 'Rejuvenating skin therapy.', isPublished: true, imageUrl: 'https://picsum.photos/seed/verde-facial/800/600' },
-        { id: 's3', title: 'Artisan Manicure', category: 'Nails', price: '$45', duration: '45 min', description: 'Minimalist nail refinement.', isPublished: true, imageUrl: 'https://picsum.photos/seed/verde-mani/800/600' }
-      ];
-
-      starterServices.forEach(s => {
-        setDocumentNonBlocking(doc(db, 'services', s.id), { ...s, updatedAt: new Date().toISOString() }, { merge: true });
-      });
-
-      toast({
-        title: "Sanctuary Initialized",
-        description: "Your luxury digital space is ready for you.",
-      });
+      toast({ title: "Sanctuary Initialized", description: "Your luxury digital space is ready." });
     } catch (e) {
       toast({ variant: "destructive", title: "Setup Failed", description: "Could not seed initial data." });
     } finally {
       setIsSeeding(false);
+    }
+  }
+
+  function handleDeleteBlog(id: string) {
+    if (confirm('Delete this journal entry?')) {
+      deleteDocumentNonBlocking(doc(db, 'blog_posts', id));
     }
   }
 
@@ -136,30 +108,30 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="space-y-12 animate-fade-in">
+    <div className="space-y-12 pb-20 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-headline font-bold text-foreground">Welcome back, Sanctuary Editor</h1>
-          <p className="text-muted-foreground mt-2 font-light">Managing the Verde Salon aesthetic across all platforms.</p>
+          <h1 className="text-4xl font-headline font-bold text-foreground">Sanctuary Command</h1>
+          <p className="text-muted-foreground mt-2 font-light">Centralized management for Verde Salon.</p>
         </div>
         <div className="flex space-x-4">
           <Button variant="outline" className="rounded-none border-primary/20" asChild>
-            <Link href="/" target="_blank"><Eye className="w-4 h-4 mr-2" /> View Live Site</Link>
+            <Link href="/" target="_blank"><Eye className="w-4 h-4 mr-2" /> Live Site</Link>
           </Button>
           <Button className="bg-primary hover:bg-primary/90 rounded-none" asChild>
-            <Link href="/admin/blog/new"><Plus className="w-4 h-4 mr-2" /> New Journal</Link>
+            <Link href="/admin/blog/new"><Plus className="w-4 h-4 mr-2" /> New Article</Link>
           </Button>
         </div>
       </div>
 
       {/* Action Banner for Beginners */}
-      {!services || services.length === 0 ? (
+      {(!pages || pages.length === 0) && (
         <Card className="border-none bg-accent text-primary shadow-xl rounded-none">
           <CardHeader className="flex flex-row items-center justify-between">
             <div className="space-y-1">
               <CardTitle className="text-2xl font-headline">First Step: Initialize Your Sanctuary</CardTitle>
-              <CardDescription className="text-primary/70">Your database is currently empty. Click the button to the right to generate a premium starter layout instantly.</CardDescription>
+              <CardDescription className="text-primary/70">Your database is currently empty. Click to generate a luxury starter layout.</CardDescription>
             </div>
             <Button 
               onClick={handleSeedSanctuary} 
@@ -171,102 +143,142 @@ export default function AdminDashboard() {
             </Button>
           </CardHeader>
         </Card>
-      ) : null}
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {stats.map((stat) => (
-          <Card key={stat.name} className="border-none shadow-sm overflow-hidden group rounded-none">
+          <Card key={stat.name} className="border-none shadow-sm rounded-none">
             <CardContent className="pt-8">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">{stat.name}</p>
                   <p className="text-4xl font-headline font-bold mt-2 text-foreground">{stat.value}</p>
                 </div>
-                <div className={`p-4 rounded-full ${stat.bg} ${stat.color} transition-transform group-hover:scale-110 duration-500`}>
+                <div className={`p-4 rounded-full ${stat.bg} ${stat.color}`}>
                   <stat.icon className="w-6 h-6" />
                 </div>
               </div>
             </CardContent>
-            <div className={`h-1 w-full ${stat.bg.replace('/10', '')}`} />
           </Card>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Recent Blog Posts */}
+      <div className="grid grid-cols-1 gap-12">
+        {/* Pages Management */}
         <Card className="border-none shadow-sm rounded-none">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="text-xl font-headline">Recent Journals</CardTitle>
-              <CardDescription>Stories currently shared with your clients.</CardDescription>
+              <CardTitle className="text-2xl font-headline">Website Pages</CardTitle>
+              <CardDescription>Manage your visual identity and live content sections.</CardDescription>
             </div>
-            <Button variant="ghost" size="sm" className="text-primary uppercase tracking-widest text-[10px] font-bold" asChild>
-              <Link href="/admin/blog">View All <ArrowUpRight className="ml-2 w-3 h-3" /></Link>
-            </Button>
           </CardHeader>
           <CardContent>
-            <div className="space-y-6">
-              {posts?.map((post: any) => (
-                <div key={post.id} className="flex items-center justify-between p-4 bg-muted/20 hover:bg-muted/40 transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-muted overflow-hidden flex-shrink-0 relative">
-                      {post.imageUrl && (
-                        <Image src={post.imageUrl} className="object-cover grayscale" alt="" fill sizes="48px" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-headline text-base leading-tight">{post.title}</p>
-                      <Badge variant="outline" className="mt-1 text-[9px] uppercase tracking-widest font-light h-5 rounded-none">
-                        {post.category}
-                      </Badge>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="icon" asChild>
-                    <Link href={`/admin/blog/${post.id}`}><Sparkles className="w-4 h-4 text-primary/40" /></Link>
-                  </Button>
-                </div>
-              ))}
-              {(!posts || posts.length === 0) && (
-                <div className="py-10 text-center text-muted-foreground italic font-light">No journal entries yet.</div>
-              )}
-            </div>
+            {pagesLoading ? (
+              <div className="py-10 text-center animate-pulse">Loading pages...</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Page Title</TableHead>
+                    <TableHead>Path</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pages?.map((page: any) => (
+                    <TableRow key={page.id} className="group">
+                      <TableCell className="font-bold font-headline text-lg">{page.title}</TableCell>
+                      <TableCell className="font-mono text-xs opacity-60">{page.slug || '/'}</TableCell>
+                      <TableCell>
+                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none rounded-none text-[10px] uppercase font-bold">Live</Badge>
+                      </TableCell>
+                      <TableCell className="text-right space-x-2">
+                        <Button variant="ghost" size="icon" asChild title="Live Visual Editor">
+                          <Link href={`${page.slug || '/'}?edit=true`}>
+                            <Pencil className="w-4 h-4 text-primary" />
+                          </Link>
+                        </Button>
+                        <Button variant="ghost" size="icon" asChild title="Preview Page">
+                          <Link href={page.slug || '/'} target="_blank">
+                            <ExternalLink className="w-4 h-4 text-muted-foreground" />
+                          </Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 
-        {/* Knowledge Base Card */}
-        <div className="space-y-8">
-          <Card className="bg-primary text-white border-none shadow-xl overflow-hidden relative rounded-none">
-            <CardHeader>
-              <CardTitle className="text-xl font-headline">Knowledge Base</CardTitle>
-              <CardDescription className="text-white/60">Manage your salon's expert FAQs.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm font-light leading-relaxed mb-6 opacity-90">
-                Help your clients understand your rituals before they even step foot in the sanctuary.
-              </p>
-              <Button variant="secondary" className="bg-white text-primary hover:bg-white/90 rounded-none uppercase tracking-[0.2em] text-[10px] font-bold w-full py-6" asChild>
-                <Link href="/admin/faq">Manage FAQs</Link>
-              </Button>
-            </CardContent>
-            <HelpCircle className="absolute -bottom-6 -right-6 w-32 h-32 opacity-10 rotate-12" />
-          </Card>
-
-          <Card className="border-none shadow-sm bg-muted/30 rounded-none">
-            <CardHeader>
-              <CardTitle className="text-xl font-headline">Quick Page Builder</CardTitle>
-              <CardDescription>Instantly jump into designing your pages.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex gap-4">
-              <Button className="bg-primary flex-1 h-12 rounded-none uppercase tracking-widest text-[10px]" asChild>
-                <Link href="/admin/pages">Design Home</Link>
-              </Button>
-              <Button variant="outline" className="flex-1 h-12 rounded-none border-primary/20 uppercase tracking-widest text-[10px]" asChild>
-                <Link href="/admin/pages">Design Services</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Blog Management */}
+        <Card className="border-none shadow-sm rounded-none">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl font-headline">The Journal (Blog)</CardTitle>
+              <CardDescription>Manage your editorial content and SEO insights.</CardDescription>
+            </div>
+            <Button className="bg-primary hover:bg-primary/90" asChild>
+              <Link href="/admin/blog/new"><Plus className="w-4 h-4 mr-2" /> New Article</Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {postsLoading ? (
+              <div className="py-10 text-center animate-pulse">Loading articles...</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {posts?.map((post: any) => (
+                    <TableRow key={post.id}>
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-muted relative overflow-hidden flex-shrink-0">
+                            {post.imageUrl && <Image src={post.imageUrl} alt="" fill className="object-cover grayscale" />}
+                          </div>
+                          <span className="font-medium">{post.title}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="rounded-none text-[10px] uppercase font-bold">{post.category}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {post.isPublished ? (
+                          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none rounded-none text-[10px] uppercase font-bold">Published</Badge>
+                        ) : (
+                          <Badge variant="outline" className="rounded-none text-[10px] uppercase font-bold">Draft</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right space-x-2">
+                        <Button variant="ghost" size="icon" asChild>
+                          <Link href={`/admin/blog/${post.id}`}><Pencil className="w-4 h-4 text-primary" /></Link>
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteBlog(post.id)}>
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {posts?.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="py-10 text-center text-muted-foreground italic">No journal entries yet.</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
