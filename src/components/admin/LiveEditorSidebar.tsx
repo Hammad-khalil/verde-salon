@@ -32,7 +32,7 @@ const isMediaKey = (key: string) => {
   const k = key.toLowerCase();
   return k.includes('image') || k.includes('photo') || k.includes('thumb') || 
          k.includes('logo') || k.includes('icon') || k.includes('video') || 
-         k.includes('src') || k.includes('media') || (k.includes('url') && !k.includes('cta'));
+         k.includes('src') || k.includes('media') || k.includes('bg') || (k.includes('url') && !k.includes('cta'));
 };
 
 const isLinkKey = (key: string) => {
@@ -141,6 +141,7 @@ const MediaField = ({
 };
 
 export default function LiveEditorSidebar() {
+  // All hooks must be at the top level and always called in the same order
   const { user } = useUser();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -148,9 +149,10 @@ export default function LiveEditorSidebar() {
   const { toast } = useToast();
   const db = useFirestore();
   
-  const isEditMode = searchParams.get('edit') === 'true' && !!user;
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [editingData, setEditingData] = useState<any>(null);
+
+  const isEditMode = useMemo(() => searchParams.get('edit') === 'true' && !!user, [searchParams, user]);
 
   useEffect(() => {
     const handleSectionSelect = (e: any) => { if (isEditMode) setSelectedSectionId(e.detail.id); };
@@ -213,7 +215,6 @@ export default function LiveEditorSidebar() {
     toast({ title: "Sanctuary Synced", description: "Live updates published." });
   }
 
-  // Moved conditional return to the bottom to avoid Rules of Hooks violation
   if (!isEditMode) return null;
 
   return (
@@ -248,7 +249,7 @@ export default function LiveEditorSidebar() {
                   {allFields.filter(f => f.type === 'string' && !isMediaKey(f.key) && !isLinkKey(f.key) && f.key !== 'backgroundType').map(f => (
                     <div key={f.path} className="space-y-2">
                       <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">{f.path.split('.').pop()?.replace(/([A-Z])/g, ' $1')}</Label>
-                      {f.value.length > 50 || f.path.includes('content') ? (
+                      {(f.value && f.value.length > 50) || f.path.includes('content') ? (
                         <Textarea className="rounded-none min-h-[100px] text-sm border-slate-200" value={f.value} onChange={(e) => updateValue(f.path, e.target.value)} />
                       ) : (
                         <Input className="rounded-none h-11 text-sm border-slate-200" value={f.value} onChange={(e) => updateValue(f.path, e.target.value)} />

@@ -17,7 +17,7 @@ import { useCollection, useFirestore, useMemoFirebase, useUser, setDocumentNonBl
 import { collection, query, doc, getDoc } from 'firebase/firestore';
 import { useSearchParams, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Plus, Edit2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -36,10 +36,11 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
   const { user } = useUser();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const isEditMode = searchParams.get('edit') === 'true' && !!user;
   const db = useFirestore();
   const { toast } = useToast();
+  
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
+  const isEditMode = useMemo(() => searchParams.get('edit') === 'true' && !!user, [searchParams, user]);
   
   const sectionsQuery = useMemoFirebase(() => query(collection(db, 'cms_page_sections')), [db]);
   const { data: allSections, isLoading } = useCollection(sectionsQuery);
@@ -63,8 +64,8 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
 
   async function handleAddSectionAt(index: number, type: string) {
     let pageId = 'home';
-    if (pathname === '/services') pageId = 'services';
-    else if (pathname === '/blog') pageId = 'blog';
+    if (pathname.includes('services')) pageId = 'services';
+    else if (pathname.includes('blog')) pageId = 'blog';
     
     const newId = doc(collection(db, 'cms_page_sections')).id;
     
