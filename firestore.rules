@@ -6,7 +6,7 @@ rules_version = '2';
  * Core Philosophy:
  * 1. Public content (Blogs, Services, Pages, etc.) is globally readable (get and list).
  * 2. Administrative actions (Create, Update, Delete) are restricted to authenticated administrators.
- * 3. Users signed in via the 'password' provider are granted admin rights for the prototype.
+ * 3. Users signed in via the 'password' provider or with specific verified emails are granted admin rights.
  */
 
 service cloud.firestore {
@@ -21,6 +21,8 @@ service cloud.firestore {
     function isAdmin() {
       return isSignedIn() && (
         request.auth.token.firebase.sign_in_provider == 'password' ||
+        request.auth.token.email == 'hammad.khalil.work@gmail.com' ||
+        request.auth.token.email == 'editor@verdesalon.com' ||
         exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))
       );
     }
