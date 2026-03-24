@@ -21,9 +21,14 @@ export default function BlogPage() {
   // STRICT SEPARATION: Public view ONLY uses publishedSectionIds
   const sectionIds = useMemo(() => {
     if (!pageData) return [];
-    return isEditMode 
-      ? (pageData.sectionIds || []) 
-      : (pageData.publishedSectionIds || []);
+    if (isEditMode) return pageData.sectionIds || [];
+    
+    // ⚠️ CRITICAL: Migration Fallback
+    if (pageData.publishedSectionIds === undefined) {
+      return pageData.sectionIds || [];
+    }
+    
+    return pageData.publishedSectionIds || [];
   }, [pageData, isEditMode]);
 
   return (

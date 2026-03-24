@@ -24,11 +24,16 @@ export default function Home() {
   // STRICT SEPARATION: Public view ONLY uses publishedSectionIds
   const sectionIds = useMemo(() => {
     if (!pageData) return [];
-    // If we are in edit mode, we show draft sections. 
-    // If public, we strictly show published sections.
-    return isEditMode 
-      ? (pageData.sectionIds || []) 
-      : (pageData.publishedSectionIds || []);
+    if (isEditMode) return pageData.sectionIds || [];
+    
+    // ⚠️ CRITICAL: Migration Fallback
+    // If publishedSectionIds is undefined (legacy data), treat current sectionIds as published.
+    // Once the user clicks 'Publish', this field will be an array (even if empty).
+    if (pageData.publishedSectionIds === undefined) {
+      return pageData.sectionIds || [];
+    }
+    
+    return pageData.publishedSectionIds || [];
   }, [pageData, isEditMode]);
 
   return (

@@ -52,12 +52,13 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       .filter(Boolean);
   }, [allSections, sectionIds]);
 
-  // ⚠️ CRITICAL: Ensure we only return null if we explicitly have no sections to render
-  if (!sectionIds || sectionIds.length === 0) return null;
-
+  // ⚠️ CRITICAL: Check loading first to prevent premature fallback triggering
   if (isLoading) {
     return <div className="h-screen flex items-center justify-center animate-pulse font-headline text-primary tracking-widest bg-background">VERDE</div>;
   }
+
+  // Ensure we only return null if we explicitly have no section IDs to render
+  if (!sectionIds || sectionIds.length === 0) return null;
 
   const handleSectionClick = (id: string) => {
     if (isEditMode) {
@@ -125,9 +126,11 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       {orderedSections.map((section: any, idx: number) => {
         let data = {};
         try { 
-          // STRICT SEPARATION: Only show publishedContent to public
-          // We provide a fallback only if it matches the draft to prevent empty holes during sync
-          const contentToRender = isEditMode ? section.content : (section.publishedContent || section.content);
+          // ⚠️ CRITICAL: Migration Fallback
+          // Only show publishedContent to public, but fallback to content if publishedContent is undefined (legacy)
+          const contentToRender = isEditMode 
+            ? section.content 
+            : (section.publishedContent !== undefined ? section.publishedContent : section.content);
           
           if (!contentToRender && !isEditMode) return null;
           
