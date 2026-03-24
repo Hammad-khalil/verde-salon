@@ -17,7 +17,7 @@ import { useCollection, useFirestore, useMemoFirebase, useUser, setDocumentNonBl
 import { collection, query, doc, getDoc } from 'firebase/firestore';
 import { useSearchParams, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Plus, Edit2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -52,9 +52,16 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       .filter(Boolean);
   }, [allSections, sectionIds]);
 
+  // Signal 100% progress when sections are ready
+  useEffect(() => {
+    if (!isLoading && allSections) {
+      window.dispatchEvent(new CustomEvent('verde-progress', { detail: { progress: 100 } }));
+    }
+  }, [isLoading, allSections]);
+
   // ⚠️ CRITICAL: Check loading first to prevent premature fallback triggering
   if (isLoading) {
-    return <div className="h-screen flex items-center justify-center animate-pulse font-headline text-primary tracking-widest bg-background">VERDE</div>;
+    return <div className="min-h-screen bg-background" />;
   }
 
   // Ensure we only return null if we explicitly have no section IDs to render

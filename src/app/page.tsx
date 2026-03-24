@@ -7,7 +7,7 @@ import SEOManager from '@/components/seo/SEOManager';
 import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useSearchParams } from 'next/navigation';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 
 export default function Home() {
   const db = useFirestore();
@@ -21,14 +21,19 @@ export default function Home() {
 
   const { data: pageData, isLoading } = useDoc(pageRef);
 
+  // Emit progress once page document is resolved
+  useEffect(() => {
+    if (!isLoading) {
+      window.dispatchEvent(new CustomEvent('verde-progress', { detail: { progress: 50 } }));
+    }
+  }, [isLoading]);
+
   // STRICT SEPARATION: Public view ONLY uses publishedSectionIds
   const sectionIds = useMemo(() => {
     if (!pageData) return [];
     if (isEditMode) return pageData.sectionIds || [];
     
     // ⚠️ CRITICAL: Migration Fallback
-    // If publishedSectionIds is undefined (legacy data), treat current sectionIds as published.
-    // Once the user clicks 'Publish', this field will be an array (even if empty).
     if (pageData.publishedSectionIds === undefined) {
       return pageData.sectionIds || [];
     }
@@ -47,9 +52,8 @@ export default function Home() {
       
       <main className="flex-grow">
         {isLoading ? (
-          <div className="h-screen flex items-center justify-center animate-pulse font-headline text-primary tracking-widest bg-background">
-            VERDE
-          </div>
+          /* Visual space maintained for preloader blur effect */
+          <div className="h-screen bg-background" />
         ) : pageData ? (
           sectionIds.length > 0 ? (
             <SectionRenderer sectionIds={sectionIds} />
@@ -65,7 +69,6 @@ export default function Home() {
             </div>
           )
         ) : (
-          /* Case where document doesn't exist yet */
           <div className="py-40 text-center text-muted-foreground flex flex-col items-center justify-center space-y-6">
             <p className="font-headline text-2xl">Architecture Pending</p>
             <p className="text-sm font-light max-w-md mx-auto">

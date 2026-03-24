@@ -7,7 +7,7 @@ import SEOManager from '@/components/seo/SEOManager';
 import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useSearchParams } from 'next/navigation';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 
 export default function BlogPage() {
   const db = useFirestore();
@@ -17,6 +17,13 @@ export default function BlogPage() {
 
   const pageRef = useMemoFirebase(() => doc(db, 'cms_pages', 'blog'), [db]);
   const { data: pageData, isLoading } = useDoc(pageRef);
+
+  // Emit progress once page document is resolved
+  useEffect(() => {
+    if (!isLoading) {
+      window.dispatchEvent(new CustomEvent('verde-progress', { detail: { progress: 50 } }));
+    }
+  }, [isLoading]);
 
   // STRICT SEPARATION: Public view ONLY uses publishedSectionIds
   const sectionIds = useMemo(() => {
@@ -41,9 +48,7 @@ export default function BlogPage() {
       
       <main className="flex-grow">
         {isLoading ? (
-          <div className="h-screen flex items-center justify-center animate-pulse font-headline text-primary tracking-widest bg-background">
-            VERDE JOURNAL
-          </div>
+          <div className="h-screen bg-background" />
         ) : pageData ? (
           sectionIds.length > 0 ? (
             <SectionRenderer sectionIds={sectionIds} />
