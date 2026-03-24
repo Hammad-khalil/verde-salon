@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -9,20 +8,103 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Save, Palette, Type, ImageIcon, Layout } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { Save, Palette, Type, ImageIcon, Layout, Upload, Trash2, Globe, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+
+const LogoMediaField = ({ 
+  label, 
+  value, 
+  onChange 
+}: { 
+  label: string, 
+  value: string, 
+  onChange: (val: string) => void 
+}) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const { toast } = useToast();
+
+  const handleFile = (file: File) => {
+    if (!file) return;
+    if (file.size > 800000) {
+      toast({ variant: "destructive", title: "Asset too large", description: "Please use files under 800KB." });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result;
+      if (typeof result === 'string') onChange(result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div className="space-y-3">
+      <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">{label}</Label>
+      <div 
+        className={cn(
+          "relative border-2 border-dashed rounded-lg transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden bg-slate-50/50 min-h-[160px]",
+          isDragging ? "border-primary bg-primary/5" : "border-slate-200 hover:border-primary/30"
+        )}
+        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDragging(false);
+          const file = e.dataTransfer.files[0];
+          handleFile(file);
+        }}
+        onClick={() => document.getElementById('logo-upload')?.click()}
+      >
+        {value ? (
+          <div className="relative w-full h-full p-4 flex items-center justify-center group">
+            <img src={value} className="max-h-32 object-contain" alt="Logo Preview" />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-lg">
+              <Upload className="w-6 h-6 text-white" />
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center space-y-2 opacity-40">
+            <Upload className="w-8 h-8" />
+            <p className="text-xs font-bold uppercase tracking-widest">Drop logo here or click to browse</p>
+          </div>
+        )}
+        <input id="logo-upload" type="file" className="hidden" accept="image/*" onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFile(file);
+        }} />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-[9px] opacity-40 uppercase font-bold">Or use a Direct URL</Label>
+        <Input 
+          placeholder="https://..."
+          className="h-9 text-xs rounded-none"
+          value={value?.startsWith('data:') ? 'Local Asset Uploaded' : value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      </div>
+    </div>
+  );
+};
 
 export default function BrandingEditor() {
   const db = useFirestore();
   const { toast } = useToast();
   const settingsRef = useMemoFirebase(() => doc(db, 'settings', 'global'), [db]);
   const { data: settings, isLoading } = useDoc(settingsRef);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const [form, setForm] = useState({
     siteName: 'Verde Salon',
     logoUrl: '',
     logoHeight: 40,
+    logoWidth: 0,
     logoPlacement: 'left',
+    logoPadding: 0,
+    logoMargin: 0,
+    hoverScale: 100,
+    hoverOpacity: 100,
     primaryColor: '#4A6741',
     backgroundColor: '#F4F6F5',
     accentColor: '#A8B89E',
@@ -36,7 +118,12 @@ export default function BrandingEditor() {
         siteName: settings.siteName || 'Verde Salon',
         logoUrl: settings.logo?.url || '',
         logoHeight: settings.logo?.height || 40,
+        logoWidth: settings.logo?.width || 0,
         logoPlacement: settings.logo?.placement || 'left',
+        logoPadding: settings.logo?.padding || 0,
+        logoMargin: settings.logo?.margin || 0,
+        hoverScale: settings.logo?.hoverScale || 100,
+        hoverOpacity: settings.logo?.hoverOpacity || 100,
         primaryColor: settings.colors?.primary || '#4A6741',
         backgroundColor: settings.colors?.background || '#F4F6F5',
         accentColor: settings.colors?.accent || '#A8B89E',
@@ -46,14 +133,19 @@ export default function BrandingEditor() {
     }
   }, [settings]);
 
-  function handleSave() {
+  function handleSaveDraft() {
     setDocumentNonBlocking(settingsRef, {
       ...settings,
       siteName: form.siteName,
       logo: {
         url: form.logoUrl,
         height: form.logoHeight,
-        placement: form.logoPlacement
+        width: form.logoWidth,
+        placement: form.logoPlacement,
+        padding: form.logoPadding,
+        margin: form.logoMargin,
+        hoverScale: form.hoverScale,
+        hoverOpacity: form.hoverOpacity
       },
       colors: {
         primary: form.primaryColor,
@@ -66,10 +158,48 @@ export default function BrandingEditor() {
       }
     }, { merge: true });
 
-    toast({
-      title: "Identity Published",
-      description: "Global theme and assets have been updated.",
-    });
+    toast({ title: "Draft Saved", description: "Changes are visible in Architect Mode." });
+  }
+
+  async function handlePublish() {
+    setIsPublishing(true);
+    try {
+      const publishedConfig = {
+        siteName: form.siteName,
+        logo: {
+          url: form.logoUrl,
+          height: form.logoHeight,
+          width: form.logoWidth,
+          placement: form.logoPlacement,
+          padding: form.logoPadding,
+          margin: form.logoMargin,
+          hoverScale: form.hoverScale,
+          hoverOpacity: form.hoverOpacity
+        },
+        colors: {
+          primary: form.primaryColor,
+          background: form.backgroundColor,
+          accent: form.accentColor
+        },
+        typography: {
+          headline: form.headlineFont,
+          body: form.bodyFont
+        }
+      };
+
+      setDocumentNonBlocking(settingsRef, {
+        ...settings,
+        ...publishedConfig,
+        published: publishedConfig,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      toast({ title: "Identity Published", description: "Your brand changes are now live for everyone." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Publish Failed" });
+    } finally {
+      setIsPublishing(false);
+    }
   }
 
   if (isLoading) return <div className="py-20 text-center animate-pulse">Loading Identity...</div>;
@@ -78,154 +208,221 @@ export default function BrandingEditor() {
     <div className="space-y-8 pb-20">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-headline font-bold text-primary">Branding & Identity</h1>
-          <p className="text-muted-foreground">Manage your logo, colors, and typography globally.</p>
+          <h1 className="text-3xl font-headline font-bold text-primary tracking-tight">Identity Architect</h1>
+          <p className="text-muted-foreground mt-1">Refine your logo and global aesthetic signature.</p>
         </div>
-        <Button className="bg-primary hover:bg-primary/90" onClick={handleSave}>
-          <Save className="w-4 h-4 mr-2" /> Publish Branding
-        </Button>
+        <div className="flex space-x-3">
+          <Button variant="outline" onClick={handleSaveDraft} className="border-primary/20">
+            <Save className="w-4 h-4 mr-2" /> Save Draft
+          </Button>
+          <Button className="bg-primary hover:bg-primary/90 min-w-[160px]" onClick={handlePublish} disabled={isPublishing}>
+            {isPublishing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Globe className="w-4 h-4 mr-2" />}
+            Publish Live
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Logo & Site Info */}
-        <Card className="border-none shadow-sm">
-          <CardHeader>
-            <div className="flex items-center space-x-2">
-              <ImageIcon className="w-5 h-5 text-primary" />
-              <CardTitle>Brand Assets</CardTitle>
-            </div>
-            <CardDescription>Logo placement and site naming</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label>Site Name</Label>
-              <Input 
-                value={form.siteName} 
-                onChange={(e) => setForm({...form, siteName: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Logo Image URL</Label>
-              <Input 
-                value={form.logoUrl} 
-                onChange={(e) => setForm({...form, logoUrl: e.target.value})}
-                placeholder="https://..."
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Logo Height (px)</Label>
-                <Input 
-                  type="number"
-                  value={form.logoHeight} 
-                  onChange={(e) => setForm({...form, logoHeight: parseInt(e.target.value)})}
-                />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          {/* Logo Management */}
+          <Card className="border-none shadow-sm overflow-hidden">
+            <CardHeader className="bg-slate-50/50 border-b">
+              <div className="flex items-center space-x-2">
+                <ImageIcon className="w-5 h-5 text-primary" />
+                <CardTitle>Logo Engine</CardTitle>
               </div>
-              <div className="space-y-2">
-                <Label>Navbar Placement</Label>
-                <Select 
-                  value={form.logoPlacement} 
-                  onValueChange={(val) => setForm({...form, logoPlacement: val})}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="left">Left Aligned</SelectItem>
-                    <SelectItem value="center">Centered</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              <CardDescription>Upload and style your brand anchor</CardDescription>
+            </CardHeader>
+            <CardContent className="p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div className="space-y-6">
+                  <LogoMediaField 
+                    label="Brand Logo" 
+                    value={form.logoUrl} 
+                    onChange={(val) => setForm({...form, logoUrl: val})} 
+                  />
+                  <div className="space-y-4">
+                    <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Navbar Alignment</Label>
+                    <Select value={form.logoPlacement} onValueChange={(v) => setForm({...form, logoPlacement: v})}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="left">Left Aligned</SelectItem>
+                        <SelectItem value="center">Centered Hub</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
 
-        {/* Color Palette */}
-        <Card className="border-none shadow-sm">
-          <CardHeader>
-            <div className="flex items-center space-x-2">
-              <Palette className="w-5 h-5 text-primary" />
-              <CardTitle>Color Palette</CardTitle>
-            </div>
-            <CardDescription>Nature-inspired theme hex codes</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 rounded-lg border shadow-sm" style={{ backgroundColor: form.primaryColor }} />
-              <div className="flex-grow space-y-1">
-                <Label>Primary (Forest Green)</Label>
-                <Input value={form.primaryColor} onChange={(e) => setForm({...form, primaryColor: e.target.value})} />
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 rounded-lg border shadow-sm" style={{ backgroundColor: form.backgroundColor }} />
-              <div className="flex-grow space-y-1">
-                <Label>Background (Off-White)</Label>
-                <Input value={form.backgroundColor} onChange={(e) => setForm({...form, backgroundColor: e.target.value})} />
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 rounded-lg border shadow-sm" style={{ backgroundColor: form.accentColor }} />
-              <div className="flex-grow space-y-1">
-                <Label>Accent (Sage)</Label>
-                <Input value={form.accentColor} onChange={(e) => setForm({...form, accentColor: e.target.value})} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                <div className="space-y-8">
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-[10px] font-bold uppercase opacity-60">Dimensions (px)</Label>
+                      <span className="text-[10px] font-mono opacity-40">{form.logoHeight}H × {form.logoWidth || 'Auto'}W</span>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <p className="text-[9px] opacity-50 uppercase">Height</p>
+                        <Slider value={[form.logoHeight]} max={150} min={20} step={2} onValueChange={([v]) => setForm({...form, logoHeight: v})} />
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-[9px] opacity-50 uppercase">Width (Set 0 for Auto)</p>
+                        <Slider value={[form.logoWidth]} max={400} min={0} step={5} onValueChange={([v]) => setForm({...form, logoWidth: v})} />
+                      </div>
+                    </div>
+                  </div>
 
-        {/* Typography */}
-        <Card className="border-none shadow-sm">
-          <CardHeader>
-            <div className="flex items-center space-x-2">
-              <Type className="w-5 h-5 text-primary" />
-              <CardTitle>Typography</CardTitle>
-            </div>
-            <CardDescription>Luxury Google Font pairings</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label>Headline Font (Serif)</Label>
-              <Input 
-                placeholder="e.g., Playfair Display" 
-                value={form.headlineFont} 
-                onChange={(e) => setForm({...form, headlineFont: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Body Font (Sans-Serif)</Label>
-              <Input 
-                placeholder="e.g., PT Sans" 
-                value={form.bodyFont} 
-                onChange={(e) => setForm({...form, bodyFont: e.target.value})}
-              />
-            </div>
-            <div className="p-4 bg-muted/30 border border-dashed rounded-lg">
-              <p className="text-[10px] uppercase font-bold tracking-widest opacity-50 mb-2">Preview</p>
-              <h3 className="text-2xl mb-2" style={{ fontFamily: `"${form.headlineFont}", serif` }}>Timeless Elegance</h3>
-              <p className="text-sm" style={{ fontFamily: `"${form.bodyFont}", sans-serif` }}>High-end craftsmanship meets sustainable beauty.</p>
-            </div>
-          </CardContent>
-        </Card>
+                  <div className="space-y-6 pt-6 border-t">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-[10px] font-bold uppercase opacity-60">Spacing (px)</Label>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <p className="text-[9px] opacity-50 uppercase">Padding</p>
+                        <Input type="number" value={form.logoPadding} onChange={(e) => setForm({...form, logoPadding: parseInt(e.target.value) || 0})} />
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-[9px] opacity-50 uppercase">Margin</p>
+                        <Input type="number" value={form.logoMargin} onChange={(e) => setForm({...form, logoMargin: parseInt(e.target.value) || 0})} />
+                      </div>
+                    </div>
+                  </div>
 
-        {/* Live Preview */}
-        <Card className="border-none shadow-sm bg-muted/10">
-          <CardHeader>
-             <div className="flex items-center space-x-2">
-              <Layout className="w-5 h-5 text-primary" />
-              <CardTitle>Navbar Preview</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-white border p-6 rounded-sm flex items-center h-20 shadow-inner">
-               <div className={`flex w-full ${form.logoPlacement === 'center' ? 'justify-center' : 'justify-start'}`}>
-                 {form.logoUrl ? (
-                   <img src={form.logoUrl} alt="Logo" style={{ height: `${form.logoHeight}px` }} />
-                 ) : (
-                   <span className="font-headline text-xl tracking-[0.2em] text-primary font-bold uppercase">{form.siteName}</span>
-                 )}
-               </div>
-            </div>
-          </CardContent>
-        </Card>
+                  <div className="space-y-6 pt-6 border-t">
+                    <Label className="text-[10px] font-bold uppercase opacity-60">Interactive Effects</Label>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <p className="text-[9px] opacity-50 uppercase">Hover Zoom (%)</p>
+                          <span className="text-[10px] font-mono">{form.hoverScale}%</span>
+                        </div>
+                        <Slider value={[form.hoverScale]} max={150} min={80} step={1} onValueChange={([v]) => setForm({...form, hoverScale: v})} />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <p className="text-[9px] opacity-50 uppercase">Hover Opacity (%)</p>
+                          <span className="text-[10px] font-mono">{form.hoverOpacity}%</span>
+                        </div>
+                        <Slider value={[form.hoverOpacity]} max={100} min={10} step={5} onValueChange={([v]) => setForm({...form, hoverOpacity: v})} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Colors & Fonts */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Card className="border-none shadow-sm">
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <Palette className="w-5 h-5 text-primary" />
+                  <CardTitle>Color Signature</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {[
+                  { label: 'Primary (Forest)', key: 'primaryColor' },
+                  { label: 'Background (Canvas)', key: 'backgroundColor' },
+                  { label: 'Accent (Gold)', key: 'accentColor' }
+                ].map((color) => (
+                  <div key={color.key} className="flex items-center space-x-4">
+                    <div className="w-12 h-12 rounded-full border shadow-inner" style={{ backgroundColor: (form as any)[color.key] }} />
+                    <div className="flex-grow space-y-1">
+                      <Label className="text-[10px] uppercase">{color.label}</Label>
+                      <Input value={(form as any)[color.key]} onChange={(e) => setForm({...form, [color.key]: e.target.value})} />
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card className="border-none shadow-sm">
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <Type className="w-5 h-5 text-primary" />
+                  <CardTitle>Typography</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase">Headline Font</Label>
+                  <Input value={form.headlineFont} onChange={(e) => setForm({...form, headlineFont: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase">Body Text Font</Label>
+                  <Input value={form.bodyFont} onChange={(e) => setForm({...form, bodyFont: e.target.value})} />
+                </div>
+                <div className="p-6 bg-slate-50 border border-dashed rounded-lg text-center">
+                  <h3 className="text-2xl mb-2" style={{ fontFamily: form.headlineFont }}>Sample Title</h3>
+                  <p className="text-sm opacity-60" style={{ fontFamily: form.bodyFont }}>Refining beauty through sustainable elegance.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Live Sidebar Preview */}
+        <div className="space-y-8">
+          <Card className="border-none shadow-xl sticky top-8 bg-white overflow-hidden">
+            <CardHeader className="bg-primary text-white">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm flex items-center">
+                  <Layout className="w-4 h-4 mr-2" /> Live Navbar Preview
+                </CardTitle>
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 rounded-full bg-red-400" />
+                  <div className="w-2 h-2 rounded-full bg-amber-400" />
+                  <div className="w-2 h-2 rounded-full bg-green-400" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="bg-slate-100 p-8">
+                <div className="bg-white shadow-lg border h-24 flex items-center px-6 overflow-hidden">
+                  <div className={cn(
+                    "flex w-full items-center transition-all",
+                    form.logoPlacement === 'center' ? 'justify-center' : 'justify-start'
+                  )}>
+                    {form.logoUrl ? (
+                      <div className="relative group cursor-pointer" style={{ padding: `${form.logoPadding}px`, margin: `${form.logoMargin}px` }}>
+                        <img 
+                          src={form.logoUrl} 
+                          alt="Logo Preview" 
+                          style={{ 
+                            height: `${form.logoHeight}px`,
+                            width: form.logoWidth ? `${form.logoWidth}px` : 'auto'
+                          }}
+                          className="transition-transform duration-500"
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = `scale(${form.hoverScale / 100})`;
+                            e.currentTarget.style.opacity = `${form.hoverOpacity / 100}`;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = `scale(1)`;
+                            e.currentTarget.style.opacity = `1`;
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <span className="font-headline text-xl tracking-[0.3em] font-light uppercase">{form.siteName}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-4 text-center">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Draft Header Simulation</p>
+                </div>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="h-4 w-3/4 bg-slate-100 rounded animate-pulse" />
+                <div className="h-4 w-1/2 bg-slate-100 rounded animate-pulse" />
+                <div className="h-32 w-full bg-slate-50 rounded border border-dashed flex items-center justify-center text-[10px] uppercase font-bold text-muted-foreground">
+                  Content Body
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
