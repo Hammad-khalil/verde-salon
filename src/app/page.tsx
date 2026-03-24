@@ -21,10 +21,12 @@ export default function Home() {
 
   const { data: pageData, isLoading } = useDoc(pageRef);
 
-  // Choose between draft and live section IDs
+  // STRICT SEPARATION: Public view ONLY uses publishedSectionIds
   const sectionIds = useMemo(() => {
     if (!pageData) return [];
-    return isEditMode ? (pageData.sectionIds || []) : (pageData.publishedSectionIds || pageData.sectionIds || []);
+    return isEditMode 
+      ? (pageData.sectionIds || []) 
+      : (pageData.publishedSectionIds || []);
   }, [pageData, isEditMode]);
 
   return (
@@ -44,8 +46,13 @@ export default function Home() {
         ) : sectionIds.length > 0 ? (
           <SectionRenderer sectionIds={sectionIds} />
         ) : (
-          <div className="py-40 text-center text-muted-foreground">
-            Welcome to Verde Salon. Please configure your Home page in the CMS.
+          <div className="py-40 text-center text-muted-foreground flex flex-col items-center justify-center space-y-6">
+            <p className="font-headline text-2xl">Welcome to Verde Salon</p>
+            <p className="text-sm font-light max-w-md mx-auto">
+              {isEditMode 
+                ? "Start building your sanctuary by adding sections below." 
+                : "This page is currently being prepared. Please check back soon."}
+            </p>
           </div>
         )}
       </main>

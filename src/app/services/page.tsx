@@ -18,10 +18,12 @@ export default function ServicesPage() {
   const pageRef = useMemoFirebase(() => doc(db, 'cms_pages', 'services'), [db]);
   const { data: pageData, isLoading } = useDoc(pageRef);
 
-  // Choose between draft and live section IDs
+  // STRICT SEPARATION: Public view ONLY uses publishedSectionIds
   const sectionIds = useMemo(() => {
     if (!pageData) return [];
-    return isEditMode ? (pageData.sectionIds || []) : (pageData.publishedSectionIds || pageData.sectionIds || []);
+    return isEditMode 
+      ? (pageData.sectionIds || []) 
+      : (pageData.publishedSectionIds || []);
   }, [pageData, isEditMode]);
 
   return (
@@ -42,7 +44,11 @@ export default function ServicesPage() {
         ) : (
           <div className="py-40 text-center text-muted-foreground flex flex-col items-center justify-center space-y-6">
             <p className="font-headline text-2xl">Ritual Architecture Pending</p>
-            <p className="text-sm font-light max-w-md mx-auto">Please go to the Sanctuary Command (Dashboard) and click "Complete Architecture Now" to initialize this page.</p>
+            <p className="text-sm font-light max-w-md mx-auto">
+              {isEditMode 
+                ? "Initialize the Services page in the Sanctuary Command to start editing."
+                : "We are currently updating our ritual menu. Please check back shortly."}
+            </p>
           </div>
         )}
       </main>

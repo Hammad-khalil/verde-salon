@@ -168,7 +168,7 @@ export default function AdminDashboard() {
             title: p.title,
             slug: p.slug,
             sectionIds: p.sections,
-            publishedSectionIds: p.sections,
+            publishedSectionIds: p.sections, // Initialize both draft and live
             isPublished: true,
             createdAt: new Date().toISOString()
           }, { merge: true });

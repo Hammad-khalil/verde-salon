@@ -76,7 +76,13 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       BrandIntro: { title: 'The Philosophy', content: 'Pure elegance...', imageUrl: 'https://picsum.photos/seed/about/800/1000' }
     };
 
-    const newSection = { id: newId, type, content: JSON.stringify(defaults[type] || { title: `New ${type}` }) };
+    // New sections only have draft content initially
+    const newSection = { 
+      id: newId, 
+      type, 
+      content: JSON.stringify(defaults[type] || { title: `New ${type}` }) 
+    };
+    
     setDocumentNonBlocking(doc(db, 'cms_page_sections', newId), newSection, { merge: true });
 
     const pageRef = doc(db, 'cms_pages', pageId);
@@ -85,8 +91,9 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       const data = pageSnap.data();
       const currentIds = [...(data.sectionIds || [])];
       currentIds.splice(index, 0, newId);
+      // Update draft list only
       setDocumentNonBlocking(pageRef, { ...data, sectionIds: currentIds }, { merge: true });
-      toast({ title: "Draft Section Added", description: `${type} integrated into draft layout.` });
+      toast({ title: "Draft Section Added", description: `${type} added to your workspace. Click 'Publish' to take it live.` });
     }
   }
 
@@ -116,8 +123,11 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       {orderedSections.map((section: any, idx: number) => {
         let data = {};
         try { 
-          // CRITICAL: Choose between draft content and published content
-          const contentToRender = isEditMode ? section.content : (section.publishedContent || section.content);
+          // STRICT SEPARATION: Only show publishedContent to public
+          const contentToRender = isEditMode ? section.content : section.publishedContent;
+          
+          if (!contentToRender && !isEditMode) return null;
+          
           data = JSON.parse(contentToRender || '{}'); 
         } catch (e) { 
           console.error("Renderer Parse Error:", e);
