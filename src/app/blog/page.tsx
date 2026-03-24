@@ -39,16 +39,25 @@ export default function BlogPage() {
           <div className="h-screen flex items-center justify-center animate-pulse font-headline text-primary tracking-widest bg-background">
             VERDE JOURNAL
           </div>
-        ) : (sectionIds && sectionIds.length > 0) ? (
-          <SectionRenderer sectionIds={sectionIds} />
+        ) : pageData ? (
+          sectionIds.length > 0 ? (
+            <SectionRenderer sectionIds={sectionIds} />
+          ) : (
+            /* ⚠️ CRITICAL: Do NOT modify fallback unless CMS data is truly empty. */
+            <div className="py-40 text-center text-muted-foreground flex flex-col items-center justify-center space-y-6">
+              <p className="font-headline text-2xl">Journal Architecture Pending</p>
+              <p className="text-sm font-light max-w-md mx-auto">
+                {isEditMode 
+                  ? "Initialize the Blog page in the Sanctuary Command to start editing."
+                  : "Our journal is currently being curated. New reflections coming soon."}
+              </p>
+            </div>
+          )
         ) : (
-          /* ⚠️ CRITICAL: Do NOT modify fallback unless CMS data is truly empty. */
           <div className="py-40 text-center text-muted-foreground flex flex-col items-center justify-center space-y-6">
-            <p className="font-headline text-2xl">Journal Architecture Pending</p>
+            <p className="font-headline text-2xl">Architecture Pending</p>
             <p className="text-sm font-light max-w-md mx-auto">
-              {isEditMode 
-                ? "Initialize the Blog page in the Sanctuary Command to start editing."
-                : "Our journal is currently being curated. New reflections coming soon."}
+              Initialize the Blog page in the Sanctuary Command to begin.
             </p>
           </div>
         )}

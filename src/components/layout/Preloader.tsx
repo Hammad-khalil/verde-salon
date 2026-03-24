@@ -32,8 +32,8 @@ export default function Preloader() {
   }, []);
 
   useEffect(() => {
-    // Once data is no longer loading and settings are found
-    if (!isLoading && settings) {
+    // Once document fetch is complete (regardless of whether settings document exists)
+    if (!isLoading) {
       setProgress(100);
       const timer = setTimeout(() => {
         setIsExiting(true);
@@ -42,7 +42,7 @@ export default function Preloader() {
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [isLoading, settings]);
+  }, [isLoading]);
 
   if (!isVisible) return null;
 

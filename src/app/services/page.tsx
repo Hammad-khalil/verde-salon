@@ -39,16 +39,25 @@ export default function ServicesPage() {
           <div className="h-screen flex items-center justify-center animate-pulse font-headline text-primary tracking-widest bg-background">
             VERDE RITUALS
           </div>
-        ) : (sectionIds && sectionIds.length > 0) ? (
-          <SectionRenderer sectionIds={sectionIds} />
+        ) : pageData ? (
+          sectionIds.length > 0 ? (
+            <SectionRenderer sectionIds={sectionIds} />
+          ) : (
+            /* ⚠️ CRITICAL: Do NOT modify fallback unless CMS data is truly empty. */
+            <div className="py-40 text-center text-muted-foreground flex flex-col items-center justify-center space-y-6">
+              <p className="font-headline text-2xl">Ritual Architecture Pending</p>
+              <p className="text-sm font-light max-w-md mx-auto">
+                {isEditMode 
+                  ? "Initialize the Services page in the Sanctuary Command to start editing."
+                  : "We are currently updating our ritual menu. Please check back shortly."}
+              </p>
+            </div>
+          )
         ) : (
-          /* ⚠️ CRITICAL: Do NOT modify fallback unless CMS data is truly empty. */
           <div className="py-40 text-center text-muted-foreground flex flex-col items-center justify-center space-y-6">
-            <p className="font-headline text-2xl">Ritual Architecture Pending</p>
+            <p className="font-headline text-2xl">Architecture Pending</p>
             <p className="text-sm font-light max-w-md mx-auto">
-              {isEditMode 
-                ? "Initialize the Services page in the Sanctuary Command to start editing."
-                : "We are currently updating our ritual menu. Please check back shortly."}
+              Initialize the Services page in the Sanctuary Command to begin.
             </p>
           </div>
         )}

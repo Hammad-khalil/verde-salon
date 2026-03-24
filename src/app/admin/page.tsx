@@ -44,7 +44,11 @@ export default function AdminDashboard() {
     if (pagesLoading) return false;
     if (!pages || pages.length === 0) return true;
     const required = ['home', 'services', 'blog'];
-    return !required.every(id => pages.find(p => p.id === id));
+    // Also check if they have published IDs (Migration check)
+    return !required.every(id => {
+      const p = pages.find(page => page.id === id);
+      return p && p.publishedSectionIds && p.publishedSectionIds.length > 0;
+    });
   }, [pages, pagesLoading]);
 
   async function handleSeedSanctuary() {
@@ -148,16 +152,22 @@ export default function AdminDashboard() {
         }
       ];
 
-      // Safe write sections (Only if ID doesn't exist)
+      // Safe write sections (Ensure publishedContent exists)
       for (const section of sections) {
         const secRef = doc(db, 'cms_page_sections', section.id);
         const secSnap = await getDoc(secRef);
         if (!secSnap.exists()) {
           setDocumentNonBlocking(secRef, section, { merge: true });
+        } else {
+          // Migration: Ensure publishedContent is set for existing sections
+          const existing = secSnap.data();
+          if (!existing.publishedContent) {
+            setDocumentNonBlocking(secRef, { publishedContent: existing.content || section.content }, { merge: true });
+          }
         }
       }
 
-      // 3. Safe Page Construction (Additive Only)
+      // 3. Safe Page Construction (Additive & Migration)
       const pageDefinitions = [
         { id: 'home', title: 'Home', slug: '/', sections: ['initial-hero', 'initial-intro', 'initial-craft', 'initial-gallery'] },
         { id: 'services', title: 'Services', slug: '/services', sections: ['initial-services-list'] },
@@ -174,27 +184,26 @@ export default function AdminDashboard() {
             title: p.title,
             slug: p.slug,
             sectionIds: p.sections,
-            publishedSectionIds: p.sections, // Initialize both draft and live
+            publishedSectionIds: p.sections,
             isPublished: true,
             createdAt: new Date().toISOString()
           }, { merge: true });
         } else {
+          // Migration: Ensure publishedSectionIds is set for existing pages
           const currentData = pSnap.data();
-          const currentIds = currentData.sectionIds || [];
-          if (currentIds.length === 0) {
+          if (!currentData.publishedSectionIds || currentData.publishedSectionIds.length === 0) {
             setDocumentNonBlocking(pRef, {
-              ...currentData,
-              sectionIds: p.sections,
-              publishedSectionIds: p.sections
+              publishedSectionIds: currentData.sectionIds && currentData.sectionIds.length > 0 ? currentData.sectionIds : p.sections,
+              sectionIds: currentData.sectionIds && currentData.sectionIds.length > 0 ? currentData.sectionIds : p.sections
             }, { merge: true });
           }
         }
       }
 
-      toast({ title: "Sanctuary Safeguarded", description: "Architecture filled without overwriting your custom sections." });
+      toast({ title: "Sanctuary Synced", description: "All pages and sections migrated to the new Publish system." });
     } catch (e) {
       console.error(e);
-      toast({ variant: "destructive", title: "Setup Failed", description: "Could not safely verify architecture." });
+      toast({ variant: "destructive", title: "Setup Failed", description: "Could not verify architecture." });
     } finally {
       setIsSeeding(false);
     }
