@@ -164,7 +164,7 @@ export default function BrandingEditor() {
   async function handlePublish() {
     setIsPublishing(true);
     try {
-      const publishedConfig = {
+      const currentConfig = {
         siteName: form.siteName,
         logo: {
           url: form.logoUrl,
@@ -189,8 +189,8 @@ export default function BrandingEditor() {
 
       setDocumentNonBlocking(settingsRef, {
         ...settings,
-        ...publishedConfig,
-        published: publishedConfig,
+        ...currentConfig,
+        published: currentConfig,
         updatedAt: new Date().toISOString()
       }, { merge: true });
 
@@ -330,7 +330,13 @@ export default function BrandingEditor() {
                     <div className="w-12 h-12 rounded-full border shadow-inner" style={{ backgroundColor: (form as any)[color.key] }} />
                     <div className="flex-grow space-y-1">
                       <Label className="text-[10px] uppercase">{color.label}</Label>
-                      <Input value={(form as any)[color.key]} onChange={(e) => setForm({...form, [color.key]: e.target.value})} />
+                      <input 
+                        type="color" 
+                        value={(form as any)[color.key]} 
+                        onChange={(e) => setForm({...form, [color.key]: e.target.value})}
+                        className="w-full h-8 cursor-pointer border-none bg-transparent"
+                      />
+                      <Input value={(form as any)[color.key]} onChange={(e) => setForm({...form, [color.key]: e.target.value})} className="h-8 text-xs font-mono" />
                     </div>
                   </div>
                 ))}
@@ -391,7 +397,7 @@ export default function BrandingEditor() {
                           alt="Logo Preview" 
                           style={{ 
                             height: `${form.logoHeight}px`,
-                            width: form.logoWidth ? `${form.logoWidth}px` : 'auto'
+                            width: form.logoWidth && form.logoWidth > 0 ? `${form.logoWidth}px` : 'auto'
                           }}
                           className="transition-transform duration-500"
                           onMouseEnter={(e) => {

@@ -19,7 +19,7 @@ export default function Navbar() {
   
   const db = useFirestore();
   const settingsRef = useMemoFirebase(() => doc(db, 'settings', 'global'), [db]);
-  const { data: settings } = useDoc(settingsRef);
+  const { data: settings, isLoading } = useDoc(settingsRef);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -42,6 +42,9 @@ export default function Navbar() {
   const logoSettings = brandConfig?.logo;
   const siteName = brandConfig?.siteName || 'VERDE SALON';
 
+  // Prevent flicker by showing nothing until settings are ready
+  if (isLoading) return null;
+
   return (
     <>
       <nav className={cn(
@@ -56,12 +59,14 @@ export default function Navbar() {
             logoSettings?.placement === 'center' ? 'md:flex-1' : ''
           )}>
             {logoSettings?.placement !== 'center' && (
-              <Link href={getHref('/')} className="group transition-all duration-500">
+              <Link href={getHref('/')} className="group transition-all duration-500 flex items-center">
                 {logoSettings?.url ? (
                   <div 
+                    className="relative flex items-center justify-center"
                     style={{ 
                       padding: `${logoSettings.padding || 0}px`,
-                      margin: `${logoSettings.margin || 0}px`
+                      margin: `${logoSettings.margin || 0}px`,
+                      minHeight: `${logoSettings.height || 40}px`
                     }}
                   >
                     <img 
@@ -69,7 +74,8 @@ export default function Navbar() {
                       alt={siteName} 
                       style={{ 
                         height: `${logoSettings.height || 40}px`,
-                        width: logoSettings.width ? `${logoSettings.width}px` : 'auto'
+                        width: logoSettings.width && logoSettings.width > 0 ? `${logoSettings.width}px` : 'auto',
+                        maxWidth: 'none'
                       }} 
                       className="object-contain transition-all duration-500"
                       onMouseEnter={(e) => {
@@ -93,12 +99,14 @@ export default function Navbar() {
 
           {logoSettings?.placement === 'center' && (
             <div className="hidden md:flex flex-1 justify-center">
-              <Link href={getHref('/')} className="group transition-all duration-500">
+              <Link href={getHref('/')} className="group transition-all duration-500 flex items-center">
                 {logoSettings?.url ? (
                   <div 
+                    className="relative flex items-center justify-center"
                     style={{ 
                       padding: `${logoSettings.padding || 0}px`,
-                      margin: `${logoSettings.margin || 0}px`
+                      margin: `${logoSettings.margin || 0}px`,
+                      minHeight: `${logoSettings.height || 40}px`
                     }}
                   >
                     <img 
@@ -106,7 +114,8 @@ export default function Navbar() {
                       alt={siteName} 
                       style={{ 
                         height: `${logoSettings.height || 40}px`,
-                        width: logoSettings.width ? `${logoSettings.width}px` : 'auto'
+                        width: logoSettings.width && logoSettings.width > 0 ? `${logoSettings.width}px` : 'auto',
+                        maxWidth: 'none'
                       }} 
                       className="object-contain transition-all duration-500"
                       onMouseEnter={(e) => {
