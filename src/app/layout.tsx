@@ -5,6 +5,7 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import AnalyticsManager from '@/components/analytics/AnalyticsManager';
 import ThemeManager from '@/components/theme/ThemeManager';
 import LiveEditorSidebar from '@/components/admin/LiveEditorSidebar';
+import Preloader from '@/components/layout/Preloader';
 import { Suspense } from 'react';
 
 export const metadata: Metadata = {
@@ -21,6 +22,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased bg-background text-foreground min-h-screen flex flex-col" style={{ fontFamily: 'var(--font-body)' }}>
         <FirebaseClientProvider>
+          {/* Global Preloader - Prevents logo/theme flicker */}
+          <Preloader />
+          
           <ThemeManager />
           <AnalyticsManager />
           <div className="flex-grow flex flex-col relative">
