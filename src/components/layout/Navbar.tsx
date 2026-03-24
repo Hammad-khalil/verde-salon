@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Menu, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import GlobalSearch from '@/components/search/GlobalSearch';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
@@ -15,7 +15,7 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchParams = useSearchParams();
-  const isEditMode = searchParams.get('edit') === 'true';
+  const isEditMode = useMemo(() => searchParams.get('edit') === 'true', [searchParams]);
   
   const db = useFirestore();
   const settingsRef = useMemoFirebase(() => doc(db, 'settings', 'global'), [db]);
@@ -25,25 +25,24 @@ export default function Navbar() {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navLinks = [
+  const navLinks = useMemo(() => [
     { name: 'Home', href: '/' },
     { name: 'Services', href: '/services' },
     { name: 'Blogs', href: '/blog' },
-  ];
+  ], []);
 
   const getHref = (path: string) => isEditMode ? `${path}${path.includes('?') ? '&' : '?'}edit=true` : path;
 
-  // LOGO LOGIC: Use 'published' settings unless we are in Architect Mode
-  const brandConfig = isEditMode ? settings : settings?.published;
+  const brandConfig = useMemo(() => isEditMode ? settings : settings?.published, [isEditMode, settings]);
   const logoSettings = brandConfig?.logo;
   const siteName = brandConfig?.siteName || 'VERDE SALON';
 
-  // Prevent flicker by showing nothing until settings are ready
-  if (isLoading) return null;
+  // Optimization: Return a ghost navbar during initial brand identity load to prevent layout shift
+  if (isLoading && !settings) return <nav className="fixed top-0 left-0 right-0 z-50 h-20 bg-background/40 backdrop-blur-md" />;
 
   return (
     <>
@@ -78,14 +77,6 @@ export default function Navbar() {
                         maxWidth: 'none'
                       }} 
                       className="object-contain transition-all duration-500"
-                      onMouseEnter={(e) => {
-                        if (logoSettings.hoverScale) e.currentTarget.style.transform = `scale(${logoSettings.hoverScale / 100})`;
-                        if (logoSettings.hoverOpacity) e.currentTarget.style.opacity = `${logoSettings.hoverOpacity / 100}`;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = `scale(1)`;
-                        e.currentTarget.style.opacity = `1`;
-                      }}
                     />
                   </div>
                 ) : (
@@ -118,14 +109,6 @@ export default function Navbar() {
                         maxWidth: 'none'
                       }} 
                       className="object-contain transition-all duration-500"
-                      onMouseEnter={(e) => {
-                        if (logoSettings.hoverScale) e.currentTarget.style.transform = `scale(${logoSettings.hoverScale / 100})`;
-                        if (logoSettings.hoverOpacity) e.currentTarget.style.opacity = `${logoSettings.hoverOpacity / 100}`;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = `scale(1)`;
-                        e.currentTarget.style.opacity = `1`;
-                      }}
                     />
                   </div>
                 ) : (

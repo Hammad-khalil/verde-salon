@@ -32,6 +32,11 @@ interface SectionRendererProps {
   sectionIds: string[];
 }
 
+const SECTION_COMPONENTS: Record<string, any> = {
+  Hero, BrandIntro, TextBlock, ServicesPreview, FeaturedWork, Testimonials, 
+  InstagramPreview, CTA, FormBlock, VideoBlock, FAQSection, BlogListing, ServicesListing
+};
+
 export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
   const { user } = useUser();
   const searchParams = useSearchParams();
@@ -59,12 +64,11 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
     }
   }, [isLoading, allSections]);
 
-  // ⚠️ CRITICAL: Check loading first to prevent premature fallback triggering
-  if (isLoading) {
+  // Optimization: Keep previous layout stable while loading new data
+  if (isLoading && !allSections) {
     return <div className="min-h-screen bg-background" />;
   }
 
-  // Ensure we only return null if we explicitly have no section IDs to render
   if (!sectionIds || sectionIds.length === 0) return null;
 
   const handleSectionClick = (id: string) => {
@@ -103,7 +107,7 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       const currentIds = [...(data.sectionIds || [])];
       currentIds.splice(index, 0, newId);
       setDocumentNonBlocking(pageRef, { ...data, sectionIds: currentIds }, { merge: true });
-      toast({ title: "Draft Section Added", description: `${type} added to your workspace. Click 'Publish' to take it live.` });
+      toast({ title: "Draft Section Added", description: `${type} added to your workspace.` });
     }
   }
 
@@ -133,29 +137,22 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       {orderedSections.map((section: any, idx: number) => {
         let data = {};
         try { 
-          // ⚠️ CRITICAL: Migration Fallback
-          // Only show publishedContent to public, but fallback to content if publishedContent is undefined (legacy)
           const contentToRender = isEditMode 
             ? section.content 
             : (section.publishedContent !== undefined ? section.publishedContent : section.content);
           
           if (!contentToRender && !isEditMode) return null;
-          
           data = JSON.parse(contentToRender || '{}'); 
         } catch (e) { 
           console.error("Renderer Parse Error:", e);
           return null;
         }
         
-        const SectionComponents: Record<string, any> = {
-          Hero, BrandIntro, TextBlock, ServicesPreview, FeaturedWork, Testimonials, InstagramPreview, CTA, FormBlock, VideoBlock, FAQSection, BlogListing, ServicesListing
-        };
-        const Component = SectionComponents[section.type];
-
+        const Component = SECTION_COMPONENTS[section.type];
         if (!Component) return null;
 
         return (
-          <div key={section.id}>
+          <div key={section.id} className="animate-section-in">
             <div 
               className={cn(
                 "relative transition-all duration-300",
@@ -168,7 +165,7 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
                 <div className="absolute top-4 right-4 z-50 flex space-x-2 opacity-0 hover:opacity-100 transition-opacity">
                   <div className="flex items-center space-x-2 bg-white/90 backdrop-blur-md p-1 pr-3 shadow-xl border border-accent/20">
                     <div className="bg-accent p-2"><Sparkles className="w-3 h-3 text-primary" /></div>
-                    <span className="text-[9px] font-bold uppercase widests tracking-widest text-primary">{section.type}</span>
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-primary">{section.type}</span>
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleSectionClick(section.id); }}><Edit2 className="w-3 h-3" /></Button>
                   </div>
                 </div>

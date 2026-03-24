@@ -26,9 +26,6 @@
     --accent: 39 49% 57%; /* #C6A15B Gold */
     --accent-foreground: 180 52% 12%;
     
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    
     --border: 180 15% 85%;
     --input: 180 15% 85%;
     --ring: 39 49% 57%;
@@ -92,6 +89,16 @@
     @apply font-normal tracking-tight;
     font-family: var(--font-headline);
   }
+}
+
+/* Optimization: Smooth entrance for CMS sections */
+.animate-section-in {
+  animation: sectionIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes sectionIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
