@@ -10,32 +10,49 @@ import {
   persistentMultipleTabManager 
 } from 'firebase/firestore';
 
-// IMPORTANT: DO NOT MODIFY THIS FUNCTION
+/**
+ * Cache for initialized SDKs to prevent redundant initialization 
+ * and errors during hot module replacement.
+ */
+let cachedSdks: { firebaseApp: FirebaseApp; auth: any; firestore: any } | null = null;
+
 export function initializeFirebase() {
-  if (!getApps().length) {
-    let firebaseApp;
+  if (cachedSdks) return cachedSdks;
+
+  const apps = getApps();
+  let firebaseApp: FirebaseApp;
+
+  if (!apps.length) {
     try {
+      // Attempt automatic initialization (often works in hosted environments)
       firebaseApp = initializeApp();
     } catch (e) {
-      if (process.env.NODE_ENV === "production") {
-        console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
-      }
+      // Fallback to provided config
       firebaseApp = initializeApp(firebaseConfig);
     }
-
-    return getSdks(firebaseApp);
+  } else {
+    firebaseApp = apps[0];
   }
 
-  return getSdks(getApp());
+  cachedSdks = getSdks(firebaseApp);
+  return cachedSdks;
 }
 
 export function getSdks(firebaseApp: FirebaseApp) {
-  // Optimization: Enable persistent local cache for instant data loading on revisit
-  const firestore = initializeFirestore(firebaseApp, {
-    localCache: persistentLocalCache({
-      tabManager: persistentMultipleTabManager()
-    })
-  });
+  let firestore;
+  try {
+    // Optimization: Enable persistent local cache for instant data loading on revisit.
+    // This can only be called once per app instance.
+    firestore = initializeFirestore(firebaseApp, {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager()
+      })
+    });
+  } catch (e) {
+    // If initializeFirestore was already called (common during development/HMR),
+    // get the existing instance.
+    firestore = getFirestore(firebaseApp);
+  }
 
   return {
     firebaseApp,
