@@ -24,10 +24,11 @@ export default function Home() {
   // STRICT SEPARATION: Public view ONLY uses publishedSectionIds
   const sectionIds = useMemo(() => {
     if (!pageData) return [];
-    const ids = isEditMode 
+    // If we are in edit mode, we show draft sections. 
+    // If public, we strictly show published sections.
+    return isEditMode 
       ? (pageData.sectionIds || []) 
       : (pageData.publishedSectionIds || []);
-    return ids;
   }, [pageData, isEditMode]);
 
   return (
@@ -44,10 +45,11 @@ export default function Home() {
           <div className="h-screen flex items-center justify-center animate-pulse font-headline text-primary tracking-widest bg-background">
             VERDE
           </div>
-        ) : sectionIds && sectionIds.length > 0 ? (
+        ) : (sectionIds && sectionIds.length > 0) ? (
           <SectionRenderer sectionIds={sectionIds} />
         ) : (
-          /* ⚠️ CRITICAL: Do NOT modify fallback unless CMS data is truly empty. This previously broke the Home page. */
+          /* ⚠️ CRITICAL: Do NOT modify fallback unless CMS data is truly empty. 
+             This triggers if pageData is loaded but sectionIds/publishedSectionIds is empty. */
           <div className="py-40 text-center text-muted-foreground flex flex-col items-center justify-center space-y-6">
             <p className="font-headline text-2xl">Welcome to Verde Salon</p>
             <p className="text-sm font-light max-w-md mx-auto">

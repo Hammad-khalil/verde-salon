@@ -58,7 +58,13 @@ export default function AdminDashboard() {
           siteName: 'VERDE SALON',
           colors: { primary: '#0F2F2F', background: '#F5F3EF', accent: '#C6A15B' },
           typography: { headline: 'Playfair Display', body: 'Inter' },
-          logo: { placement: 'left', height: 40 }
+          logo: { placement: 'left', height: 40 },
+          published: {
+            siteName: 'VERDE SALON',
+            colors: { primary: '#0F2F2F', background: '#F5F3EF', accent: '#C6A15B' },
+            typography: { headline: 'Playfair Display', body: 'Inter' },
+            logo: { placement: 'left', height: 40 }
+          }
         }, { merge: true });
       }
 
