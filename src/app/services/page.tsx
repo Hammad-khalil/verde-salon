@@ -39,9 +39,10 @@ export default function ServicesPage() {
           <div className="h-screen flex items-center justify-center animate-pulse font-headline text-primary tracking-widest bg-background">
             VERDE RITUALS
           </div>
-        ) : sectionIds.length > 0 ? (
+        ) : sectionIds && sectionIds.length > 0 ? (
           <SectionRenderer sectionIds={sectionIds} />
         ) : (
+          /* ⚠️ CRITICAL: Do NOT modify fallback unless CMS data is truly empty. This previously broke the page renderer. */
           <div className="py-40 text-center text-muted-foreground flex flex-col items-center justify-center space-y-6">
             <p className="font-headline text-2xl">Ritual Architecture Pending</p>
             <p className="text-sm font-light max-w-md mx-auto">

@@ -45,15 +45,19 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
   const sectionsQuery = useMemoFirebase(() => query(collection(db, 'cms_page_sections')), [db]);
   const { data: allSections, isLoading } = useCollection(sectionsQuery);
 
+  const orderedSections = useMemo(() => {
+    if (!allSections || !sectionIds) return [];
+    return sectionIds
+      .map(id => allSections.find(s => s.id === id))
+      .filter(Boolean);
+  }, [allSections, sectionIds]);
+
   if (isLoading) {
     return <div className="h-screen flex items-center justify-center animate-pulse font-headline text-primary tracking-widest bg-background">VERDE</div>;
   }
 
-  if (!allSections) return null;
-
-  const orderedSections = sectionIds
-    .map(id => allSections.find(s => s.id === id))
-    .filter(Boolean);
+  // ⚠️ CRITICAL: Ensure we only return null if we explicitly have no sections to render
+  if (!sectionIds || sectionIds.length === 0) return null;
 
   const handleSectionClick = (id: string) => {
     if (isEditMode) {
@@ -76,7 +80,6 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       BrandIntro: { title: 'The Philosophy', content: 'Pure elegance...', imageUrl: 'https://picsum.photos/seed/about/800/1000' }
     };
 
-    // New sections only have draft content initially
     const newSection = { 
       id: newId, 
       type, 
@@ -91,7 +94,6 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       const data = pageSnap.data();
       const currentIds = [...(data.sectionIds || [])];
       currentIds.splice(index, 0, newId);
-      // Update draft list only
       setDocumentNonBlocking(pageRef, { ...data, sectionIds: currentIds }, { merge: true });
       toast({ title: "Draft Section Added", description: `${type} added to your workspace. Click 'Publish' to take it live.` });
     }
