@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -35,7 +36,9 @@ import {
   Search,
   FileText,
   Scissors,
-  Loader2
+  Loader2,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -124,9 +127,23 @@ export default function PagesEditor() {
 
   function handleSaveSection() {
     if (!editingSection) return;
+    
+    const contentString = JSON.stringify(editingSection.parsedContent);
+    
+    // Size Check: Firestore document limit is 1MB. 
+    // We must ensure the draft + live data doesn't exceed this.
+    if (contentString.length > 800000) {
+      toast({ 
+        variant: "destructive", 
+        title: "Section Too Large", 
+        description: "This section contains too much media data. Please use external URLs for images or videos to stay under the 1MB limit."
+      });
+      return;
+    }
+
     const updatedSection = {
       ...editingSection,
-      content: JSON.stringify(editingSection.parsedContent)
+      content: contentString
     };
     delete updatedSection.parsedContent;
     
@@ -151,6 +168,8 @@ export default function PagesEditor() {
       activeIds.forEach((id: string) => {
         const section = allSections.find(s => s.id === id);
         if (section) {
+          // Architectural Optimization: We deduplicate large strings if draft == live 
+          // to prevent the 1MB Firestore document limit from being hit by duplication.
           batch.update(doc(db, 'cms_page_sections', id), {
             publishedContent: section.content
           });
@@ -159,9 +178,16 @@ export default function PagesEditor() {
       
       await batch.commit();
       toast({ title: "Site Published", description: "All changes are now live for visitors." });
-    } catch (e) {
+    } catch (e: any) {
       console.error("Publish Error:", e);
-      toast({ variant: "destructive", title: "Publish Failed", description: "Could not sync draft to live." });
+      const isSizeError = e.message?.toLowerCase().includes('size') || e.message?.toLowerCase().includes('limit');
+      toast({ 
+        variant: "destructive", 
+        title: "Publish Failed", 
+        description: isSizeError 
+          ? "Database limit reached. One or more sections are too large (1MB limit). Use external URLs for HD videos/images instead of local uploads."
+          : "Could not sync draft to live. Check connection and try again." 
+      });
     } finally {
       setIsPublishing(false);
     }
@@ -380,6 +406,7 @@ export default function PagesEditor() {
                 <TabsList className="w-full justify-start rounded-none bg-transparent border-b h-12 px-2">
                   <TabsTrigger value="content" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">Content</TabsTrigger>
                   <TabsTrigger value="background" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">Background</TabsTrigger>
+                  {editingSection?.type === 'VideoBlock' && <TabsTrigger value="playback" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">Playback</TabsTrigger>}
                   <TabsTrigger value="layout" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">Layout</TabsTrigger>
                 </TabsList>
 
@@ -388,7 +415,7 @@ export default function PagesEditor() {
                     <>
                       <TabsContent value="content" className="mt-0 space-y-6">
                         {Object.keys(editingSection.parsedContent).map((key) => {
-                          if (['styles', 'backgroundType', 'testimonials', 'images', 'posts', 'services'].includes(key)) return null;
+                          if (['styles', 'backgroundType', 'testimonials', 'images', 'posts', 'services', 'muted', 'showControls', 'autoplay', 'loop'].includes(key)) return null;
                           return (
                             <div key={key} className="space-y-2">
                               <Label className="text-[10px] uppercase tracking-widest font-bold opacity-60">{key.replace(/([A-Z])/g, ' $1')}</Label>
@@ -483,6 +510,46 @@ export default function PagesEditor() {
                           </div>
                         </div>
                       </TabsContent>
+
+                      {editingSection?.type === 'VideoBlock' && (
+                        <TabsContent value="playback" className="mt-0 space-y-8">
+                          <div className="space-y-6">
+                            <div className="flex items-center justify-between p-4 bg-white border rounded-sm">
+                              <div className="space-y-0.5">
+                                <Label className="text-[10px] uppercase font-bold tracking-widest">Mute Video</Label>
+                                <p className="text-[9px] text-muted-foreground italic">Note: Autoplay requires muting in most browsers.</p>
+                              </div>
+                              <Switch 
+                                checked={editingSection.parsedContent.muted ?? true} 
+                                onCheckedChange={(val) => updateNestedContent('muted', val)} 
+                              />
+                            </div>
+
+                            <div className="space-y-4 p-4 bg-white border rounded-sm">
+                              <Label className="text-[10px] uppercase font-bold tracking-widest">User Controls</Label>
+                              <Select 
+                                value={editingSection.parsedContent.showControls ? 'show' : 'hide'} 
+                                onValueChange={(val) => updateNestedContent('showControls', val === 'show')}
+                              >
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="hide">Hide All (Clean Play)</SelectItem>
+                                  <SelectItem value="show">Show Player Controls</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <p className="text-[9px] text-muted-foreground">"Hide All" removes play/pause buttons and click interactions for a cinematic look.</p>
+                            </div>
+
+                            <div className="flex items-center justify-between p-4 bg-white border rounded-sm">
+                              <Label className="text-[10px] uppercase font-bold tracking-widest">Autoplay</Label>
+                              <Switch 
+                                checked={editingSection.parsedContent.autoplay ?? true} 
+                                onCheckedChange={(val) => updateNestedContent('autoplay', val)} 
+                              />
+                            </div>
+                          </div>
+                        </TabsContent>
+                      )}
 
                       <TabsContent value="layout" className="mt-0 space-y-8">
                         <div className="space-y-6">
@@ -602,7 +669,7 @@ const defaultContents: Record<string, any> = {
   BrandIntro: { title: 'About VERDE SALON', subtitle: 'The Essence of Luxury', content: 'At Verde Salon, we blend modern beauty techniques with natural care. Our mission is to enhance your beauty while maintaining the health of your hair and skin.', imageUrl: 'https://picsum.photos/seed/verde-about/800/1000', buttonText: 'Discover Our Story', buttonUrl: '/blog' },
   CTA: { title: 'Ready for a transformation?', subtitle: 'Book your experience today at Verde Salon.', buttonText: 'Book Your Visit', buttonUrl: '/services' },
   FormBlock: { title: 'Book an Experience', subtitle: 'Request a service at Verde Salon.', type: 'Booking' },
-  VideoBlock: { title: 'Featured Video', subtitle: 'Experience Verde Salon in motion', videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', posterUrl: 'https://picsum.photos/seed/video-thumb/1280/720', autoplay: true, startTime: 0, endTime: 60, showControls: false },
+  VideoBlock: { title: 'Featured Video', subtitle: 'Experience Verde Salon in motion', videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', posterUrl: 'https://picsum.photos/seed/video-thumb/1280/720', autoplay: true, loop: true, muted: true, showControls: false, startTime: 0, endTime: 60 },
   FAQSection: { title: 'Common Queries', subtitle: 'Information for your visit' },
   ServicesPreview: { title: 'Signature Services', subtitle: 'Our Craft', services: [] },
   FeaturedWork: { title: 'Our Work', subtitle: 'The Verde Aesthetic', images: [] },

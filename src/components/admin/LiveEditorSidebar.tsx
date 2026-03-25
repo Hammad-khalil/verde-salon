@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -10,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
 import { 
   X, 
   Save, 
@@ -23,7 +25,10 @@ import {
   Trash2,
   Loader2,
   Globe,
-  Info
+  Info,
+  Volume2,
+  VolumeX,
+  MonitorPlay
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -234,11 +239,18 @@ export default function LiveEditorSidebar() {
     }
     current[keys[keys.length - 1]] = value;
     
-    // Auto-save to draft on any field change
-    const newEditingData = { ...editingData, parsedContent: updated };
-    setEditingData(newEditingData);
-    
     const contentString = JSON.stringify(updated);
+    
+    // Safety check for Firestore document limit (1MB)
+    if (contentString.length > 800000) {
+      toast({ 
+        variant: "destructive", 
+        title: "Limit Approached", 
+        description: "This section is becoming too large for the database. Try using external URLs for images/videos." 
+      });
+    }
+
+    setEditingData({ ...editingData, parsedContent: updated });
     setDocumentNonBlocking(
       doc(db, 'cms_page_sections', selectedSectionId!), 
       { content: contentString }, 
@@ -269,9 +281,16 @@ export default function LiveEditorSidebar() {
       
       await batch.commit();
       toast({ title: "Sanctuary Published", description: "All changes are now live for visitors." });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Publish Error:", err);
-      toast({ variant: "destructive", title: "Sync Failed", description: "The content might be too large for the database. Try using external URLs for images/videos." });
+      const isSizeError = err.message?.toLowerCase().includes('size') || err.message?.toLowerCase().includes('limit');
+      toast({ 
+        variant: "destructive", 
+        title: "Sync Failed", 
+        description: isSizeError 
+          ? "The content is too large for the database. Delete local media and use external URLs (YouTube/Unsplash) instead."
+          : "Could not apply live changes. Check connection." 
+      });
     } finally {
       setIsPublishing(false);
     }
@@ -301,6 +320,7 @@ export default function LiveEditorSidebar() {
             <TabsList className="w-full rounded-none h-14 bg-white border-b sticky top-0 z-10">
               <TabsTrigger value="content" className="flex-1 h-full rounded-none text-[10px] uppercase font-bold tracking-widest">Content</TabsTrigger>
               <TabsTrigger value="media" className="flex-1 h-full rounded-none text-[10px] uppercase font-bold tracking-widest">Media</TabsTrigger>
+              {editingData.type === 'VideoBlock' && <TabsTrigger value="playback" className="flex-1 h-full rounded-none text-[10px] uppercase font-bold tracking-widest">Playback</TabsTrigger>}
               <TabsTrigger value="style" className="flex-1 h-full rounded-none text-[10px] uppercase font-bold tracking-widest">Style</TabsTrigger>
             </TabsList>
 
@@ -360,6 +380,47 @@ export default function LiveEditorSidebar() {
                   })}
                 </div>
               </TabsContent>
+
+              {editingData.type === 'VideoBlock' && (
+                <TabsContent value="playback" className="mt-0 space-y-8">
+                  <div className="space-y-6">
+                    <div className="flex items-center text-primary font-bold text-[9px] uppercase tracking-[0.2em] border-b pb-2"><MonitorPlay className="w-3 h-3 mr-2 text-accent" /> Playback Controls</div>
+                    
+                    <div className="flex items-center justify-between p-4 bg-white border rounded-sm">
+                      <div className="space-y-0.5">
+                        <Label className="text-[10px] uppercase font-bold tracking-widest">Mute Audio</Label>
+                        <p className="text-[8px] text-muted-foreground">Required for background autoplay.</p>
+                      </div>
+                      <Switch 
+                        checked={editingData.parsedContent.muted ?? true} 
+                        onCheckedChange={(val) => updateValue('muted', val)} 
+                      />
+                    </div>
+
+                    <div className="space-y-4 p-4 bg-white border rounded-sm">
+                      <Label className="text-[10px] uppercase font-bold tracking-widest">Player Interface</Label>
+                      <Select 
+                        value={editingData.parsedContent.showControls ? 'show' : 'hide'} 
+                        onValueChange={(val) => updateValue('showControls', val === 'show')}
+                      >
+                        <SelectTrigger className="h-10 text-[10px] font-bold uppercase tracking-widest"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="hide">Hide All (Clean Mode)</SelectItem>
+                          <SelectItem value="show">Show Controls</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-white border rounded-sm">
+                      <Label className="text-[10px] uppercase font-bold tracking-widest">Autoplay</Label>
+                      <Switch 
+                        checked={editingData.parsedContent.autoplay ?? true} 
+                        onCheckedChange={(val) => updateValue('autoplay', val)} 
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+              )}
 
               <TabsContent value="style" className="mt-0 space-y-10">
                 <div className="space-y-4">

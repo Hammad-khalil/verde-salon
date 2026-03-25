@@ -1,7 +1,8 @@
+
 'use client';
 
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
+import { useEffect, useRef } from 'react';
 
 interface VideoBlockProps {
   title?: string;
@@ -32,12 +33,13 @@ export default function VideoBlock({
   endTime,
   styles
 }: VideoBlockProps) {
-  // Force muted/playsinline for autoplay compatibility
+  const videoRef = useRef<HTMLVideoElement>(null);
+  
+  // Force muted/playsinline for autoplay compatibility if requested
   const effectiveMuted = autoplay ? true : (muted ?? true);
   const effectiveControls = showControls ?? false;
   
   const isYouTube = videoUrl?.includes('youtube.com') || videoUrl?.includes('youtu.be');
-  const isLocalOrDirect = videoUrl?.startsWith('data:video') || videoUrl?.endsWith('.mp4') || videoUrl?.endsWith('.webm');
   
   let finalUrl = videoUrl;
   if (isYouTube && videoUrl) {
@@ -52,7 +54,8 @@ export default function VideoBlock({
       controls: effectiveControls ? '1' : '0',
       modestbranding: '1',
       rel: '0',
-      iv_load_policy: '3'
+      iv_load_policy: '3',
+      showinfo: '0'
     });
 
     if (startTime) params.append('start', startTime.toString());
@@ -60,6 +63,16 @@ export default function VideoBlock({
 
     finalUrl = `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
   }
+
+  // Ensure native video properties are applied correctly after hydration
+  useEffect(() => {
+    if (videoRef.current && !isYouTube) {
+      videoRef.current.muted = effectiveMuted;
+      if (autoplay) {
+        videoRef.current.play().catch(e => console.warn('Autoplay prevented:', e));
+      }
+    }
+  }, [videoUrl, effectiveMuted, autoplay, isYouTube]);
 
   const paddingVal = styles?.paddingVertical || '96';
 
@@ -101,7 +114,7 @@ export default function VideoBlock({
         <div className={cn(
           "relative aspect-video overflow-hidden bg-black shadow-2xl transition-all duration-700",
           isFullWidth ? '' : 'rounded-sm',
-          !effectiveControls && !isYouTube ? '' : ''
+          !effectiveControls ? "pointer-events-none" : ""
         )}>
           {isYouTube ? (
             <div className={cn(
@@ -118,6 +131,7 @@ export default function VideoBlock({
             </div>
           ) : (
             <video 
+              ref={videoRef}
               key={videoUrl}
               src={videoUrl} 
               poster={posterUrl}
@@ -131,7 +145,7 @@ export default function VideoBlock({
             />
           )}
           
-          {/* Overlay gradient for aesthetics */}
+          {/* Subtle overlay gradient if controls are hidden */}
           {!effectiveControls && (
             <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
           )}
