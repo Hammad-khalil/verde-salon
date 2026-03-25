@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { Calendar, User, ArrowLeft, Share2, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export default function BlogPostDetail({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = use(params);
@@ -27,7 +28,7 @@ export default function BlogPostDetail({ params }: { params: Promise<{ slug: str
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center animate-pulse font-headline text-primary tracking-widest uppercase bg-white">
-        SYNCHRONIZING JOURNAL...
+        SYNCHRONIZING BLOG...
       </div>
     );
   }
@@ -63,7 +64,7 @@ export default function BlogPostDetail({ params }: { params: Promise<{ slug: str
               className="inline-flex items-center text-[10px] font-bold uppercase tracking-[0.5em] text-muted-foreground hover:text-accent transition-all duration-500 group"
             >
               <ArrowLeft className="w-3 h-3 mr-4 transition-transform group-hover:-translate-x-2" /> 
-              The Journal Collection
+              The Blog Collection
             </Link>
             
             <div className="space-y-8">
