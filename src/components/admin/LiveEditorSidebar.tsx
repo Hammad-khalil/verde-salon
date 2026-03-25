@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -65,10 +64,6 @@ const MediaField = ({
 
   const handleFile = (file: File) => {
     if (!file) return;
-    
-    // CRITICAL: Firestore Document Limit is 1MB. 
-    // Decoupling collections has freed up space, but we still cap local assets to ~400KB
-    // to ensure total JSON string remains safely within limits.
     const limit = type === 'video' ? 500000 : 400000;
     
     if (file.size > limit) {
@@ -244,8 +239,6 @@ export default function LiveEditorSidebar() {
     const contentString = JSON.stringify(updated);
     const byteSize = new TextEncoder().encode(contentString).length;
     
-    // CRITICAL SIZE CHECK:
-    // Even with decoupled collections, individual documents cannot exceed 1MB.
     if (byteSize > 800000) {
       toast({ 
         variant: "destructive", 
@@ -270,14 +263,12 @@ export default function LiveEditorSidebar() {
     try {
       const batch = writeBatch(db);
       
-      // Update Page Architecture
       batch.update(pageRef!, {
         publishedSectionIds: pageData.sectionIds || [],
         updatedAt: new Date().toISOString(),
         publishedAt: new Date().toISOString()
       });
       
-      // Update Live Content state for the current section
       if (selectedSectionId && editingData) {
         const liveRef = doc(db, 'cms_sections_live', selectedSectionId);
         batch.set(liveRef, {
@@ -334,7 +325,6 @@ export default function LiveEditorSidebar() {
             </TabsList>
 
             <div className="p-6 space-y-8 pb-32">
-              {/* Density Audit Badge */}
               <div className="flex items-center justify-between p-3 bg-white border border-primary/5 rounded-none">
                 <span className="text-[8px] font-bold uppercase tracking-widest opacity-40">Section Density</span>
                 <div className="flex items-center space-x-2">
@@ -349,7 +339,7 @@ export default function LiveEditorSidebar() {
               <TabsContent value="content" className="mt-0 space-y-8">
                 <div className="space-y-6">
                   <div className="flex items-center text-primary font-bold text-[9px] uppercase tracking-[0.2em] border-b pb-2"><Type className="w-3 h-3 mr-2 text-accent" /> Draft Text</div>
-                  {allFields.filter(f => f.type === 'string' && !isMediaKey(f.key) && !isLinkKey(f.key) && f.key !== 'backgroundType').map(f => (
+                  {allFields.filter(f => f.type === 'string' && !isMediaKey(f.key) && !isLinkKey(f.key) && !['backgroundType', 'objectFit'].includes(f.key)).map(f => (
                     <div key={f.path} className="space-y-2">
                       <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">{f.path.split('.').pop()?.replace(/([A-Z])/g, ' $1')}</Label>
                       {(f.value && f.value.length > 50) || f.path.includes('content') ? (
@@ -366,11 +356,10 @@ export default function LiveEditorSidebar() {
                 <div className="space-y-6">
                   <div className="flex items-center text-primary font-bold text-[9px] uppercase tracking-[0.2em] border-b pb-2"><ImageIcon className="w-3 h-3 mr-2 text-accent" /> Draft Media</div>
                   
-                  {/* Warning for high density sections */}
                   {(new TextEncoder().encode(JSON.stringify(editingData.parsedContent)).length > 500000) && (
                     <div className="p-4 bg-amber-50 border border-amber-100 flex items-start space-x-3">
                       <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                      <p className="text-[9px] text-amber-700 leading-relaxed font-bold uppercase tracking-tight">Warning: Document density approaching limit. Use external URLs for large assets to ensure site stability.</p>
+                      <p className="text-[9px] text-amber-700 leading-relaxed font-bold uppercase tracking-tight">Warning: Document density approaching limit. Use external URLs for large assets.</p>
                     </div>
                   )}
 
@@ -464,6 +453,32 @@ export default function LiveEditorSidebar() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {editingData.type === 'VideoBlock' && (
+                  <div className="space-y-6 pt-6 border-t">
+                    <div className="flex items-center text-primary font-bold text-[9px] uppercase tracking-[0.2em] mb-4"><Maximize className="w-3 h-3 mr-2 text-accent" /> Fitting & Size</div>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] opacity-50 uppercase font-bold">Fitting Mode</Label>
+                        <Select value={editingData.parsedContent.styles?.objectFit || 'cover'} onValueChange={(val) => updateValue('styles.objectFit', val)}>
+                          <SelectTrigger className="h-10 rounded-none bg-white"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="cover">Cover (No Black Bars)</SelectItem>
+                            <SelectItem value="contain">Contain (Full Frame)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] opacity-50 uppercase font-bold">Height</Label>
+                        <Input className="h-10 rounded-none bg-white text-xs" placeholder="e.g. 600px or auto" value={editingData.parsedContent.styles?.height ?? ''} onChange={(e) => updateValue('styles.height', e.target.value)} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] opacity-50 uppercase font-bold">Max Width</Label>
+                        <Input className="h-10 rounded-none bg-white text-xs" placeholder="e.g. 1200px or 100%" value={editingData.parsedContent.styles?.maxWidth ?? ''} onChange={(e) => updateValue('styles.maxWidth', e.target.value)} />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-6 pt-6 border-t">
                   <div className="flex items-center text-primary font-bold text-[9px] uppercase tracking-[0.2em] mb-4"><Palette className="w-3 h-3 mr-2 text-accent" /> Visuals</div>

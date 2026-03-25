@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -132,8 +131,6 @@ export default function PagesEditor() {
     const contentString = JSON.stringify(editingSection.parsedContent);
     const byteSize = new TextEncoder().encode(contentString).length;
     
-    // CRITICAL: Prevent saving if section exceeds 800KB. 
-    // This leaves room for metadata and prevents Firestore rejection.
     if (byteSize > 800000) {
       toast({ 
         variant: "destructive", 
@@ -162,15 +159,12 @@ export default function PagesEditor() {
     try {
       const batch = writeBatch(db);
       
-      // 1. Update Page Manifest
       batch.update(pageRef, {
         publishedSectionIds: pageData.sectionIds || [],
         updatedAt: new Date().toISOString(),
         publishedAt: new Date().toISOString()
       });
       
-      // 2. Structural Fix: Decouple Live content into a separate collection
-      // This prevents the 1MB limit crash by isolating draft vs live states.
       const activeIds = pageData.sectionIds || [];
       activeIds.forEach((id: string) => {
         const section = allSections.find(s => s.id === id);
@@ -438,7 +432,7 @@ export default function PagesEditor() {
                     <>
                       <TabsContent value="content" className="mt-0 space-y-8">
                         {Object.keys(editingSection.parsedContent).map((key) => {
-                          if (['styles', 'backgroundType', 'testimonials', 'images', 'posts', 'services', 'muted', 'showControls', 'autoplay', 'loop'].includes(key)) return null;
+                          if (['styles', 'backgroundType', 'testimonials', 'images', 'posts', 'services', 'muted', 'showControls', 'autoplay', 'loop', 'objectFit'].includes(key)) return null;
                           return (
                             <div key={key} className="space-y-3">
                               <Label className="text-[10px] uppercase tracking-widest font-bold text-primary/60">{key.replace(/([A-Z])/g, ' $1')}</Label>
@@ -594,6 +588,47 @@ export default function PagesEditor() {
                           </div>
                         </div>
 
+                        {editingSection?.type === 'VideoBlock' && (
+                          <div className="space-y-6 border-t pt-8">
+                            <Label className="text-[10px] uppercase tracking-widest font-bold text-primary/60">Video Scaling & Size</Label>
+                            <div className="space-y-4">
+                              <div className="space-y-2">
+                                <Label className="text-[9px] uppercase font-bold opacity-50">Fitting Mode</Label>
+                                <Select 
+                                  value={editingSection.parsedContent.styles?.objectFit || 'cover'} 
+                                  onValueChange={(val) => updateNestedContent('objectFit', val, true)}
+                                >
+                                  <SelectTrigger className="h-10 rounded-none bg-white"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="cover">Cover (No Black Bars)</SelectItem>
+                                    <SelectItem value="contain">Contain (Show Full Frame)</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-[9px] uppercase font-bold opacity-50">Custom Height</Label>
+                                  <Input 
+                                    placeholder="e.g. 600px or auto" 
+                                    className="h-10 rounded-none bg-white"
+                                    value={editingSection.parsedContent.styles?.height ?? ''} 
+                                    onChange={(e) => updateNestedContent('height', e.target.value, true)}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-[9px] uppercase font-bold opacity-50">Max Width</Label>
+                                  <Input 
+                                    placeholder="e.g. 1200px or 100%" 
+                                    className="h-10 rounded-none bg-white"
+                                    value={editingSection.parsedContent.styles?.maxWidth ?? ''} 
+                                    onChange={(e) => updateNestedContent('maxWidth', e.target.value, true)}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         <div className="space-y-6 border-t pt-8">
                           <Label className="text-[10px] uppercase tracking-widest font-bold text-primary/60">Spatial Rhythm</Label>
                           <div className="space-y-6 p-6 bg-white border border-primary/5">
@@ -671,7 +706,6 @@ export default function PagesEditor() {
                     <p className="text-muted-foreground text-lg font-light leading-relaxed max-w-md">These changes are isolated in your **Draft State**. Visitors will only see them after you click **"Publish Changes"** in the main header.</p>
                   </div>
                   
-                  {/* Structural Warning if section is heavy */}
                   {editingSection && (new TextEncoder().encode(JSON.stringify(editingSection.parsedContent)).length > 600000) && (
                     <div className="flex items-center space-x-3 text-amber-600 bg-amber-50 p-4 border border-amber-100 mt-4">
                       <AlertTriangle className="w-5 h-5" />
@@ -696,7 +730,8 @@ const defaultStyles = {
   overlayOpacity: 20,
   overlayColor: '#000000',
   alignment: 'center',
-  buttonType: 'primary'
+  buttonType: 'primary',
+  objectFit: 'cover'
 };
 
 const defaultContents: Record<string, any> = {
@@ -705,7 +740,24 @@ const defaultContents: Record<string, any> = {
   BrandIntro: { title: 'About VERDE SALON', subtitle: 'The Essence of Luxury', content: 'At Verde Salon, we blend modern beauty techniques with natural care. Our mission is to enhance your beauty while maintaining the health of your hair and skin.', imageUrl: 'https://picsum.photos/seed/verde-about/800/1000', buttonText: 'Discover Our Story', buttonUrl: '/blog' },
   CTA: { title: 'Ready for a transformation?', subtitle: 'Book your experience today at Verde Salon.', buttonText: 'Book Your Visit', buttonUrl: '/services' },
   FormBlock: { title: 'Book an Experience', subtitle: 'Request a service at Verde Salon.', type: 'Booking' },
-  VideoBlock: { title: 'Featured Video', subtitle: 'Experience Verde Salon in motion', videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', posterUrl: 'https://picsum.photos/seed/video-thumb/1280/720', autoplay: true, loop: true, muted: true, showControls: false, startTime: 0, endTime: 60 },
+  VideoBlock: { 
+    title: 'Featured Video', 
+    subtitle: 'Experience Verde Salon in motion', 
+    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 
+    posterUrl: 'https://picsum.photos/seed/video-thumb/1280/720', 
+    autoplay: true, 
+    loop: true, 
+    muted: true, 
+    showControls: false, 
+    startTime: 0, 
+    endTime: 60,
+    styles: {
+      ...defaultStyles,
+      objectFit: 'cover',
+      height: 'auto',
+      maxWidth: '100%'
+    }
+  },
   FAQSection: { title: 'Common Queries', subtitle: 'Information for your visit' },
   ServicesPreview: { title: 'Signature Services', subtitle: 'Our Craft', services: [] },
   FeaturedWork: { title: 'Our Work', subtitle: 'The Verde Aesthetic', images: [] },

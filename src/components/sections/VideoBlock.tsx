@@ -1,4 +1,3 @@
-
 'use client';
 
 import { cn } from '@/lib/utils';
@@ -16,9 +15,21 @@ interface VideoBlockProps {
   showControls?: boolean;
   startTime?: number;
   endTime?: number;
-  styles?: any;
+  styles?: {
+    backgroundColor?: string;
+    titleColor?: string;
+    subtitleColor?: string;
+    paddingVertical?: string;
+    objectFit?: 'cover' | 'contain';
+    height?: string;
+    maxWidth?: string;
+  };
 }
 
+/**
+ * VideoBlock - A high-performance media section.
+ * Supports local and external videos with custom fitting and sizing.
+ */
 export default function VideoBlock({ 
   title, 
   subtitle, 
@@ -35,9 +46,14 @@ export default function VideoBlock({
 }: VideoBlockProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   
-  // Force muted/playsinline for autoplay compatibility if requested
+  // Audio and Interface Logic
   const effectiveMuted = autoplay ? true : (muted ?? true);
   const effectiveControls = showControls ?? false;
+  
+  // Layout Logic
+  const objectFit = styles?.objectFit || 'cover';
+  const customHeight = styles?.height || ''; // empty means standard aspect-video
+  const customWidth = styles?.maxWidth || '100%';
   
   const isYouTube = videoUrl?.includes('youtube.com') || videoUrl?.includes('youtu.be');
   
@@ -64,7 +80,6 @@ export default function VideoBlock({
     finalUrl = `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
   }
 
-  // Ensure native video properties are applied correctly after hydration
   useEffect(() => {
     if (videoRef.current && !isYouTube) {
       videoRef.current.muted = effectiveMuted;
@@ -88,7 +103,10 @@ export default function VideoBlock({
         backgroundColor: styles?.backgroundColor || 'transparent'
       }}
     >
-      <div className={cn("space-y-12", isFullWidth ? '' : 'max-w-5xl mx-auto')}>
+      <div 
+        className={cn("space-y-12 mx-auto", isFullWidth ? 'w-full' : '')} 
+        style={{ maxWidth: isFullWidth ? '100%' : customWidth }}
+      >
         {(title || subtitle) && (
           <div className="text-center space-y-6 px-6 max-w-3xl mx-auto animate-fade-in">
             {title && (
@@ -111,15 +129,19 @@ export default function VideoBlock({
           </div>
         )}
 
-        <div className={cn(
-          "relative aspect-video overflow-hidden bg-black shadow-2xl transition-all duration-700",
-          isFullWidth ? '' : 'rounded-sm',
-          !effectiveControls ? "pointer-events-none" : ""
-        )}>
+        <div 
+          className={cn(
+            "relative overflow-hidden bg-black shadow-2xl transition-all duration-700",
+            (!customHeight || customHeight === 'auto' || customHeight === '') ? "aspect-video" : "",
+            isFullWidth ? '' : 'rounded-sm',
+            !effectiveControls ? "pointer-events-none" : ""
+          )}
+          style={{ height: (customHeight && customHeight !== 'auto' && customHeight !== '') ? customHeight : undefined }}
+        >
           {isYouTube ? (
             <div className={cn(
               "absolute inset-0 w-full h-full",
-              !effectiveControls && "scale-[1.15]"
+              objectFit === 'cover' ? "scale-[1.35]" : "scale-100"
             )}>
               <iframe
                 src={finalUrl}
@@ -127,6 +149,7 @@ export default function VideoBlock({
                 allow="autoplay; fullscreen; picture-in-picture"
                 allowFullScreen
                 title={title || "Video content"}
+                style={{ objectFit: objectFit as any }}
               ></iframe>
             </div>
           ) : (
@@ -141,7 +164,8 @@ export default function VideoBlock({
               playsInline={true}
               controls={effectiveControls}
               preload="metadata"
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full"
+              style={{ objectFit: objectFit as any }}
             />
           )}
           
