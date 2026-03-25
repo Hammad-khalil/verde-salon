@@ -8,15 +8,17 @@ import Footer from '@/components/layout/Footer';
 import SEOManager from '@/components/seo/SEOManager';
 import Image from 'next/image';
 import { format } from 'date-fns';
-import { Calendar, User, ArrowLeft, Share2, Sparkles } from 'lucide-react';
+import { Calendar, User, ArrowLeft, Share2, Sparkles, Link as LinkIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 export default function BlogPostDetail({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = use(params);
   const slug = resolvedParams.slug;
   const db = useFirestore();
+  const { toast } = useToast();
 
   const blogQuery = useMemoFirebase(() => {
     return query(collection(db, 'blog_posts'), where('slug', '==', slug), limit(1));
@@ -24,6 +26,38 @@ export default function BlogPostDetail({ params }: { params: Promise<{ slug: str
 
   const { data: posts, isLoading } = useCollection(blogQuery);
   const post = posts?.[0];
+
+  const handleShare = async () => {
+    if (!post) return;
+    
+    const shareData = {
+      title: post.title,
+      text: post.excerpt || `Check out this blog from Verde Salon: ${post.title}`,
+      url: window.location.href,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        // User cancelled or share failed, ignore
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "Link Copied",
+          description: "The blog URL has been copied to your clipboard.",
+        });
+      } catch (err) {
+        toast({
+          variant: "destructive",
+          title: "Copy Failed",
+          description: "Could not copy the link automatically.",
+        });
+      }
+    }
+  };
 
   if (isLoading) {
     return (
@@ -107,18 +141,18 @@ export default function BlogPostDetail({ params }: { params: Promise<{ slug: str
 
           {/* Article Master Content */}
           <div className="max-w-3xl mx-auto">
-            <div className="font-body text-xl leading-[2.1] text-muted-foreground/90 space-y-12 tracking-wide text-justify">
+            <div className="font-body text-lg md:text-xl leading-[1.8] md:leading-[2] text-muted-foreground/90 space-y-10 tracking-wide">
               {post.content.split('\n').map((line: string, i: number) => {
                 if (line.startsWith('# ')) {
-                  return <h2 key={i} className="text-5xl font-headline font-bold text-primary mt-20 mb-10 leading-tight">{line.replace('# ', '')}</h2>;
+                  return <h2 key={i} className="text-4xl md:text-5xl font-headline font-bold text-primary mt-20 mb-8 leading-tight">{line.replace('# ', '')}</h2>;
                 }
                 if (line.startsWith('## ')) {
-                  return <h3 key={i} className="text-3xl font-headline font-bold text-primary mt-16 mb-8">{line.replace('## ', '')}</h3>;
+                  return <h3 key={i} className="text-2xl md:text-3xl font-headline font-bold text-primary mt-16 mb-6">{line.replace('## ', '')}</h3>;
                 }
                 if (line.startsWith('* ') || line.startsWith('1. ')) {
                   return (
-                    <div key={i} className="flex items-start space-x-4 ml-4 mb-4">
-                      <div className="mt-3.5 w-1.5 h-1.5 bg-accent rounded-full shrink-0" />
+                    <div key={i} className="flex items-start space-x-4 ml-2 md:ml-4 mb-4">
+                      <div className="mt-3 w-1.5 h-1.5 bg-accent rounded-full shrink-0" />
                       <p className="text-lg">{line.replace(/^\* |^1\. /, '')}</p>
                     </div>
                   );
@@ -126,14 +160,8 @@ export default function BlogPostDetail({ params }: { params: Promise<{ slug: str
                 
                 const trimmedLine = line.trim();
                 if (trimmedLine) {
-                  // Enhanced readability: Dropcap for the first paragraph
-                  const isFirstPara = i === 0 || (i > 0 && post.content.split('\n')[i-1].trim() === '');
-                  
                   return (
-                    <p key={i} className={cn(
-                      "mb-8",
-                      isFirstPara && "first-letter:text-7xl first-letter:font-headline first-letter:float-left first-letter:mr-4 first-letter:text-accent first-letter:leading-[0.8] first-letter:mt-2"
-                    )}>
+                    <p key={i} className="mb-6 last:mb-0">
                       {trimmedLine}
                     </p>
                   );
@@ -154,8 +182,12 @@ export default function BlogPostDetail({ params }: { params: Promise<{ slug: str
                 </div>
               </div>
               <div className="flex space-x-4">
-                <Button variant="outline" className="rounded-none border-primary/10 h-14 px-8 text-[10px] font-bold uppercase tracking-widest hover:bg-primary hover:text-white transition-all duration-500">
-                  <Share2 className="w-4 h-4 mr-3" /> Share Reflection
+                <Button 
+                  onClick={handleShare}
+                  variant="outline" 
+                  className="rounded-none border-primary/10 h-14 px-8 text-[10px] font-bold uppercase tracking-widest hover:bg-primary hover:text-white transition-all duration-500"
+                >
+                  <Share2 className="w-4 h-4 mr-3" /> Share this blog
                 </Button>
               </div>
             </div>
