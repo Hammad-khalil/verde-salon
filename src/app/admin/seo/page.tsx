@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -17,7 +16,7 @@ import {
   CreditCard, 
   Webhook, 
   Zap, 
-  Link as LinkIcon,
+  Link as LinkIcon, 
   ZapOff,
   ShieldCheck,
   Settings as SettingsIcon,
@@ -147,7 +146,7 @@ export default function SeoAnalyticsEditor() {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label>Global Title Prefix</Label>
-                <Input value={form.titlePrefix} onChange={(e) => setForm({...form, titlePrefix: e.target.value})} />
+                <Input value={form.titlePrefix ?? ''} onChange={(e) => setForm({...form, titlePrefix: e.target.value})} />
               </div>
               <div className="flex items-center justify-between py-2 border-b">
                 <div className="space-y-0.5">
@@ -158,7 +157,7 @@ export default function SeoAnalyticsEditor() {
               </div>
               <div className="space-y-2 pt-2">
                 <Label>Google Search Console Verification</Label>
-                <Input placeholder="Verification HTML tag content" value={form.googleSearchConsole} onChange={(e) => setForm({...form, googleSearchConsole: e.target.value})} />
+                <Input placeholder="Verification HTML tag content" value={form.googleSearchConsole ?? ''} onChange={(e) => setForm({...form, googleSearchConsole: e.target.value})} />
               </div>
             </CardContent>
           </Card>
@@ -176,7 +175,7 @@ export default function SeoAnalyticsEditor() {
                 <Label>robots.txt Editor</Label>
                 <Textarea 
                   className="font-mono text-xs min-h-[200px]"
-                  value={form.robotsTxt}
+                  value={form.robotsTxt ?? ''}
                   onChange={(e) => setForm({...form, robotsTxt: e.target.value})}
                 />
               </div>
@@ -196,15 +195,15 @@ export default function SeoAnalyticsEditor() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Google Analytics 4 ID</Label>
-                <Input placeholder="G-XXXXXXXXXX" value={form.googleAnalyticsId} onChange={(e) => setForm({...form, googleAnalyticsId: e.target.value})} />
+                <Input placeholder="G-XXXXXXXXXX" value={form.googleAnalyticsId ?? ''} onChange={(e) => setForm({...form, googleAnalyticsId: e.target.value})} />
               </div>
               <div className="space-y-2">
                 <Label>Google Tag Manager ID</Label>
-                <Input placeholder="GTM-XXXXXXX" value={form.googleTagManagerId} onChange={(e) => setForm({...form, googleTagManagerId: e.target.value})} />
+                <Input placeholder="GTM-XXXXXXX" value={form.googleTagManagerId ?? ''} onChange={(e) => setForm({...form, googleTagManagerId: e.target.value})} />
               </div>
               <div className="space-y-2">
                 <Label>Meta (Facebook) Pixel ID</Label>
-                <Input placeholder="Pixel ID" value={form.facebookPixelId} onChange={(e) => setForm({...form, facebookPixelId: e.target.value})} />
+                <Input placeholder="Pixel ID" value={form.facebookPixelId ?? ''} onChange={(e) => setForm({...form, facebookPixelId: e.target.value})} />
               </div>
             </CardContent>
           </Card>
@@ -220,11 +219,11 @@ export default function SeoAnalyticsEditor() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label className="flex items-center"><LinkIcon className="w-3 h-3 mr-2" /> Zapier Webhook</Label>
-                <Input placeholder="https://hooks.zapier.com/..." value={form.zapierWebhookUrl} onChange={(e) => setForm({...form, zapierWebhookUrl: e.target.value})} />
+                <Input placeholder="https://hooks.zapier.com/..." value={form.zapierWebhookUrl ?? ''} onChange={(e) => setForm({...form, zapierWebhookUrl: e.target.value})} />
               </div>
               <div className="space-y-2">
                 <Label>HubSpot Portal ID</Label>
-                <Input placeholder="Portal ID" value={form.hubspotPortalId} onChange={(e) => setForm({...form, hubspotPortalId: e.target.value})} />
+                <Input placeholder="Portal ID" value={form.hubspotPortalId ?? ''} onChange={(e) => setForm({...form, hubspotPortalId: e.target.value})} />
               </div>
             </CardContent>
           </Card>
@@ -275,7 +274,7 @@ export default function SeoAnalyticsEditor() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Cache Duration (Minutes)</Label>
-                <Input type="number" value={form.cacheDuration} onChange={(e) => setForm({...form, cacheDuration: parseInt(e.target.value)})} />
+                <Input type="number" value={form.cacheDuration} onChange={(e) => setForm({...form, cacheDuration: parseInt(e.target.value) || 0})} />
                 <p className="text-[10px] text-muted-foreground">How long browsers should store your content before re-validation.</p>
               </div>
             </CardContent>
@@ -294,15 +293,15 @@ export default function SeoAnalyticsEditor() {
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="space-y-2">
                 <Label>Stripe Public Key</Label>
-                <Input placeholder="pk_test_..." value={form.stripePublicKey} onChange={(e) => setForm({...form, stripePublicKey: e.target.value})} />
+                <Input placeholder="pk_test_..." value={form.stripePublicKey ?? ''} onChange={(e) => setForm({...form, stripePublicKey: e.target.value})} />
               </div>
               <div className="space-y-2">
                 <Label>PayPal Client ID</Label>
-                <Input placeholder="Client ID" value={form.paypalClientId} onChange={(e) => setForm({...form, paypalClientId: e.target.value})} />
+                <Input placeholder="Client ID" value={form.paypalClientId ?? ''} onChange={(e) => setForm({...form, paypalClientId: e.target.value})} />
               </div>
               <div className="space-y-2">
                 <Label>Razorpay Key ID</Label>
-                <Input placeholder="rzp_test_..." value={form.razorpayKeyId} onChange={(e) => setForm({...form, razorpayKeyId: e.target.value})} />
+                <Input placeholder="rzp_test_..." value={form.razorpayKeyId ?? ''} onChange={(e) => setForm({...form, razorpayKeyId: e.target.value})} />
               </div>
             </CardContent>
           </Card>

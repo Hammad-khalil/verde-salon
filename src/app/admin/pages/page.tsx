@@ -29,7 +29,7 @@ import {
   Sparkles,
   Palette,
   Maximize,
-  Image as ImageIcon,
+  ImageIcon,
   Monitor,
   Library,
   Search,
@@ -389,20 +389,19 @@ export default function PagesEditor() {
                       <TabsContent value="content" className="mt-0 space-y-6">
                         {Object.keys(editingSection.parsedContent).map((key) => {
                           if (['styles', 'backgroundType', 'testimonials', 'images', 'posts', 'services'].includes(key)) return null;
-                          const isMedia = key.toLowerCase().includes('url') || key.toLowerCase().includes('image') || key.toLowerCase().includes('video');
                           return (
                             <div key={key} className="space-y-2">
                               <Label className="text-[10px] uppercase tracking-widest font-bold opacity-60">{key.replace(/([A-Z])/g, ' $1')}</Label>
                               {key.toLowerCase().includes('content') || key.toLowerCase().includes('subtitle') ? (
                                 <Textarea 
                                   className="text-sm rounded-none border-primary/10 focus-visible:ring-primary/20 min-h-[120px]"
-                                  value={editingSection.parsedContent[key]} 
+                                  value={editingSection.parsedContent[key] ?? ''} 
                                   onChange={(e) => updateNestedContent(key, e.target.value)}
                                 />
                               ) : (
                                 <Input 
                                   className="h-10 text-sm rounded-none border-primary/10 focus-visible:ring-primary/20"
-                                  value={editingSection.parsedContent[key]} 
+                                  value={editingSection.parsedContent[key] ?? ''} 
                                   onChange={(e) => updateNestedContent(key, e.target.value)}
                                 />
                               )}
@@ -439,7 +438,7 @@ export default function PagesEditor() {
                               />
                               <Input 
                                 className="text-sm h-10" 
-                                value={editingSection.parsedContent.styles?.backgroundColor} 
+                                value={editingSection.parsedContent.styles?.backgroundColor ?? ''} 
                                 onChange={(e) => updateNestedContent('backgroundColor', e.target.value, true)} 
                               />
                             </div>
@@ -451,7 +450,7 @@ export default function PagesEditor() {
                             <Label className="text-[10px] uppercase tracking-widest font-bold">Media URL</Label>
                             <div className="flex space-x-2">
                               <Input 
-                                value={editingSection.parsedContent[editingSection.parsedContent.backgroundType === 'image' ? 'imageUrl' : 'videoUrl']} 
+                                value={editingSection.parsedContent[editingSection.parsedContent.backgroundType === 'image' ? 'imageUrl' : 'videoUrl'] ?? ''} 
                                 onChange={(e) => updateNestedContent(editingSection.parsedContent.backgroundType === 'image' ? 'imageUrl' : 'videoUrl', e.target.value)}
                                 placeholder="https://..."
                               />
@@ -493,14 +492,14 @@ export default function PagesEditor() {
                               <Label className="text-[9px] opacity-50">Heading</Label>
                               <div className="flex items-center space-x-2">
                                 <input type="color" className="w-6 h-6" value={editingSection.parsedContent.styles?.titleColor || '#000000'} onChange={(e) => updateNestedContent('titleColor', e.target.value, true)} />
-                                <Input className="h-8 text-[10px]" value={editingSection.parsedContent.styles?.titleColor} onChange={(e) => updateNestedContent('titleColor', e.target.value, true)} />
+                                <Input className="h-8 text-[10px]" value={editingSection.parsedContent.styles?.titleColor ?? ''} onChange={(e) => updateNestedContent('titleColor', e.target.value, true)} />
                               </div>
                             </div>
                             <div className="space-y-2">
                               <Label className="text-[9px] opacity-50">Accent</Label>
                               <div className="flex items-center space-x-2">
                                 <input type="color" className="w-6 h-6" value={editingSection.parsedContent.styles?.subtitleColor || '#C6A15B'} onChange={(e) => updateNestedContent('subtitleColor', e.target.value, true)} />
-                                <Input className="h-8 text-[10px]" value={editingSection.parsedContent.styles?.subtitleColor} onChange={(e) => updateNestedContent('subtitleColor', e.target.value, true)} />
+                                <Input className="h-8 text-[10px]" value={editingSection.parsedContent.styles?.subtitleColor ?? ''} onChange={(e) => updateNestedContent('subtitleColor', e.target.value, true)} />
                               </div>
                             </div>
                           </div>

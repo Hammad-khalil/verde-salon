@@ -80,7 +80,7 @@ const LogoMediaField = ({
         <Input 
           placeholder="https://..."
           className="h-9 text-xs rounded-none"
-          value={value?.startsWith('data:') ? 'Local Asset Uploaded' : value}
+          value={value?.startsWith('data:') ? 'Local Asset Uploaded' : (value ?? '')}
           onChange={(e) => onChange(e.target.value)}
         />
       </div>
@@ -336,7 +336,7 @@ export default function BrandingEditor() {
                         onChange={(e) => setForm({...form, [color.key]: e.target.value})}
                         className="w-full h-8 cursor-pointer border-none bg-transparent"
                       />
-                      <Input value={(form as any)[color.key]} onChange={(e) => setForm({...form, [color.key]: e.target.value})} className="h-8 text-xs font-mono" />
+                      <Input value={(form as any)[color.key] ?? ''} onChange={(e) => setForm({...form, [color.key]: e.target.value})} className="h-8 text-xs font-mono" />
                     </div>
                   </div>
                 ))}
@@ -353,11 +353,11 @@ export default function BrandingEditor() {
               <CardContent className="space-y-6">
                 <div className="space-y-2">
                   <Label className="text-[10px] uppercase">Headline Font</Label>
-                  <Input value={form.headlineFont} onChange={(e) => setForm({...form, headlineFont: e.target.value})} />
+                  <Input value={form.headlineFont ?? ''} onChange={(e) => setForm({...form, headlineFont: e.target.value})} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] uppercase">Body Text Font</Label>
-                  <Input value={form.bodyFont} onChange={(e) => setForm({...form, bodyFont: e.target.value})} />
+                  <Input value={form.bodyFont ?? ''} onChange={(e) => setForm({...form, bodyFont: e.target.value})} />
                 </div>
                 <div className="p-6 bg-slate-50 border border-dashed rounded-lg text-center">
                   <h3 className="text-2xl mb-2" style={{ fontFamily: form.headlineFont }}>Sample Title</h3>

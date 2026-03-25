@@ -14,7 +14,7 @@ import {
   X, 
   Save, 
   Type, 
-  Image as ImageIcon, 
+  ImageIcon, 
   Video, 
   Palette, 
   Link as LinkIcon, 
@@ -303,9 +303,9 @@ export default function LiveEditorSidebar() {
                     <div key={f.path} className="space-y-2">
                       <Label className="text-[10px] uppercase font-bold opacity-50 tracking-wider">{f.path.split('.').pop()?.replace(/([A-Z])/g, ' $1')}</Label>
                       {(f.value && f.value.length > 50) || f.path.includes('content') ? (
-                        <Textarea className="rounded-none min-h-[100px] text-sm border-slate-200" value={f.value} onChange={(e) => updateValue(f.path, e.target.value)} />
+                        <Textarea className="rounded-none min-h-[100px] text-sm border-slate-200" value={f.value ?? ''} onChange={(e) => updateValue(f.path, e.target.value)} />
                       ) : (
-                        <Input className="rounded-none h-11 text-sm border-slate-200" value={f.value} onChange={(e) => updateValue(f.path, e.target.value)} />
+                        <Input className="rounded-none h-11 text-sm border-slate-200" value={f.value ?? ''} onChange={(e) => updateValue(f.path, e.target.value)} />
                       )}
                     </div>
                   ))}
@@ -324,7 +324,7 @@ export default function LiveEditorSidebar() {
                           <MediaField 
                             key={`${f.path}-${idx}`} 
                             label={`${f.path} [${idx + 1}]`} 
-                            value={itemUrl} 
+                            value={itemUrl ?? ''} 
                             onChange={(newVal) => {
                               const newArr = [...f.value];
                               if (typeof newArr[idx] === 'string') newArr[idx] = newVal;
@@ -341,7 +341,7 @@ export default function LiveEditorSidebar() {
                         <MediaField 
                           key={f.path} 
                           label={f.path} 
-                          value={f.value} 
+                          value={f.value ?? ''} 
                           onChange={(newVal) => updateValue(f.path, newVal)} 
                           type={isVideoField ? 'video' : 'image'} 
                         />
@@ -371,7 +371,7 @@ export default function LiveEditorSidebar() {
                     <Label className="text-[10px] opacity-50 uppercase font-bold">Accent Color</Label>
                     <div className="flex items-center space-x-3">
                       <input type="color" className="w-10 h-10 border rounded-sm cursor-pointer" value={editingData.parsedContent.styles?.backgroundColor || '#FFFFFF'} onChange={(e) => updateValue('styles.backgroundColor', e.target.value)} />
-                      <Input className="h-11 rounded-none font-mono text-xs" value={editingData.parsedContent.styles?.backgroundColor || ''} onChange={(e) => updateValue('styles.backgroundColor', e.target.value)} />
+                      <Input className="h-11 rounded-none font-mono text-xs" value={editingData.parsedContent.styles?.backgroundColor ?? ''} onChange={(e) => updateValue('styles.backgroundColor', e.target.value)} />
                     </div>
                   </div>
                   <div className="space-y-4">
