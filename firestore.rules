@@ -62,6 +62,11 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /cms_sections_live/{sectionId} {
+      allow get, list: if true; 
+      allow write: if isAdmin();
+    }
+
     match /services/{serviceId} {
       allow get, list: if true;
       allow write: if isAdmin();
