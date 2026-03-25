@@ -47,24 +47,28 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const isEditMode = useMemo(() => searchParams.get('edit') === 'true' && !!user, [searchParams, user]);
   
-  // OPTIMIZATION: Separate queries to reduce data transfer based on mode
-  const draftQuery = useMemoFirebase(() => isEditMode ? query(collection(db, 'cms_page_sections')) : null, [db, isEditMode]);
+  // Load collections. We fetch draft sections even in live mode as a robust migration fallback
+  const draftQuery = useMemoFirebase(() => query(collection(db, 'cms_page_sections')), [db]);
   const { data: draftSections, isLoading: draftLoading } = useCollection(draftQuery);
 
-  const liveQuery = useMemoFirebase(() => !isEditMode ? query(collection(db, 'cms_sections_live')) : null, [db, isEditMode]);
+  const liveQuery = useMemoFirebase(() => query(collection(db, 'cms_sections_live')), [db]);
   const { data: liveSections, isLoading: liveLoading } = useCollection(liveQuery);
 
   const orderedSections = useMemo(() => {
-    const targetSource = isEditMode ? draftSections : liveSections;
-    if (!targetSource || !sectionIds) return [];
+    // Determine the primary source based on mode
+    const primarySource = isEditMode ? draftSections : liveSections;
+    const fallbackSource = isEditMode ? null : draftSections;
+    
+    if (!sectionIds) return [];
 
     return sectionIds
       .map(id => {
-        let found = targetSource.find(s => s.id === id);
+        // Try primary source first
+        let found = primarySource?.find(s => s.id === id);
         
-        // Fallback if live hasn't been populated yet
-        if (!found && !isEditMode && draftSections) {
-          found = draftSections.find(s => s.id === id);
+        // Robust Fallback: If not found in live, try draft (migration period support)
+        if (!found && fallbackSource) {
+          found = fallbackSource.find(s => s.id === id);
         }
         
         return found;
@@ -72,15 +76,15 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       .filter(Boolean);
   }, [draftSections, liveSections, sectionIds, isEditMode]);
 
-  // Signal completion for preloader
+  // Signal completion for preloader - Ensure it fires even if sections are missing
   useEffect(() => {
-    const currentLoading = isEditMode ? draftLoading : liveLoading;
-    if (!currentLoading && (orderedSections.length > 0 || (sectionIds && sectionIds.length === 0))) {
+    const currentLoading = isEditMode ? draftLoading : (liveLoading && draftLoading);
+    if (!currentLoading) {
       window.dispatchEvent(new CustomEvent('verde-progress', { detail: { progress: 100 } }));
     }
-  }, [draftLoading, liveLoading, isEditMode, orderedSections, sectionIds]);
+  }, [draftLoading, liveLoading, isEditMode]);
 
-  if ((isEditMode && draftLoading && !draftSections) || (!isEditMode && liveLoading && !liveSections && !draftSections)) {
+  if ((isEditMode && draftLoading && !draftSections) || (!isEditMode && liveLoading && draftLoading && !liveSections && !draftSections)) {
     return <div className="min-h-screen bg-background" />;
   }
 
@@ -91,49 +95,19 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
     }
   };
 
-  async function handleAddSectionAt(index: number, type: string) {
-    let pageId = 'home';
-    if (pathname.includes('services')) pageId = 'services';
-    else if (pathname.includes('blog')) pageId = 'blog';
-    
-    const newId = doc(collection(db, 'cms_page_sections')).id;
-    
-    const defaults: Record<string, any> = {
-      Hero: { title: 'New Vision', subtitle: 'Elevating beauty.', ctaText: 'Explore', imageUrl: 'https://picsum.photos/seed/hero/1920/1080', backgroundType: 'image' },
-      TextBlock: { title: 'Our Story', content: 'Crafting luxury...', alignment: 'center' },
-      CTA: { title: 'Begin Ritual', subtitle: 'Book your visit.', buttonText: 'Connect' }
-    };
-
-    const newSection = { 
-      id: newId, 
-      type, 
-      content: JSON.stringify(defaults[type] || { title: `New ${type}` }),
-      isHidden: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    setDocumentNonBlocking(doc(db, 'cms_page_sections', newId), newSection, { merge: true });
-
-    const pageRef = doc(db, 'cms_pages', pageId);
-    const pageSnap = await getDoc(pageRef);
-    if (pageSnap.exists()) {
-      const data = pageSnap.data();
-      const currentIds = [...(data.sectionIds || [])];
-      currentIds.splice(index, 0, newId);
-      setDocumentNonBlocking(pageRef, { ...data, sectionIds: currentIds }, { merge: true });
-      toast({ title: "Draft Section Added" });
-    }
-  }
-
   return (
     <div className={cn("relative", isEditMode && "pb-32")}>
-      {orderedSections.map((section: any, idx: number) => {
+      {orderedSections.map((section: any) => {
         const isHidden = section.isHidden === true;
         if (!isEditMode && isHidden) return null;
 
         let data = {};
-        try { data = JSON.parse(section.content || '{}'); } catch (e) { return null; }
+        try { 
+          data = typeof section.content === 'string' ? JSON.parse(section.content || '{}') : (section.content || {}); 
+        } catch (e) { 
+          console.error("Content Parse Error:", e);
+          return null; 
+        }
         
         const Component = SECTION_COMPONENTS[section.type];
         if (!Component) return null;

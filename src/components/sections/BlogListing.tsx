@@ -5,7 +5,7 @@ import { collection, query, orderBy } from 'firebase/firestore';
 import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import BlogCard from '@/components/blog/BlogCard';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Info } from 'lucide-react';
 
 interface BlogListingProps {
   title?: string;
@@ -31,11 +31,11 @@ export default function BlogListing({
 
   const categories = useMemo(() => {
     const cats = ['All'];
-    if (posts) {
+    if (posts && posts.length > 0) {
       const distinct = Array.from(new Set(posts.map(p => p.category))).filter(Boolean);
       cats.push(...distinct);
     } else {
-      cats.push('Hair', 'Skin', 'Wellness', 'Trends');
+      cats.push('Hair', 'Skin', 'Wellness');
     }
     return cats;
   }, [posts]);
@@ -49,6 +49,16 @@ export default function BlogListing({
 
   const paddingVal = styles?.paddingVertical || '160';
 
+  const formatDate = (dateStr: string) => {
+    try {
+      if (!dateStr) return undefined;
+      const date = new Date(dateStr);
+      return isNaN(date.getTime()) ? undefined : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch (e) {
+      return undefined;
+    }
+  };
+
   return (
     <section 
       className="overflow-hidden"
@@ -59,7 +69,7 @@ export default function BlogListing({
       }}
     >
       <div className="container mx-auto px-6">
-        {/* Modern Header Section */}
+        {/* Header Section */}
         <div className="max-w-5xl space-y-12 mb-32">
           <div className="space-y-6">
             <span 
@@ -121,12 +131,16 @@ export default function BlogListing({
                 excerpt={post.excerpt || ''}
                 imageUrl={post.imageUrl}
                 category={post.category}
-                date={post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : undefined}
+                date={formatDate(post.publishedAt)}
               />
             ))}
-            {processedPosts.length === 0 && (
-              <div className="col-span-full py-48 text-center bg-slate-50/50 border border-dashed border-primary/10">
-                <p className="font-headline text-2xl text-muted-foreground/40 italic">The journal is currently waiting for its next entry.</p>
+            {!isLoading && processedPosts.length === 0 && (
+              <div className="col-span-full py-48 text-center bg-slate-50/50 border border-dashed border-primary/10 flex flex-col items-center justify-center space-y-6">
+                <Info className="w-10 h-10 text-primary/20" />
+                <div className="space-y-2">
+                  <p className="font-headline text-2xl text-muted-foreground/60 italic">The blog is currently being curated.</p>
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground/40">Ensure articles are marked as "Live" in the editor to appear here.</p>
+                </div>
               </div>
             )}
           </div>

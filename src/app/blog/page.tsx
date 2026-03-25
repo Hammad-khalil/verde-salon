@@ -18,19 +18,12 @@ export default function BlogPage() {
   const pageRef = useMemoFirebase(() => doc(db, 'cms_pages', 'blog'), [db]);
   const { data: pageData, isLoading } = useDoc(pageRef);
 
-  // Emit progress once page document is resolved
-  useEffect(() => {
-    if (!isLoading) {
-      window.dispatchEvent(new CustomEvent('verde-progress', { detail: { progress: 50 } }));
-    }
-  }, [isLoading]);
-
   // STRICT SEPARATION: Public view ONLY uses publishedSectionIds
   const sectionIds = useMemo(() => {
     if (!pageData) return [];
     if (isEditMode) return pageData.sectionIds || [];
     
-    // ⚠️ CRITICAL: Migration Fallback
+    // Migration Fallback for pages not yet re-published under new architecture
     if (pageData.publishedSectionIds === undefined) {
       return pageData.sectionIds || [];
     }
@@ -49,27 +42,8 @@ export default function BlogPage() {
       <main className="flex-grow">
         {isLoading ? (
           <div className="h-screen bg-background" />
-        ) : pageData ? (
-          sectionIds.length > 0 ? (
-            <SectionRenderer sectionIds={sectionIds} />
-          ) : (
-            /* ⚠️ CRITICAL: Do NOT modify fallback unless CMS data is truly empty. */
-            <div className="py-40 text-center text-muted-foreground flex flex-col items-center justify-center space-y-6">
-              <p className="font-headline text-2xl">Blogs Architecture Pending</p>
-              <p className="text-sm font-light max-w-md mx-auto">
-                {isEditMode 
-                  ? "Initialize the Blog page in the Sanctuary Command to start editing."
-                  : "Our blog is currently being curated. New reflections coming soon."}
-              </p>
-            </div>
-          )
         ) : (
-          <div className="py-40 text-center text-muted-foreground flex flex-col items-center justify-center space-y-6">
-            <p className="font-headline text-2xl">Architecture Pending</p>
-            <p className="text-sm font-light max-w-md mx-auto">
-              Initialize the Blog page in the Sanctuary Command to begin.
-            </p>
-          </div>
+          <SectionRenderer sectionIds={sectionIds} />
         )}
       </main>
 
