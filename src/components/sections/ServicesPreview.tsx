@@ -12,7 +12,7 @@ interface ServicesPreviewProps {
 }
 
 export default function ServicesPreview({ 
-  title = "Signature Rituals", 
+  title = "Signature Services", 
   subtitle = "Our Craft"
 }: ServicesPreviewProps) {
   const db = useFirestore();
@@ -48,7 +48,7 @@ export default function ServicesPreview({
             href="/blog" 
             className="group flex items-center text-[11px] font-bold uppercase tracking-[0.2em] text-primary hover:text-accent transition-all duration-300"
           >
-            Explore All Blogs <ArrowRight className="ml-3 w-4 h-4 transition-transform group-hover:translate-x-2" />
+            Explore the Journal <ArrowRight className="ml-3 w-4 h-4 transition-transform group-hover:translate-x-2" />
           </Link>
         </div>
 
@@ -58,7 +58,7 @@ export default function ServicesPreview({
           </div>
         ) : error ? (
           <div className="py-20 text-center border-2 border-dashed border-primary/5 rounded-sm">
-            <p className="font-headline text-xl text-muted-foreground/40 italic">We're updating our seasonal rituals. Check back shortly.</p>
+            <p className="font-headline text-xl text-muted-foreground/40 italic">We're updating our seasonal insights. Check back shortly.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">

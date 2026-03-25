@@ -28,13 +28,13 @@ export default function Footer() {
           <h4 className="font-headline text-xl font-light text-accent mb-10 uppercase tracking-[0.3em]">Navigation</h4>
           <ul className="space-y-5 text-[11px] font-bold uppercase tracking-[0.3em] text-background/60">
             <li><Link href="/" className="hover:text-accent transition-all duration-300">Home</Link></li>
-            <li><Link href="/services" className="hover:text-accent transition-all duration-300">Rituals</Link></li>
-            <li><Link href="/blog" className="hover:text-accent transition-all duration-300">Blogs</Link></li>
+            <li><Link href="/services" className="hover:text-accent transition-all duration-300">Services</Link></li>
+            <li><Link href="/blog" className="hover:text-accent transition-all duration-300">Journal</Link></li>
             <li><Link href="/admin" className="hover:text-accent transition-all duration-300">Staff Portal</Link></li>
           </ul>
         </div>
 
-        {/* Contact Rituals */}
+        {/* Contact Services */}
         <div>
           <h4 className="font-headline text-xl font-light text-accent mb-10 uppercase tracking-[0.3em]">Contact</h4>
           <ul className="space-y-8 text-sm font-light text-background/60 tracking-wide">
@@ -56,7 +56,7 @@ export default function Footer() {
         {/* Newsletter Inward */}
         <div>
           <h4 className="font-headline text-xl font-light text-accent mb-10 uppercase tracking-[0.3em]">Newsletter</h4>
-          <p className="text-sm font-light text-background/60 mb-10 leading-relaxed tracking-wide">Join our curated inner circle for seasonal insights and priority ritual updates.</p>
+          <p className="text-sm font-light text-background/60 mb-10 leading-relaxed tracking-wide">Join our curated inner circle for seasonal insights and priority service updates.</p>
           <div className="flex border-b border-background/10 pb-3 group">
             <input 
               type="email" 

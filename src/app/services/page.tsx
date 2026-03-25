@@ -42,8 +42,8 @@ export default function ServicesPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <SEOManager 
-        title={pageData?.seo?.title || "Signature Rituals | Verde Salon"}
-        description={pageData?.seo?.description || "Explore our curated menu of hair, skin, and nail rituals at Verde Salon."}
+        title={pageData?.seo?.title || "Signature Services | Verde Salon"}
+        description={pageData?.seo?.description || "Explore our curated menu of hair, skin, and nail services at Verde Salon."}
       />
       <Navbar />
       
@@ -57,11 +57,11 @@ export default function ServicesPage() {
             ) : (
               /* ⚠️ CRITICAL: Do NOT modify fallback unless CMS data is truly empty. */
               <div className="py-40 text-center text-muted-foreground flex flex-col items-center justify-center space-y-6">
-                <p className="font-headline text-2xl">Ritual Architecture Pending</p>
+                <p className="font-headline text-2xl">Services Architecture Pending</p>
                 <p className="text-sm font-light max-w-md mx-auto">
                   {isEditMode 
                     ? "Initialize the Services page in the Sanctuary Command to start editing."
-                    : "We are currently updating our ritual menu. Please check back shortly."}
+                    : "We are currently updating our service menu. Please check back shortly."}
                 </p>
               </div>
             )}

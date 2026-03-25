@@ -113,8 +113,8 @@ export default function AdminDashboard() {
         {
           id: 'initial-craft',
           type: 'ServicesPreview',
-          content: JSON.stringify({ title: 'Signature Rituals', subtitle: 'Our Craft' }),
-          publishedContent: JSON.stringify({ title: 'Signature Rituals', subtitle: 'Our Craft' })
+          content: JSON.stringify({ title: 'Signature Services', subtitle: 'Our Craft' }),
+          publishedContent: JSON.stringify({ title: 'Signature Services', subtitle: 'Our Craft' })
         },
         {
           id: 'initial-gallery',
@@ -126,12 +126,12 @@ export default function AdminDashboard() {
           id: 'initial-blog-list',
           type: 'BlogListing',
           content: JSON.stringify({ 
-            title: 'Rituals & Reflections', 
+            title: 'Journal & Reflections', 
             subtitle: 'The Journal',
             description: 'Curated insights on beauty and intentional living.'
           }),
           publishedContent: JSON.stringify({ 
-            title: 'Rituals & Reflections', 
+            title: 'Journal & Reflections', 
             subtitle: 'The Journal',
             description: 'Curated insights on beauty and intentional living.'
           })
@@ -140,12 +140,12 @@ export default function AdminDashboard() {
           id: 'initial-services-list',
           type: 'ServicesListing',
           content: JSON.stringify({ 
-            title: 'Signature Rituals', 
+            title: 'Signature Services', 
             subtitle: 'The Menu',
             description: 'Timeless techniques meets contemporary science.'
           }),
           publishedContent: JSON.stringify({ 
-            title: 'Signature Rituals', 
+            title: 'Signature Services', 
             subtitle: 'The Menu',
             description: 'Timeless techniques meets contemporary science.'
           })
@@ -171,7 +171,7 @@ export default function AdminDashboard() {
       const pageDefinitions = [
         { id: 'home', title: 'Home', slug: '/', sections: ['initial-hero', 'initial-intro', 'initial-craft', 'initial-gallery'] },
         { id: 'services', title: 'Services', slug: '/services', sections: ['initial-services-list'] },
-        { id: 'blog', title: 'Blog', slug: '/blog', sections: ['initial-blog-list'] }
+        { id: 'blog', title: 'Journal', slug: '/blog', sections: ['initial-blog-list'] }
       ];
 
       for (const p of pageDefinitions) {
@@ -210,8 +210,8 @@ export default function AdminDashboard() {
   }
 
   const stats = [
-    { name: 'Active Rituals', value: services?.length || 0, icon: Scissors, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { name: 'Blogs', value: posts?.length || 0, icon: FileText, color: 'text-primary', bg: 'bg-primary/10' },
+    { name: 'Active Services', value: services?.length || 0, icon: Scissors, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { name: 'Journal Entries', value: posts?.length || 0, icon: FileText, color: 'text-primary', bg: 'bg-primary/10' },
     { name: 'Client Voices', value: testimonials?.length || 0, icon: MessageSquare, color: 'text-amber-600', bg: 'bg-amber-50' },
   ];
 
@@ -244,7 +244,7 @@ export default function AdminDashboard() {
           <CardHeader className="flex flex-row items-center justify-between relative z-10">
             <div className="space-y-2">
               <CardTitle className="text-3xl font-headline font-bold">Initialize Your Sanctuary</CardTitle>
-              <CardDescription className="text-primary/70 text-base max-w-xl">Complete your architecture. This only fills in missing Services, Blog, and Home page structures without touching your edits.</CardDescription>
+              <CardDescription className="text-primary/70 text-base max-w-xl">Complete your architecture. This only fills in missing Services, Journal, and Home page structures without touching your edits.</CardDescription>
             </div>
             <Button 
               onClick={handleSeedSanctuary} 
@@ -297,7 +297,7 @@ export default function AdminDashboard() {
         {/* Pages Management */}
         <Card className="border-none shadow-sm rounded-none overflow-hidden">
           <CardHeader className="bg-slate-50/50 border-b">
-            <CardTitle className="text-2xl font-headline font-bold">Website Pages</CardTitle>
+            <CardTitle className="text-2xl font-headline font-bold">Website Architecture</CardTitle>
             <CardDescription>Manage your visual identity and live content sections.</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
