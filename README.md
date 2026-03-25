@@ -1,54 +1,65 @@
-# 🌿 Verde Salon - Administrator's Manual
+# 🌿 Verde Salon | Premium Management System
 
-Welcome to your **Verde Salon** management sanctuary. This system is designed to be elegant, powerful, and simple enough for daily use without writing a single line of code.
-
----
-
-## 🚀 Step 1: Initialize Your Sanctuary
-If your website looks empty, don't worry! 
-1. Log in at `/admin/login`.
-2. On the main **Dashboard**, scroll to the bottom.
-3. You will see a banner titled **"Initialize Your Sanctuary"**.
-4. Click **"Seed Sanctuary Now"**.
-5. **What it does**: This instantly creates your Home page layout, starter Services, and Global Colors. Use this if you are starting a fresh site or if your main pages (Home, Services, Blogs) are missing.
+Verde Salon is a bespoke digital ecosystem designed for luxury beauty brands. It combines a high-performance, minimalist frontend with a robust, real-time Content Management System (CMS), enabling seamless management of artisan services, brand narratives, and client inquiries.
 
 ---
 
-## 🛠️ Step 2: Using the Page Builder
-Located at `/admin/pages`, the Page Builder is where you design your digital presence.
-- **Adding Sections**: Click the buttons at the bottom (Hero, Gallery, CTA, etc.) to add them to your page.
-- **Editing Content**: Click the **Settings (Gear icon)** on any section to change its text, images, and buttons.
-- **Reordering**: Use the **Up/Down Arrows** tobacco move sections.
-- **Syncing**: There is **no Save button needed** for data—it saves automatically to Draft. The "Publish" button at the top is for your mental confirmation to take it live!
+## 🏗️ System Overview
+The platform is built on a modern stack featuring **Next.js 15**, **Firebase**, and **Tailwind CSS**. It prioritizes a "Content-First" philosophy, where the administrative interface provides granular control over every visual and structural element of the website without requiring technical expertise.
 
 ---
 
-## 🩹 Step 3: Data Recovery Center
-Located at the bottom of your Dashboard or within the Page Editor.
-- **What it does**: If you accidentally delete a section from a page, it isn't "deleted" from the database; it is just "unassigned."
-- **How to use**: Go to the **Section Library** inside the Page Editor to see all unassigned sections and re-attach them to any page instantly.
+## ✨ Core Features
+
+### 🛠️ Professional CMS & Admin Panel
+A centralized control hub for all business logic, branding identity, and architectural configurations.
+*   **Real-Time Data Sync**: All updates made in the admin panel propagate instantly to the live site via Firestore snapshots.
+*   **Visual Architect**: A sidebar-driven page builder allowing for point-and-click editing of live components.
+*   **Decoupled State Management**: Advanced storage logic that separates Workspace (Draft) content from Public (Live) content to ensure maximum scalability.
+
+### 📑 Content Management
+*   **Service Architecture**: Manage an artisan menu with detailed price profiles, durations, and high-definition imagery.
+*   **Journal (Blogs)**: A high-end editorial system for brand reflections, featuring category filtering and optimized readability.
+*   **CRM & Leads**: Automated tracking of client submissions with conversion status management (New, In Progress, Converted).
+*   **Brand Identity Engine**: Direct control over global HSL color signatures, typography pairings, and logo scaling.
+
+### 🚀 Performance & UX
+*   **CLS Elimination**: Explicit sizing and ghost-state placeholders prevent layout shifts during hydration.
+*   **Conditional Hydration**: Administrative scripts are only loaded in "Edit Mode," significantly reducing Total Blocking Time (TBT) for visitors.
+*   **Intelligent Media**: Support for local uploads (with strict safety caps) and external HD resource linking (YouTube/Unsplash).
 
 ---
 
-## 📖 Step 4: Managing Your Content
-- **Services**: Go to `/admin/services` to manage your menu, prices, and categories.
-- **Blogs**: Go to `/admin/blog` to write new articles. It includes built-in SEO tools to help you rank on Google.
-- **Inquiries**: Go to `/admin/submissions` to see clients who have filled out your booking or contact forms.
-- **Branding**: Go to `/admin/branding` to change your Logo, Site Name, and primary brand colors site-wide.
+## 📐 Page Builder Logic
 
----
+The system utilizes a modular **Section-Based Architecture**. Each page is an array of pointers to distinct section documents.
 
-## ✨ Pro-Tips for Success
-1. **Real-Time Sync**: Open your live website in one tab and the Admin panel in another. As you edit the Admin panel, watch the live site update **instantly** in "Edit Mode".
-2. **High-Quality Images**: For the best luxury feel, use vertical images for the Gallery and wide cinematic images for the Hero.
-3. **SEO Matters**: When writing blog posts, fill out the "SEO Optimization" fields. This is how Google understands what your salon is about.
+### How Sections Work:
+1.  **Drafting**: Sections are created and modified in the `cms_page_sections` collection. These changes are visible only to admins in "Edit Mode."
+2.  **Reordering**: Vertical rhythm can be adjusted via the "Pages & Content" manager, updating the document array sequence.
+3.  **Publishing**: Upon clicking "Publish," the system performs an atomic batch write, cloning the current workspace state to the `cms_sections_live` collection.
+4.  **Visibility**: Every section features a toggle to hide or unhide content from the public without deleting the underlying data.
 
 ---
 
 ## 🔒 Security & Access
-Your data is stored in **Google Firebase**.
-- All logins are managed via Firebase Authentication.
-- All permissions are restricted via `roles_admin` in Firestore.
-- Only users with the `admin` role can access the `/admin` area.
 
-**Verde Salon** is more than a website; it is an intentional digital ritual. May your sanctuary flourish.
+Access to the administrative sanctuary is strictly enforced through **Firebase Authentication** and **Firestore Security Rules**.
+*   **Role-Based Access (RBAC)**: Only authenticated users with verified administrative UIDs or specific brand emails can access the `/admin` routing.
+*   **Public Safety**: All public-facing collections are configured for "Read-Only" access, preventing unauthorized data injection.
+*   **Secure API Handling**: External integrations (Analytics, Webhooks) are managed via server-side configuration profiles.
+
+---
+
+## 💡 Best Practices for Management
+
+To maintain the premium performance and aesthetic of the site, we recommend the following:
+
+*   **Media Handling**: For the highest performance, use **External Source URLs** (e.g., Unsplash for images, YouTube for 4K video). The local upload system is optimized for files under 400KB.
+*   **Typography**: Stick to the pre-configured font pairings. If changing, ensure the fonts are available via Google Fonts for dynamic injection.
+*   **SEO**: Fill out the "Search Engine" card for every blog post. This metadata is injected via the `SEOManager` to improve your organic ranking.
+*   **Maintenance**: Regularly archive "Converted" leads in the CRM to keep your submission queue clean and efficient.
+
+---
+
+**Verde Salon** is more than a website; it is an intentional digital signature. Engineered for performance, designed for beauty.
