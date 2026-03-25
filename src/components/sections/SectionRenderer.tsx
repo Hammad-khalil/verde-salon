@@ -1,3 +1,4 @@
+
 'use client';
 
 import Hero from './Hero';
@@ -47,25 +48,44 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const isEditMode = useMemo(() => searchParams.get('edit') === 'true' && !!user, [searchParams, user]);
   
-  const sectionsQuery = useMemoFirebase(() => query(collection(db, 'cms_page_sections')), [db]);
-  const { data: allSections, isLoading } = useCollection(sectionsQuery);
+  // 1. Fetch Draft Sections (Primary for Architect)
+  const draftQuery = useMemoFirebase(() => query(collection(db, 'cms_page_sections')), [db]);
+  const { data: draftSections, isLoading: draftLoading } = useCollection(draftQuery);
+
+  // 2. Fetch Live Sections (Primary for Public)
+  const liveQuery = useMemoFirebase(() => query(collection(db, 'cms_sections_live')), [db]);
+  const { data: liveSections, isLoading: liveLoading } = useCollection(liveQuery);
 
   const orderedSections = useMemo(() => {
-    if (!allSections || !sectionIds) return [];
-    return sectionIds
-      .map(id => allSections.find(s => s.id === id))
-      .filter(Boolean);
-  }, [allSections, sectionIds]);
+    // Determine target collection based on Edit Mode
+    const targetSource = isEditMode ? draftSections : liveSections;
+    if (!targetSource || !sectionIds) return [];
 
-  // Signal 100% progress when sections are ready
+    return sectionIds
+      .map(id => {
+        let found = targetSource.find(s => s.id === id);
+        
+        // ⚠️ CRITICAL: Structural Fallback
+        // If we are in public mode but the section hasn't been migrated to the 'live' collection yet,
+        // we safely fall back to the draft collection to prevent site breakage.
+        if (!found && !isEditMode && draftSections) {
+          found = draftSections.find(s => s.id === id);
+        }
+        
+        return found;
+      })
+      .filter(Boolean);
+  }, [draftSections, liveSections, sectionIds, isEditMode]);
+
+  // Signal 100% progress when primary data is ready
   useEffect(() => {
-    if (!isLoading && allSections) {
+    const primaryLoading = isEditMode ? draftLoading : liveLoading;
+    if (!primaryLoading && (draftSections || liveSections)) {
       window.dispatchEvent(new CustomEvent('verde-progress', { detail: { progress: 100 } }));
     }
-  }, [isLoading, allSections]);
+  }, [draftLoading, liveLoading, draftSections, liveSections, isEditMode]);
 
-  // Optimization: Keep previous layout stable while loading new data
-  if (isLoading && !allSections) {
+  if ((isEditMode && draftLoading && !draftSections) || (!isEditMode && liveLoading && !liveSections && !draftSections)) {
     return <div className="min-h-screen bg-background" />;
   }
 
@@ -95,7 +115,9 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
     const newSection = { 
       id: newId, 
       type, 
-      content: JSON.stringify(defaults[type] || { title: `New ${type}` }) 
+      content: JSON.stringify(defaults[type] || { title: `New ${type}` }),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
     
     setDocumentNonBlocking(doc(db, 'cms_page_sections', newId), newSection, { merge: true });
@@ -137,12 +159,7 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       {orderedSections.map((section: any, idx: number) => {
         let data = {};
         try { 
-          const contentToRender = isEditMode 
-            ? section.content 
-            : (section.publishedContent !== undefined ? section.publishedContent : section.content);
-          
-          if (!contentToRender && !isEditMode) return null;
-          data = JSON.parse(contentToRender || '{}'); 
+          data = JSON.parse(section.content || '{}'); 
         } catch (e) { 
           console.error("Renderer Parse Error:", e);
           return null;

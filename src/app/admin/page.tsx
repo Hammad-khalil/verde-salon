@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
-import { collection, query, limit, orderBy, doc, getDoc } from 'firebase/firestore';
+import { collection, query, limit, orderBy, doc, getDoc, writeBatch } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -39,26 +40,23 @@ export default function AdminDashboard() {
   const { data: services } = useCollection(servicesQuery);
   const { data: testimonials } = useCollection(testimonialsQuery);
 
-  // Logic to show seeding banner only if core architecture is missing or outdated
   const isMissingCorePages = useMemo(() => {
     if (pagesLoading) return false;
     if (!pages || pages.length === 0) return true;
     const required = ['home', 'services', 'blog'];
-    // Check if pages exist and have published IDs (Strict Migration check)
-    return !required.every(id => {
-      const p = pages.find(page => page.id === id);
-      return p && p.publishedSectionIds !== undefined;
-    });
+    return !required.every(id => pages.find(page => page.id === id));
   }, [pages, pagesLoading]);
 
   async function handleSeedSanctuary() {
     setIsSeeding(true);
     try {
-      // 1. Safe Global Settings (Migration check)
+      const batch = writeBatch(db);
+
+      // 1. Safe Global Settings
       const settingsRef = doc(db, 'settings', 'global');
       const settingsSnap = await getDoc(settingsRef);
       if (!settingsSnap.exists()) {
-        setDocumentNonBlocking(settingsRef, {
+        batch.set(settingsRef, {
           siteName: 'VERDE SALON',
           colors: { primary: '#0F2F2F', background: '#F5F3EF', accent: '#C6A15B' },
           typography: { headline: 'Playfair Display', body: 'Inter' },
@@ -69,23 +67,15 @@ export default function AdminDashboard() {
             typography: { headline: 'Playfair Display', body: 'Inter' },
             logo: { placement: 'left', height: 40 }
           }
-        }, { merge: true });
+        });
       }
 
-      // 2. Define Essential Sections (Lightweight Migration)
-      const sections = [
+      // 2. Define Essential Sections (New Structural Standard)
+      const sectionDefinitions = [
         {
           id: 'initial-hero',
           type: 'Hero',
           content: JSON.stringify({ 
-            title: 'Elevate Your Natural Beauty', 
-            subtitle: 'Premium hair, skin, and wellness treatments tailored for you.', 
-            ctaText: 'Book Appointment', 
-            imageUrl: 'https://picsum.photos/seed/verde-hero-main/1920/1080',
-            backgroundType: 'image',
-            styles: { paddingVertical: '0', titleColor: '#ffffff', subtitleColor: '#C6A15B' }
-          }),
-          publishedContent: JSON.stringify({ 
             title: 'Elevate Your Natural Beauty', 
             subtitle: 'Premium hair, skin, and wellness treatments tailored for you.', 
             ctaText: 'Book Appointment', 
@@ -101,11 +91,6 @@ export default function AdminDashboard() {
             title: 'Signature Services', 
             subtitle: 'The Menu',
             description: 'Timeless techniques meets contemporary science.'
-          }),
-          publishedContent: JSON.stringify({ 
-            title: 'Signature Services', 
-            subtitle: 'The Menu',
-            description: 'Timeless techniques meets contemporary science.'
           })
         },
         {
@@ -115,31 +100,27 @@ export default function AdminDashboard() {
             title: 'Reflections & Insights', 
             subtitle: 'Blogs',
             description: 'Curated thoughts on beauty and intentional living.'
-          }),
-          publishedContent: JSON.stringify({ 
-            title: 'Reflections & Insights', 
-            subtitle: 'Blogs',
-            description: 'Curated thoughts on beauty and intentional living.'
           })
         }
       ];
 
-      // Safe write sections - Only fill missing fields to avoid breaking user data
-      for (const section of sections) {
-        const secRef = doc(db, 'cms_page_sections', section.id);
-        const secSnap = await getDoc(secRef);
-        if (!secSnap.exists()) {
-          setDocumentNonBlocking(secRef, section, { merge: true });
-        } else {
-          // Migration: Ensure publishedContent is set for legacy sections
-          const existing = secSnap.data();
-          if (existing.publishedContent === undefined) {
-            setDocumentNonBlocking(secRef, { publishedContent: existing.content || section.content }, { merge: true });
-          }
+      for (const section of sectionDefinitions) {
+        const draftRef = doc(db, 'cms_page_sections', section.id);
+        const liveRef = doc(db, 'cms_sections_live', section.id);
+        
+        const snap = await getDoc(draftRef);
+        if (!snap.exists()) {
+          const payload = {
+            ...section,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          batch.set(draftRef, payload);
+          batch.set(liveRef, payload); // Auto-publish on seed
         }
       }
 
-      // 3. Page Construction (Healing legacy pages)
+      // 3. Page Construction
       const pageDefinitions = [
         { id: 'home', title: 'Home', slug: '/', sections: ['initial-hero'] },
         { id: 'services', title: 'Services', slug: '/services', sections: ['initial-services-list'] },
@@ -151,28 +132,22 @@ export default function AdminDashboard() {
         const pSnap = await getDoc(pRef);
         
         if (!pSnap.exists()) {
-          setDocumentNonBlocking(pRef, {
+          batch.set(pRef, {
             id: p.id,
             title: p.title,
             slug: p.slug,
             sectionIds: p.sections,
             publishedSectionIds: p.sections,
             isPublished: true,
-            createdAt: new Date().toISOString()
-          }, { merge: true });
-        } else {
-          // Migration: Force sync legacy published fields
-          const currentData = pSnap.data();
-          if (currentData.publishedSectionIds === undefined) {
-            setDocumentNonBlocking(pRef, {
-              publishedSectionIds: currentData.sectionIds || p.sections,
-              sectionIds: currentData.sectionIds || p.sections
-            }, { merge: true });
-          }
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            publishedAt: new Date().toISOString()
+          });
         }
       }
 
-      toast({ title: "Sanctuary Synced", description: "Architecture migrated to the new Publish system." });
+      await batch.commit();
+      toast({ title: "Sanctuary Synced", description: "Architecture initialized with decoupled state management." });
     } catch (e) {
       console.error(e);
       toast({ variant: "destructive", title: "Setup Failed", description: "Could not finalize architecture. Please try again." });
@@ -280,7 +255,7 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* FOOTER UTILITIES - Relocated to bottom */}
+      {/* FOOTER UTILITIES */}
       <div className="space-y-8 pt-12 border-t">
         <div className="flex flex-col space-y-2">
           <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground/40">System Utilities</h3>

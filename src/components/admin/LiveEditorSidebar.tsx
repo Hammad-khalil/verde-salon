@@ -28,7 +28,8 @@ import {
   Info,
   Volume2,
   VolumeX,
-  MonitorPlay
+  MonitorPlay,
+  AlertTriangle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -66,14 +67,15 @@ const MediaField = ({
     if (!file) return;
     
     // CRITICAL: Firestore Document Limit is 1MB. 
-    // Since we store content TWICE (Draft + Published), we must limit raw files to ~400KB.
+    // Decoupling collections has freed up space, but we still cap local assets to ~400KB
+    // to ensure total JSON string remains safely within limits.
     const limit = type === 'video' ? 500000 : 400000;
     
     if (file.size > limit) {
       toast({ 
         variant: "destructive", 
         title: "Database Limit Warning", 
-        description: `This ${type} is too large for internal storage. Please use a file under ${Math.round(limit/1000)}KB or use an External URL for high-quality media.` 
+        description: `This ${type} is too large for stable storage. Please use a file under ${Math.round(limit/1000)}KB or use an External URL for high-quality media.` 
       });
       return;
     }
@@ -97,7 +99,7 @@ const MediaField = ({
           <div className="group relative">
             <Info className="w-3 h-3 text-muted-foreground/40 cursor-help" />
             <div className="absolute bottom-full left-0 mb-2 w-48 p-2 bg-black text-white text-[8px] rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
-              Internal storage limit: {type === 'video' ? '500KB' : '400KB'}. For HD media, use an External URL.
+              Recommended: External URL for performance. Internal storage limit: {type === 'video' ? '500KB' : '400KB'}.
             </div>
           </div>
         </div>
@@ -240,20 +242,23 @@ export default function LiveEditorSidebar() {
     current[keys[keys.length - 1]] = value;
     
     const contentString = JSON.stringify(updated);
+    const byteSize = new TextEncoder().encode(contentString).length;
     
-    // Safety check for Firestore document limit (1MB)
-    if (contentString.length > 800000) {
+    // CRITICAL SIZE CHECK:
+    // Even with decoupled collections, individual documents cannot exceed 1MB.
+    if (byteSize > 800000) {
       toast({ 
         variant: "destructive", 
-        title: "Limit Approached", 
-        description: "This section is becoming too large for the database. Try using external URLs for images/videos." 
+        title: "Density Limit Reached", 
+        description: "This section is becoming too large for the database. Remove local media and switch to External Source URLs (YouTube/Unsplash) to continue." 
       });
+      return;
     }
 
     setEditingData({ ...editingData, parsedContent: updated });
     setDocumentNonBlocking(
       doc(db, 'cms_page_sections', selectedSectionId!), 
-      { content: contentString }, 
+      { content: contentString, updatedAt: new Date().toISOString() }, 
       { merge: true }
     );
   };
@@ -265,22 +270,26 @@ export default function LiveEditorSidebar() {
     try {
       const batch = writeBatch(db);
       
+      // Update Page Architecture
       batch.update(pageRef!, {
         publishedSectionIds: pageData.sectionIds || [],
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        publishedAt: new Date().toISOString()
       });
       
-      const sectionIds = pageData.sectionIds || [];
-      
-      for (const id of sectionIds) {
-        const sRef = doc(db, 'cms_page_sections', id);
-        if (id === selectedSectionId && editingData) {
-          batch.update(sRef, { publishedContent: JSON.stringify(editingData.parsedContent) });
-        }
+      // Update Live Content state for the current section
+      if (selectedSectionId && editingData) {
+        const liveRef = doc(db, 'cms_sections_live', selectedSectionId);
+        batch.set(liveRef, {
+          id: selectedSectionId,
+          type: editingData.type,
+          content: JSON.stringify(editingData.parsedContent),
+          updatedAt: new Date().toISOString()
+        });
       }
       
       await batch.commit();
-      toast({ title: "Sanctuary Published", description: "All changes are now live for visitors." });
+      toast({ title: "Sanctuary Published", description: "Changes successfully deployed to the public site." });
     } catch (err: any) {
       console.error("Publish Error:", err);
       const isSizeError = err.message?.toLowerCase().includes('size') || err.message?.toLowerCase().includes('limit');
@@ -288,8 +297,8 @@ export default function LiveEditorSidebar() {
         variant: "destructive", 
         title: "Sync Failed", 
         description: isSizeError 
-          ? "The content is too large for the database. Delete local media and use external URLs (YouTube/Unsplash) instead."
-          : "Could not apply live changes. Check connection." 
+          ? "The content density is too high. Replace Base64 media with External URLs."
+          : "Could not apply live changes. Check your connection." 
       });
     } finally {
       setIsPublishing(false);
@@ -325,6 +334,18 @@ export default function LiveEditorSidebar() {
             </TabsList>
 
             <div className="p-6 space-y-8 pb-32">
+              {/* Density Audit Badge */}
+              <div className="flex items-center justify-between p-3 bg-white border border-primary/5 rounded-none">
+                <span className="text-[8px] font-bold uppercase tracking-widest opacity-40">Section Density</span>
+                <div className="flex items-center space-x-2">
+                  <div className={cn(
+                    "w-2 h-2 rounded-full",
+                    (new TextEncoder().encode(JSON.stringify(editingData.parsedContent)).length > 600000) ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
+                  )} />
+                  <span className="text-[9px] font-mono">{Math.round(new TextEncoder().encode(JSON.stringify(editingData.parsedContent)).length / 1024)}KB</span>
+                </div>
+              </div>
+
               <TabsContent value="content" className="mt-0 space-y-8">
                 <div className="space-y-6">
                   <div className="flex items-center text-primary font-bold text-[9px] uppercase tracking-[0.2em] border-b pb-2"><Type className="w-3 h-3 mr-2 text-accent" /> Draft Text</div>
@@ -344,6 +365,15 @@ export default function LiveEditorSidebar() {
               <TabsContent value="media" className="mt-0 space-y-8">
                 <div className="space-y-6">
                   <div className="flex items-center text-primary font-bold text-[9px] uppercase tracking-[0.2em] border-b pb-2"><ImageIcon className="w-3 h-3 mr-2 text-accent" /> Draft Media</div>
+                  
+                  {/* Warning for high density sections */}
+                  {(new TextEncoder().encode(JSON.stringify(editingData.parsedContent)).length > 500000) && (
+                    <div className="p-4 bg-amber-50 border border-amber-100 flex items-start space-x-3">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <p className="text-[9px] text-amber-700 leading-relaxed font-bold uppercase tracking-tight">Warning: Document density approaching limit. Use external URLs for large assets to ensure site stability.</p>
+                    </div>
+                  )}
+
                   {allFields.map(f => {
                     if (f.type === 'array') {
                       return f.value.map((item: any, idx: number) => {
@@ -457,14 +487,14 @@ export default function LiveEditorSidebar() {
 
       <div className="p-6 border-t bg-white flex flex-col space-y-3 shrink-0 shadow-inner">
         <Button 
-          className="w-full bg-primary hover:bg-primary/90 rounded-none h-14 uppercase tracking-[0.2em] text-[10px] font-bold" 
+          className="w-full bg-primary hover:bg-primary/90 rounded-none h-14 uppercase tracking-[0.4em] text-[10px] font-bold shadow-xl" 
           onClick={handlePublish}
           disabled={isPublishing}
         >
           {isPublishing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Globe className="w-4 h-4 mr-2" />}
-          Publish Site
+          Publish Section
         </Button>
-        <Button variant="outline" className="w-full rounded-none h-12 uppercase tracking-widest text-[9px] font-bold" onClick={() => router.push(pathname)}>Exit Visual Architect</Button>
+        <Button variant="outline" className="w-full rounded-none h-12 uppercase tracking-widest text-[9px] font-bold" onClick={() => router.push(pathname)}>Exit Architect</Button>
       </div>
     </div>
   );

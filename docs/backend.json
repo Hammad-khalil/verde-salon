@@ -315,13 +315,9 @@
           "type": "string",
           "description": "The type or component name of the section (e.g., 'hero', 'text-image', 'gallery', 'testimonials-carousel', 'faq-accordion', 'cta-banner', 'instagram-feed', 'service-grid', 'blog-post-list')."
         },
-        "contentData": {
+        "content": {
           "type": "string",
           "description": "A JSON string containing the specific data and configuration for this section type. This allows for flexible content structures per section type (e.g., {'heading': 'Welcome', 'imageUrl': '...', 'text': '...'})."
-        },
-        "isPublished": {
-          "type": "boolean",
-          "description": "Indicates whether this specific section is visible on the live page."
         },
         "createdAt": {
           "type": "string",
@@ -336,11 +332,8 @@
       },
       "required": [
         "id",
-        "pageId",
-        "order",
         "type",
-        "contentData",
-        "isPublished",
+        "content",
         "createdAt",
         "updatedAt"
       ]
@@ -462,413 +455,6 @@
         "createdAt",
         "updatedAt"
       ]
-    },
-    "BlogPost": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "BlogPost",
-      "type": "object",
-      "description": "Represents an individual blog article or insight, including content, author, categories, tags, and comprehensive SEO metadata.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the blog post."
-        },
-        "title": {
-          "type": "string",
-          "description": "The title of the blog post."
-        },
-        "slug": {
-          "type": "string",
-          "description": "URL-friendly slug for the blog post detail page."
-        },
-        "content": {
-          "type": "string",
-          "description": "The full content of the blog post, typically stored as rich text (e.g., Markdown or HTML string)."
-        },
-        "excerpt": {
-          "type": "string",
-          "description": "A short summary or preview of the blog post content, used in listings."
-        },
-        "featuredImageUrl": {
-          "type": "string",
-          "description": "URL to the main image featured with the blog post.",
-          "format": "uri"
-        },
-        "authorId": {
-          "type": "string",
-          "description": "Reference to the AdminUser who authored the blog post. (Relationship: AdminUser 1:N BlogPost)"
-        },
-        "categoryId": {
-          "type": "string",
-          "description": "Reference to the BlogCategory this post belongs to. (Relationship: BlogCategory 1:N BlogPost)"
-        },
-        "tagIds": {
-          "type": "array",
-          "description": "References to BlogTag entities associated with this post. (Relationship: BlogTag N:N BlogPost)",
-          "items": {
-            "type": "string"
-          }
-        },
-        "publishedDate": {
-          "type": "string",
-          "description": "The date and time when the blog post was published.",
-          "format": "date-time"
-        },
-        "isPublished": {
-          "type": "boolean",
-          "description": "Indicates whether the blog post is live and visible on the website."
-        },
-        "seoTitle": {
-          "type": "string",
-          "description": "Specific SEO title for the blog post, overriding global settings if provided.",
-          "format": "string"
-        },
-        "metaDescription": {
-          "type": "string",
-          "description": "Specific meta description for the blog post, overriding global settings if provided.",
-          "format": "string"
-        },
-        "canonicalUrl": {
-          "type": "string",
-          "description": "The canonical URL for this blog post.",
-          "format": "uri"
-        },
-        "openGraphTitle": {
-          "type": "string",
-          "description": "Open Graph title for social media sharing of the blog post."
-        },
-        "openGraphDescription": {
-          "type": "string",
-          "description": "Open Graph description for social media sharing of the blog post."
-        },
-        "openGraphImageUrl": {
-          "type": "string",
-          "description": "URL to an image for social media sharing of the blog post.",
-          "format": "uri"
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the blog post was first created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the blog post content or metadata was last updated.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "title",
-        "slug",
-        "content",
-        "excerpt",
-        "featuredImageUrl",
-        "authorId",
-        "categoryId",
-        "publishedDate",
-        "isPublished",
-        "createdAt",
-        "updatedAt"
-      ]
-    },
-    "BlogCategory": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "BlogCategory",
-      "type": "object",
-      "description": "Categorizes blog posts, enabling filtering and organization on the Blog / Insights Page.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the blog category."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the blog category (e.g., 'Hair Care Tips', 'Salon Trends')."
-        },
-        "slug": {
-          "type": "string",
-          "description": "URL-friendly slug for the blog category."
-        },
-        "description": {
-          "type": "string",
-          "description": "A brief description of the blog category."
-        },
-        "isPublished": {
-          "type": "boolean",
-          "description": "Indicates whether the blog category is visible on the website."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the blog category was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the blog category was last updated.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "slug",
-        "isPublished",
-        "createdAt",
-        "updatedAt"
-      ]
-    },
-    "BlogTag": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "BlogTag",
-      "type": "object",
-      "description": "Tags used to further classify blog posts, allowing for more granular filtering and searchability.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the blog tag."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the blog tag (e.g., 'balayage', 'bridal-hair', 'product-reviews')."
-        },
-        "slug": {
-          "type": "string",
-          "description": "URL-friendly slug for the blog tag."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the blog tag was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the blog tag was last updated.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "slug",
-        "createdAt",
-        "updatedAt"
-      ]
-    },
-    "Testimonial": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Testimonial",
-      "type": "object",
-      "description": "Customer testimonials displayed on the website to build trust and showcase positive feedback from clients.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the testimonial."
-        },
-        "authorName": {
-          "type": "string",
-          "description": "The name of the person who provided the testimonial."
-        },
-        "text": {
-          "type": "string",
-          "description": "The full content of the testimonial."
-        },
-        "authorTitle": {
-          "type": "string",
-          "description": "Optional title or description of the author (e.g., 'Satisfied Client', 'Local Business Owner')."
-        },
-        "authorImageUrl": {
-          "type": "string",
-          "description": "URL to an optional image of the testimonial author.",
-          "format": "uri"
-        },
-        "rating": {
-          "type": "number",
-          "description": "Optional numeric rating (e.g., 1-5 stars) given in the testimonial."
-        },
-        "isApproved": {
-          "type": "boolean",
-          "description": "Indicates whether the testimonial has been approved by an administrator for display on the website."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the testimonial was submitted or created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the testimonial was last updated (e.g., approval status change).",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "authorName",
-        "text",
-        "isApproved",
-        "createdAt",
-        "updatedAt"
-      ]
-    },
-    "GalleryImage": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "GalleryImage",
-      "type": "object",
-      "description": "Represents an image in a gallery or featured work section, with metadata for display, accessibility, and SEO.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the gallery image."
-        },
-        "imageUrl": {
-          "type": "string",
-          "description": "URL to the image file.",
-          "format": "uri"
-        },
-        "altText": {
-          "type": "string",
-          "description": "Alternative text for the image, crucial for SEO and accessibility for visually impaired users."
-        },
-        "caption": {
-          "type": "string",
-          "description": "An optional caption or description for the image, displayed below it."
-        },
-        "category": {
-          "type": "string",
-          "description": "Optional category for the image (e.g., 'Hair', 'Makeup', 'Event'), for filtering or grouping."
-        },
-        "order": {
-          "type": "number",
-          "description": "The display order of the image within a gallery or section."
-        },
-        "isFeatured": {
-          "type": "boolean",
-          "description": "Indicates if this image should be highlighted as 'featured salon work' on the homepage or other prominent sections."
-        },
-        "isPublished": {
-          "type": "boolean",
-          "description": "Indicates if the image is visible on the public website."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the gallery image record was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the gallery image record was last updated.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "imageUrl",
-        "altText",
-        "isFeatured",
-        "isPublished",
-        "createdAt",
-        "updatedAt"
-      ]
-    },
-    "FAQ": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "FAQ",
-      "type": "object",
-      "description": "A frequently asked question and its answer, intended for display in an accordion style on the website.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the FAQ entry."
-        },
-        "question": {
-          "type": "string",
-          "description": "The frequently asked question itself."
-        },
-        "answer": {
-          "type": "string",
-          "description": "The detailed answer to the frequently asked question."
-        },
-        "order": {
-          "type": "number",
-          "description": "The display order of the FAQ entry within an FAQ section or list."
-        },
-        "isPublished": {
-          "type": "boolean",
-          "description": "Indicates whether the FAQ entry is visible on the website."
-        },
-        "categoryId": {
-          "type": "string",
-          "description": "Optional reference to an FAQ category if applicable, to group related questions. (Relationship: FAQCategory 1:N FAQ)"
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the FAQ entry was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the FAQ entry was last updated.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "question",
-        "answer",
-        "order",
-        "isPublished",
-        "createdAt",
-        "updatedAt"
-      ]
-    },
-    "FormSubmission": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "FormSubmission",
-      "type": "object",
-      "description": "Records data submitted through various forms on the website (e.g., contact forms, booking requests, lead generation forms).",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the form submission."
-        },
-        "formName": {
-          "type": "string",
-          "description": "The name or type of the form that was submitted (e.g., 'Contact Us Form', 'Booking Inquiry')."
-        },
-        "data": {
-          "type": "string",
-          "description": "A JSON string containing all the field data submitted by the user in the form. This allows for flexible form fields without predefined schema."
-        },
-        "submittedAt": {
-          "type": "string",
-          "description": "Timestamp when the form was submitted.",
-          "format": "date-time"
-        },
-        "isRead": {
-          "type": "boolean",
-          "description": "Flag indicating whether an administrator has reviewed or processed this submission."
-        },
-        "email": {
-          "type": "string",
-          "description": "The email address provided in the form, extracted for quick access and follow-up.",
-          "format": "email"
-        },
-        "phoneNumber": {
-          "type": "string",
-          "description": "The phone number provided in the form, extracted for quick access and contact."
-        },
-        "leadStatus": {
-          "type": "string",
-          "description": "Current status of the lead generated from this submission (e.g., 'New', 'Contacted', 'Converted', 'Archived')."
-        }
-      },
-      "required": [
-        "id",
-        "formName",
-        "data",
-        "submittedAt",
-        "isRead"
-      ]
     }
   },
   "auth": {
@@ -929,7 +515,7 @@
           "schema": {
             "$ref": "#/backend/entities/PageSection"
           },
-          "description": "Flat collection of page sections used by the Page Builder.",
+          "description": "Draft version of page sections used by the Visual Architect.",
           "params": [
             {
               "name": "sectionId",
@@ -939,22 +525,22 @@
         }
       },
       {
-        "path": "/services/{serviceId}",
+        "path": "/cms_sections_live/{sectionId}",
         "definition": {
-          "entityName": "Service",
+          "entityName": "PageSection",
           "schema": {
-            "$ref": "#/backend/entities/Service"
+            "$ref": "#/backend/entities/PageSection"
           },
-          "description": "Salon services.",
+          "description": "Live/Published version of page sections displayed to public visitors.",
           "params": [
             {
-              "name": "serviceId",
-              "description": "Service identifier."
+              "name": "sectionId",
+              "description": "Section identifier."
             }
           ]
         }
       }
     ],
-    "reasoning": "Updated structure to use a flat 'cms_page_sections' collection to support efficient bulk fetching and real-time synchronization in the Page Builder."
+    "reasoning": "Decoupled Draft and Live content into separate collections to avoid Firestore's 1MB document limit when storing large media-heavy sections twice in one document."
   }
 }
