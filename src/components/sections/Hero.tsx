@@ -77,7 +77,7 @@ export default function Hero({
 
   return (
     <section 
-      className="relative h-[100vh] w-full overflow-hidden flex items-center justify-center"
+      className="relative h-[100vh] w-full overflow-hidden flex items-center justify-center bg-background"
       style={{ backgroundColor: styles?.backgroundColor || '#0F2F2F' }}
     >
       {/* Background Layer */}
@@ -110,8 +110,9 @@ export default function Hero({
             src={imageUrl || "https://picsum.photos/seed/verde-hero-main/1920/1080"} 
             alt={altText} 
             fill 
-            priority
+            priority // OPTIMIZATION: Prioritize LCP image
             className={cn("transition-transform duration-[3s] scale-[1.02]", objectFit === 'cover' ? "object-cover" : "object-contain")}
+            sizes="100vw"
           />
         ) : null}
         

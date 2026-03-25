@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 
@@ -45,25 +45,27 @@ export default function ThemeManager() {
   const { data: settings } = useDoc(settingsRef);
 
   useEffect(() => {
+    if (!settings) return;
+
     const root = document.documentElement;
 
-    // Apply Colors from settings or defaults
-    const primary = settings?.colors?.primary || '#0F2F2F';
-    const background = settings?.colors?.background || '#F5F3EF';
-    const accent = settings?.colors?.accent || '#C6A15B';
+    // Apply Colors
+    const primary = settings.colors?.primary || '#0F2F2F';
+    const background = settings.colors?.background || '#F5F3EF';
+    const accent = settings.colors?.accent || '#C6A15B';
 
     root.style.setProperty('--primary', hexToHsl(primary));
     root.style.setProperty('--background', hexToHsl(background));
     root.style.setProperty('--accent', hexToHsl(accent));
 
-    // Apply Fonts (Injecting Google Fonts)
-    const headline = settings?.typography?.headline || 'Playfair Display';
-    const body = settings?.typography?.body || 'Inter';
+    // Apply Fonts
+    const headline = settings.typography?.headline || 'Playfair Display';
+    const body = settings.typography?.body || 'Inter';
 
     root.style.setProperty('--font-headline', `"${headline}", serif`);
     root.style.setProperty('--font-body', `"${body}", sans-serif`);
 
-    // Dynamic Font Injection
+    // Dynamic Font Injection with display=swap to prevent CLS
     const fontId = 'dynamic-fonts';
     let styleLink = document.getElementById(fontId) as HTMLLinkElement;
     if (!styleLink) {
@@ -73,8 +75,8 @@ export default function ThemeManager() {
       document.head.appendChild(styleLink);
     }
     
-    const fontQuery = `family=${headline.replace(/ /g, '+')}:wght@400..900&family=${body.replace(/ /g, '+')}:wght@400..700`;
-    styleLink.href = `https://fonts.googleapis.com/css2?${fontQuery}&display=swap`;
+    const fontQuery = `family=${headline.replace(/ /g, '+')}:wght@400..900&family=${body.replace(/ /g, '+')}:wght@400..700&display=swap`;
+    styleLink.href = `https://fonts.googleapis.com/css2?${fontQuery}`;
 
   }, [settings]);
 

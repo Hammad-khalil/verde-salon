@@ -281,22 +281,16 @@ export default function LiveEditorSidebar() {
       }
       
       await batch.commit();
-      toast({ title: "Sanctuary Published", description: "Changes successfully deployed to the public site." });
+      toast({ title: "Sanctuary Published" });
     } catch (err: any) {
       console.error("Publish Error:", err);
-      const isSizeError = err.message?.toLowerCase().includes('size') || err.message?.toLowerCase().includes('limit');
-      toast({ 
-        variant: "destructive", 
-        title: "Sync Failed", 
-        description: isSizeError 
-          ? "The content density is too high. Replace Base64 media with External URLs."
-          : "Could not apply live changes. Check your connection." 
-      });
+      toast({ variant: "destructive", title: "Sync Failed" });
     } finally {
       setIsPublishing(false);
     }
   }
 
+  // OPTIMIZATION: Only render the heavy editor UI if we are in edit mode
   if (!isEditMode) return null;
 
   return (

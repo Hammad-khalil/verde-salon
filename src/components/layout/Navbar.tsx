@@ -41,8 +41,10 @@ export default function Navbar() {
   const logoSettings = brandConfig?.logo;
   const siteName = brandConfig?.siteName || 'VERDE SALON';
 
-  // Optimization: Return a ghost navbar during initial brand identity load to prevent layout shift
-  if (isLoading && !settings) return <nav className="fixed top-0 left-0 right-0 z-50 h-20 bg-background/40 backdrop-blur-md" />;
+  // CLS FIX: Return a ghost placeholder with consistent height to prevent layout shifts
+  if (isLoading && !settings) {
+    return <nav className="fixed top-0 left-0 right-0 z-50 h-[80px] bg-background/40 backdrop-blur-md" />;
+  }
 
   return (
     <>
@@ -52,7 +54,7 @@ export default function Navbar() {
           ? "bg-background/95 backdrop-blur-xl border-b border-primary/5 py-4 shadow-sm" 
           : "bg-background/40 backdrop-blur-md py-6"
       )}>
-        <div className="container mx-auto flex items-center justify-between">
+        <div className="container mx-auto flex items-center justify-between min-h-[40px]">
           <div className={cn(
             "flex items-center",
             logoSettings?.placement === 'center' ? 'md:flex-1' : ''
