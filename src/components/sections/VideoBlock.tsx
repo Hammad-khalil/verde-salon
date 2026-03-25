@@ -1,9 +1,13 @@
 'use client';
 
+import { cn } from '@/lib/utils';
+import Image from 'next/image';
+
 interface VideoBlockProps {
   title?: string;
   subtitle?: string;
   videoUrl: string;
+  posterUrl?: string;
   isFullWidth?: boolean;
   autoplay?: boolean;
   loop?: boolean;
@@ -18,6 +22,7 @@ export default function VideoBlock({
   title, 
   subtitle, 
   videoUrl, 
+  posterUrl,
   isFullWidth = true,
   autoplay = true,
   loop = true,
@@ -32,6 +37,7 @@ export default function VideoBlock({
   const effectiveControls = showControls ?? false;
   
   const isYouTube = videoUrl?.includes('youtube.com') || videoUrl?.includes('youtu.be');
+  const isLocalOrDirect = videoUrl?.startsWith('data:video') || videoUrl?.endsWith('.mp4') || videoUrl?.endsWith('.webm');
   
   let finalUrl = videoUrl;
   if (isYouTube && videoUrl) {
@@ -59,23 +65,49 @@ export default function VideoBlock({
 
   return (
     <section 
-      className={`bg-background relative ${isFullWidth ? '' : 'container mx-auto px-6'}`}
+      className={cn(
+        "bg-background relative transition-all duration-1000",
+        isFullWidth ? '' : 'container mx-auto px-6'
+      )}
       style={{ 
         paddingTop: `${paddingVal}px`, 
         paddingBottom: `${paddingVal}px`,
         backgroundColor: styles?.backgroundColor || 'transparent'
       }}
     >
-      <div className={`space-y-12 ${isFullWidth ? '' : 'max-w-4xl mx-auto'}`}>
+      <div className={cn("space-y-12", isFullWidth ? '' : 'max-w-5xl mx-auto')}>
         {(title || subtitle) && (
-          <div className="text-center space-y-4 px-6 max-w-2xl mx-auto">
-            {title && <h2 className="text-4xl md:text-5xl font-headline font-light" style={{ color: styles?.titleColor || 'inherit' }}>{title}</h2>}
-            {subtitle && <p className="text-muted-foreground font-light text-lg" style={{ color: styles?.subtitleColor || 'inherit' }}>{subtitle}</p>}
+          <div className="text-center space-y-6 px-6 max-w-3xl mx-auto animate-fade-in">
+            {title && (
+              <h2 
+                className="text-4xl md:text-6xl font-headline font-light tracking-tight" 
+                style={{ color: styles?.titleColor || 'inherit' }}
+              >
+                {title}
+              </h2>
+            )}
+            {subtitle && (
+              <p 
+                className="text-muted-foreground font-light text-lg md:text-xl uppercase tracking-[0.3em]" 
+                style={{ color: styles?.subtitleColor || 'inherit' }}
+              >
+                {subtitle}
+              </p>
+            )}
+            <div className="h-[1px] w-12 bg-accent/40 mx-auto mt-8" />
           </div>
         )}
-        <div className={`relative aspect-video overflow-hidden bg-black ${isFullWidth ? '' : 'rounded-sm shadow-2xl'} ${!effectiveControls ? 'pointer-events-none' : ''}`}>
+
+        <div className={cn(
+          "relative aspect-video overflow-hidden bg-black shadow-2xl transition-all duration-700",
+          isFullWidth ? '' : 'rounded-sm',
+          !effectiveControls && !isYouTube ? '' : ''
+        )}>
           {isYouTube ? (
-            <div className={!effectiveControls ? 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[115%] h-[115%]' : 'absolute inset-0 w-full h-full'}>
+            <div className={cn(
+              "absolute inset-0 w-full h-full",
+              !effectiveControls && "scale-[1.15]"
+            )}>
               <iframe
                 src={finalUrl}
                 className="w-full h-full border-none"
@@ -86,14 +118,22 @@ export default function VideoBlock({
             </div>
           ) : (
             <video 
+              key={videoUrl}
               src={videoUrl} 
+              poster={posterUrl}
               autoPlay={autoplay} 
               loop={loop} 
               muted={effectiveMuted} 
               playsInline={true}
               controls={effectiveControls}
+              preload="metadata"
               className="absolute inset-0 w-full h-full object-cover"
             />
+          )}
+          
+          {/* Overlay gradient for aesthetics */}
+          {!effectiveControls && (
+            <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
           )}
         </div>
       </div>

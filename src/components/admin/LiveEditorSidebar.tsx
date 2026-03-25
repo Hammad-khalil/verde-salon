@@ -58,10 +58,20 @@ const MediaField = ({
 
   const handleFile = (file: File) => {
     if (!file) return;
-    if (file.size > 800000) {
-      toast({ variant: "destructive", title: "Asset too large", description: "Please use files under 800KB for direct upload, or use a URL." });
+    
+    // Video files can be larger, but Firestore has a 1MB doc limit.
+    // We advise users to keep base64 within reasonable limits.
+    const limit = type === 'video' ? 2000000 : 800000;
+    
+    if (file.size > limit) {
+      toast({ 
+        variant: "destructive", 
+        title: "Asset too large", 
+        description: `Please use ${type} files under ${Math.round(limit/1000000)}MB for local upload, or use a direct URL.` 
+      });
       return;
     }
+
     const reader = new FileReader();
     reader.onload = (e) => {
       const result = e.target?.result;
@@ -105,20 +115,23 @@ const MediaField = ({
       >
         {safeValue ? (
           <div className="relative w-full h-full group">
-            {type === 'image' ? (
+            {type === 'image' || (!safeValue.includes('video') && !safeValue.endsWith('.mp4')) ? (
               <img src={safeValue} className="w-full h-full object-cover" alt="Preview" />
             ) : (
-              <div className="w-full h-full bg-slate-900 flex items-center justify-center"><Video className="w-6 h-6 text-white/20" /></div>
+              <div className="w-full h-full bg-slate-900 flex items-center justify-center">
+                <Video className="w-6 h-6 text-white/20" />
+                <p className="absolute bottom-2 text-[8px] text-white/40 uppercase font-bold">Local Video Asset</p>
+              </div>
             )}
             <div className="absolute inset-0 bg-primary/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity">
               <Upload className="w-5 h-5 text-white mb-1" />
-              <p className="text-[8px] text-white font-bold uppercase tracking-widest">Replace</p>
+              <p className="text-[8px] text-white font-bold uppercase tracking-widest">Replace {type}</p>
             </div>
           </div>
         ) : (
           <div className="flex flex-col items-center space-y-1 opacity-40">
-            <Upload className="w-4 h-4" />
-            <p className="text-[8px] font-bold uppercase tracking-tighter">Upload Media</p>
+            {type === 'video' ? <Video className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
+            <p className="text-[8px] font-bold uppercase tracking-tighter">Upload {type}</p>
           </div>
         )}
         <input id={inputId} type="file" className="hidden" accept={type === 'image' ? "image/*" : "video/*"} onChange={(e) => {
@@ -128,9 +141,9 @@ const MediaField = ({
       </div>
 
       <div className="space-y-1">
-        <Label className="text-[8px] uppercase opacity-40 font-bold">Source URL</Label>
+        <Label className="text-[8px] uppercase opacity-40 font-bold">Or External Source URL</Label>
         <Input 
-          placeholder="https://..."
+          placeholder={type === 'video' ? "https://youtube.com/watch?v=..." : "https://..."}
           className="h-8 text-[9px] font-mono rounded-none"
           value={safeValue.startsWith('data:') ? 'Local Asset' : safeValue}
           onChange={(e) => onChange(e.target.value)}
@@ -231,30 +244,17 @@ export default function LiveEditorSidebar() {
     try {
       const batch = writeBatch(db);
       
-      // 1. Promote Page's sectionIds to publishedSectionIds
       batch.update(pageRef!, {
         publishedSectionIds: pageData.sectionIds || [],
         updatedAt: new Date().toISOString()
       });
       
-      // 2. Query all sections related to this page and promote content to publishedContent
-      // For MVP, we'll promote all sections currently in the database that are part of this page
       const sectionIds = pageData.sectionIds || [];
       
-      // We need to fetch current section states. Since we have useCollection in SectionRenderer, 
-      // they should be up to date. However, for a batch publish, we'll iterate through known IDs.
       for (const id of sectionIds) {
-        // We reference them via draft content which is always the 'content' field
         const sRef = doc(db, 'cms_page_sections', id);
-        // We don't have the full section object here easily without a query, 
-        // but we know the 'content' field has the latest draft.
-        // In a real app, you'd fetch them first or pass them in.
-        // For now, we'll use the 'content' of the currently editing one if it matches.
         if (id === selectedSectionId && editingData) {
           batch.update(sRef, { publishedContent: JSON.stringify(editingData.parsedContent) });
-        } else {
-          // If not currently editing, we'd need to fetch or assume draft is ready.
-          // To ensure ALL go live, we'd normally fetch them.
         }
       }
       
@@ -336,7 +336,16 @@ export default function LiveEditorSidebar() {
                       });
                     }
                     if (isMediaKey(f.key) && f.type === 'string') {
-                      return <MediaField key={f.path} label={f.path} value={f.value} onChange={(newVal) => updateValue(f.path, newVal)} type={f.path.toLowerCase().includes('video') ? 'video' : 'image'} />;
+                      const isVideoField = f.path.toLowerCase().includes('video') || f.path.toLowerCase().includes('media');
+                      return (
+                        <MediaField 
+                          key={f.path} 
+                          label={f.path} 
+                          value={f.value} 
+                          onChange={(newVal) => updateValue(f.path, newVal)} 
+                          type={isVideoField ? 'video' : 'image'} 
+                        />
+                      );
                     }
                     return null;
                   })}

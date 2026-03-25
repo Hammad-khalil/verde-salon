@@ -142,13 +142,11 @@ export default function PagesEditor() {
     try {
       const batch = writeBatch(db);
       
-      // 1. Update the Page document to promote draft IDs to published IDs
       batch.update(pageRef, {
         publishedSectionIds: pageData.sectionIds || [],
         updatedAt: new Date().toISOString()
       });
       
-      // 2. Update all sections on this page to promote draft content to published content
       const activeIds = pageData.sectionIds || [];
       activeIds.forEach((id: string) => {
         const section = allSections.find(s => s.id === id);
@@ -391,6 +389,7 @@ export default function PagesEditor() {
                       <TabsContent value="content" className="mt-0 space-y-6">
                         {Object.keys(editingSection.parsedContent).map((key) => {
                           if (['styles', 'backgroundType', 'testimonials', 'images', 'posts', 'services'].includes(key)) return null;
+                          const isMedia = key.toLowerCase().includes('url') || key.toLowerCase().includes('image') || key.toLowerCase().includes('video');
                           return (
                             <div key={key} className="space-y-2">
                               <Label className="text-[10px] uppercase tracking-widest font-bold opacity-60">{key.replace(/([A-Z])/g, ' $1')}</Label>
@@ -603,11 +602,13 @@ const defaultContents: Record<string, any> = {
   TextBlock: { title: 'A New Narrative', content: 'Share your story here...', alignment: 'center' },
   BrandIntro: { title: 'About VERDE SALON', subtitle: 'The Essence of Luxury', content: 'At Verde Salon, we blend modern beauty techniques with natural care. Our mission is to enhance your beauty while maintaining the health of your hair and skin.', imageUrl: 'https://picsum.photos/seed/verde-about/800/1000', buttonText: 'Discover Our Story', buttonUrl: '/blog' },
   CTA: { title: 'Ready for a transformation?', subtitle: 'Book your experience today at Verde Salon.', buttonText: 'Book Your Visit', buttonUrl: '/services' },
-  FormBlock: { title: 'Book an Experience', subtitle: 'Request a ritual at Verde Salon.', type: 'Booking' },
-  VideoBlock: { title: 'Featured Video', subtitle: 'Experience Verde Salon in motion', videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', autoplay: true, startTime: 0, endTime: 60, showControls: false },
+  FormBlock: { title: 'Book an Experience', subtitle: 'Request a service at Verde Salon.', type: 'Booking' },
+  VideoBlock: { title: 'Featured Video', subtitle: 'Experience Verde Salon in motion', videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', posterUrl: 'https://picsum.photos/seed/video-thumb/1280/720', autoplay: true, startTime: 0, endTime: 60, showControls: false },
   FAQSection: { title: 'Common Queries', subtitle: 'Information for your visit' },
-  ServicesPreview: { title: 'Signature Rituals', subtitle: 'Our Craft', services: [] },
+  ServicesPreview: { title: 'Signature Services', subtitle: 'Our Craft', services: [] },
   FeaturedWork: { title: 'Our Work', subtitle: 'The Verde Aesthetic', images: [] },
   Testimonials: { title: 'Client Reflections', subtitle: 'Voices of Verde Salon', testimonials: [] },
-  InstagramPreview: { handle: '@verdesalonsalon', title: 'Follow Us on Instagram', posts: [] }
+  InstagramPreview: { handle: '@verdesalonsalon', title: 'Follow Us on Instagram', posts: [] },
+  BlogListing: { title: 'Reflections & Insights', subtitle: 'Blogs', description: 'Curated thoughts on beauty and intentional living.' },
+  ServicesListing: { title: 'Signature Services', subtitle: 'The Menu', description: 'Timeless techniques meets contemporary science.' }
 };
