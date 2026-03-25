@@ -28,7 +28,8 @@ import {
   Volume2,
   VolumeX,
   MonitorPlay,
-  AlertTriangle
+  AlertTriangle,
+  Maximize
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
