@@ -319,6 +319,10 @@
           "type": "string",
           "description": "A JSON string containing the specific data and configuration for this section type. This allows for flexible content structures per section type (e.g., {'heading': 'Welcome', 'imageUrl': '...', 'text': '...'})."
         },
+        "isHidden": {
+          "type": "boolean",
+          "description": "Indicates whether the section is hidden from the public-facing website."
+        },
         "createdAt": {
           "type": "string",
           "description": "Timestamp when the page section was created.",

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -20,6 +21,7 @@ import {
   Layout,
   Settings2,
   Eye,
+  EyeOff,
   Video,
   Type,
   HelpCircle,
@@ -43,6 +45,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 export default function PagesEditor() {
   const db = useFirestore();
@@ -94,6 +98,17 @@ export default function PagesEditor() {
     const newIds = (pageData.sectionIds || []).filter((sid: string) => sid !== id);
     setDocumentNonBlocking(pageRef, { ...pageData, sectionIds: newIds }, { merge: true });
     toast({ title: "Section Detached", description: "The section was moved to your Library for recovery." });
+  }
+
+  function handleToggleVisibility(sectionId: string, isCurrentlyHidden: boolean) {
+    setDocumentNonBlocking(doc(db, 'cms_page_sections', sectionId), {
+      isHidden: !isCurrentlyHidden,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+    toast({ 
+      title: isCurrentlyHidden ? "Section Visible" : "Section Hidden", 
+      description: isCurrentlyHidden ? "The section will appear on the live site after publishing." : "The section is now hidden from visitors." 
+    });
   }
 
   function handleAttachFromLibrary(sectionId: string) {
@@ -174,6 +189,7 @@ export default function PagesEditor() {
             id: section.id,
             type: section.type,
             content: section.content,
+            isHidden: section.isHidden || false,
             updatedAt: new Date().toISOString()
           });
         }
@@ -208,6 +224,7 @@ export default function PagesEditor() {
       id: newId,
       type: type,
       content: JSON.stringify(sectionDefaults),
+      isHidden: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -286,19 +303,29 @@ export default function PagesEditor() {
               <div className="grid gap-4">
                 {pageSections.map((section: any, index: number) => {
                   const Icon = sectionIcons[section.type] || Layout;
+                  const isHidden = section.isHidden || false;
                   let content = {};
                   try { content = JSON.parse(section.content || '{}'); } catch(e) {}
                   
                   return (
-                    <Card key={section.id} className="border-none shadow-sm group overflow-hidden bg-white hover:ring-1 hover:ring-primary/20 transition-all rounded-none">
+                    <Card key={section.id} className={cn(
+                      "border-none shadow-sm group overflow-hidden bg-white transition-all rounded-none",
+                      isHidden ? "opacity-60 bg-slate-50 border-dashed border-2" : "hover:ring-1 hover:ring-primary/20"
+                    )}>
                       <div className="flex items-center justify-between px-8 py-6">
                         <div className="flex items-center space-x-6">
-                          <div className="p-4 bg-slate-50 rounded-none border border-primary/5">
-                            <Icon className="w-6 h-6 text-primary" />
+                          <div className={cn(
+                            "p-4 rounded-none border",
+                            isHidden ? "bg-slate-200 border-slate-300" : "bg-slate-50 border-primary/5"
+                          )}>
+                            <Icon className={cn("w-6 h-6", isHidden ? "text-slate-400" : "text-primary")} />
                           </div>
                           <div>
-                            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent block mb-1">{section.type}</span>
-                            <h3 className="font-headline text-xl font-bold">
+                            <div className="flex items-center space-x-3 mb-1">
+                              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent block">{section.type}</span>
+                              {isHidden && <Badge variant="outline" className="h-4 text-[8px] uppercase tracking-widest border-amber-200 text-amber-600 bg-amber-50">Hidden from Public</Badge>}
+                            </div>
+                            <h3 className={cn("font-headline text-xl font-bold", isHidden && "text-slate-400 line-through")}>
                               {(content as any).title || (content as any).handle || 'Artisan Section'}
                             </h3>
                           </div>
@@ -311,6 +338,17 @@ export default function PagesEditor() {
                             <ChevronDown className="w-5 h-5" />
                           </Button>
                           <div className="w-px h-6 bg-slate-100 mx-4" />
+                          
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className={cn("h-10 w-10", isHidden ? "text-amber-600 hover:bg-amber-50" : "text-emerald-600 hover:bg-emerald-50")} 
+                            onClick={() => handleToggleVisibility(section.id, isHidden)}
+                            title={isHidden ? "Unhide Section" : "Hide Section"}
+                          >
+                            {isHidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </Button>
+
                           <Button variant="ghost" size="icon" className="h-10 w-10 text-primary bg-primary/5 hover:bg-primary hover:text-white" onClick={() => openEditSection(section)}>
                             <Settings2 className="w-5 h-5" />
                           </Button>

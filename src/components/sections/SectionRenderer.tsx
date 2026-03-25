@@ -19,7 +19,7 @@ import { collection, query, doc, getDoc } from 'firebase/firestore';
 import { useSearchParams, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useState, useMemo, useEffect } from 'react';
-import { Plus, Edit2, Sparkles } from 'lucide-react';
+import { Plus, Edit2, Sparkles, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
@@ -116,6 +116,7 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
       id: newId, 
       type, 
       content: JSON.stringify(defaults[type] || { title: `New ${type}` }),
+      isHidden: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -157,6 +158,11 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
     <div className={cn("relative", isEditMode && "pb-32")}>
       {isEditMode && <AddButton index={0} />}
       {orderedSections.map((section: any, idx: number) => {
+        const isHidden = section.isHidden === true;
+        
+        // Don't render hidden sections on live site
+        if (!isEditMode && isHidden) return null;
+
         let data = {};
         try { 
           data = JSON.parse(section.content || '{}'); 
@@ -174,17 +180,23 @@ export default function SectionRenderer({ sectionIds }: SectionRendererProps) {
               className={cn(
                 "relative transition-all duration-300",
                 isEditMode && "cursor-pointer hover:ring-2 hover:ring-accent/50",
-                isEditMode && activeSectionId === section.id && "ring-4 ring-accent"
+                isEditMode && activeSectionId === section.id && "ring-4 ring-accent",
+                isEditMode && isHidden && "opacity-40 grayscale-[0.5] filter blur-[1px] hover:blur-0"
               )}
               onClick={() => handleSectionClick(section.id)}
             >
               {isEditMode && (
-                <div className="absolute top-4 right-4 z-50 flex space-x-2 opacity-0 hover:opacity-100 transition-opacity">
+                <div className="absolute top-4 right-4 z-50 flex flex-col items-end space-y-2 opacity-0 hover:opacity-100 transition-opacity">
                   <div className="flex items-center space-x-2 bg-white/90 backdrop-blur-md p-1 pr-3 shadow-xl border border-accent/20">
                     <div className="bg-accent p-2"><Sparkles className="w-3 h-3 text-primary" /></div>
                     <span className="text-[9px] font-bold uppercase tracking-widest text-primary">{section.type}</span>
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleSectionClick(section.id); }}><Edit2 className="w-3 h-3" /></Button>
                   </div>
+                  {isHidden && (
+                    <div className="bg-amber-500 text-white px-3 py-1 text-[8px] font-bold uppercase tracking-[0.2em] flex items-center shadow-lg">
+                      <EyeOff className="w-3 h-3 mr-2" /> Hidden Section
+                    </div>
+                  )}
                 </div>
               )}
               <Component {...data} />
