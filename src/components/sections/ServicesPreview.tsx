@@ -48,7 +48,7 @@ export default function ServicesPreview({
             href="/blog" 
             className="group flex items-center text-[11px] font-bold uppercase tracking-[0.2em] text-primary hover:text-accent transition-all duration-300"
           >
-            Explore the Journal <ArrowRight className="ml-3 w-4 h-4 transition-transform group-hover:translate-x-2" />
+            Explore our Blogs <ArrowRight className="ml-3 w-4 h-4 transition-transform group-hover:translate-x-2" />
           </Link>
         </div>
 

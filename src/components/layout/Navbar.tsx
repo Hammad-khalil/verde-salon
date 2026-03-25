@@ -32,7 +32,7 @@ export default function Navbar() {
   const navLinks = useMemo(() => [
     { name: 'Home', href: '/' },
     { name: 'Services', href: '/services' },
-    { name: 'Journal', href: '/blog' },
+    { name: 'Blogs', href: '/blog' },
   ], []);
 
   const getHref = (path: string) => isEditMode ? `${path}${path.includes('?') ? '&' : '?'}edit=true` : path;

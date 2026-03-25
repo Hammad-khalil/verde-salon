@@ -126,14 +126,14 @@ export default function AdminDashboard() {
           id: 'initial-blog-list',
           type: 'BlogListing',
           content: JSON.stringify({ 
-            title: 'Journal & Reflections', 
-            subtitle: 'The Journal',
-            description: 'Curated insights on beauty and intentional living.'
+            title: 'Reflections & Insights', 
+            subtitle: 'Blogs',
+            description: 'Curated thoughts on beauty and intentional living.'
           }),
           publishedContent: JSON.stringify({ 
-            title: 'Journal & Reflections', 
-            subtitle: 'The Journal',
-            description: 'Curated insights on beauty and intentional living.'
+            title: 'Reflections & Insights', 
+            subtitle: 'Blogs',
+            description: 'Curated thoughts on beauty and intentional living.'
           })
         },
         {
@@ -171,7 +171,7 @@ export default function AdminDashboard() {
       const pageDefinitions = [
         { id: 'home', title: 'Home', slug: '/', sections: ['initial-hero', 'initial-intro', 'initial-craft', 'initial-gallery'] },
         { id: 'services', title: 'Services', slug: '/services', sections: ['initial-services-list'] },
-        { id: 'blog', title: 'Journal', slug: '/blog', sections: ['initial-blog-list'] }
+        { id: 'blog', title: 'Blogs', slug: '/blog', sections: ['initial-blog-list'] }
       ];
 
       for (const p of pageDefinitions) {
@@ -211,7 +211,7 @@ export default function AdminDashboard() {
 
   const stats = [
     { name: 'Active Services', value: services?.length || 0, icon: Scissors, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { name: 'Journal Entries', value: posts?.length || 0, icon: FileText, color: 'text-primary', bg: 'bg-primary/10' },
+    { name: 'Blog Entries', value: posts?.length || 0, icon: FileText, color: 'text-primary', bg: 'bg-primary/10' },
     { name: 'Client Voices', value: testimonials?.length || 0, icon: MessageSquare, color: 'text-amber-600', bg: 'bg-amber-50' },
   ];
 
@@ -234,45 +234,6 @@ export default function AdminDashboard() {
           </Button>
         </div>
       </div>
-
-      {/* Action Banner for Missing Architecture */}
-      {isMissingCorePages && (
-        <Card className="border-none bg-accent text-primary shadow-2xl rounded-none relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
-            <Sparkles className="w-32 h-32" />
-          </div>
-          <CardHeader className="flex flex-row items-center justify-between relative z-10">
-            <div className="space-y-2">
-              <CardTitle className="text-3xl font-headline font-bold">Initialize Your Sanctuary</CardTitle>
-              <CardDescription className="text-primary/70 text-base max-w-xl">Complete your architecture. This only fills in missing Services, Journal, and Home page structures without touching your edits.</CardDescription>
-            </div>
-            <Button 
-              onClick={handleSeedSanctuary} 
-              disabled={isSeeding}
-              className="bg-primary text-white hover:bg-primary/90 rounded-none uppercase tracking-[0.2em] text-[11px] font-bold h-16 px-12 shadow-2xl"
-            >
-              {isSeeding ? <Loader2 className="w-4 h-4 animate-spin mr-3" /> : <Sparkles className="w-4 h-4 mr-3" />}
-              {isSeeding ? "Protecting & Syncing..." : "Complete Architecture Now"}
-            </Button>
-          </CardHeader>
-        </Card>
-      )}
-
-      {/* Recovery Banner (Always visible if page builder was used) */}
-      <Card className="border-2 border-dashed border-primary/20 bg-white/50 rounded-none">
-        <CardContent className="py-6 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="p-3 bg-primary/5 rounded-full"><ShieldCheck className="w-6 h-6 text-primary" /></div>
-            <div>
-              <h4 className="font-headline font-bold text-lg">Data Recovery Center</h4>
-              <p className="text-sm text-muted-foreground">If you are missing your custom Video Block or Gallery, use the "Section Library" inside the Page Editor.</p>
-            </div>
-          </div>
-          <Button variant="outline" className="rounded-none font-bold uppercase tracking-widest text-[10px]" asChild>
-            <Link href="/admin/pages">Open Page Editor</Link>
-          </Button>
-        </CardContent>
-      </Card>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -345,6 +306,55 @@ export default function AdminDashboard() {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {/* FOOTER UTILITIES - Relocated to bottom */}
+      <div className="space-y-8 pt-12 border-t">
+        <div className="flex flex-col space-y-2">
+          <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground/40">System Utilities</h3>
+          <p className="text-[10px] text-muted-foreground italic">Use these tools for architecture maintenance and data recovery.</p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Action Banner for Missing Architecture */}
+          {isMissingCorePages && (
+            <Card className="border-none bg-accent text-primary shadow-lg rounded-none relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-700">
+                <Sparkles className="w-16 h-16" />
+              </div>
+              <CardHeader className="flex flex-row items-center justify-between relative z-10 p-6">
+                <div className="space-y-1">
+                  <CardTitle className="text-xl font-headline font-bold">Initialize Your Sanctuary</CardTitle>
+                  <CardDescription className="text-primary/70 text-xs max-w-xs">Complete missing Services, Blogs, and Home page structures.</CardDescription>
+                </div>
+                <Button 
+                  onClick={handleSeedSanctuary} 
+                  disabled={isSeeding}
+                  className="bg-primary text-white hover:bg-primary/90 rounded-none uppercase tracking-[0.2em] text-[9px] font-bold h-12 px-6"
+                >
+                  {isSeeding ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <Sparkles className="w-3 h-3 mr-2" />}
+                  {isSeeding ? "Syncing..." : "Run Seed Now"}
+                </Button>
+              </CardHeader>
+            </Card>
+          )}
+
+          {/* Recovery Banner */}
+          <Card className="border-2 border-dashed border-primary/20 bg-white/50 rounded-none">
+            <CardContent className="py-6 px-6 flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="p-2 bg-primary/5 rounded-full"><ShieldCheck className="w-5 h-5 text-primary" /></div>
+                <div>
+                  <h4 className="font-headline font-bold text-base">Data Recovery Center</h4>
+                  <p className="text-[10px] text-muted-foreground">Restore deleted sections from your library.</p>
+                </div>
+              </div>
+              <Button variant="outline" className="rounded-none font-bold uppercase tracking-widest text-[9px] h-10" asChild>
+                <Link href="/admin/pages">Open Library</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

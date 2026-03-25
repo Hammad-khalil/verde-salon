@@ -41,7 +41,7 @@ export default function BlogPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <SEOManager 
-        title={pageData?.seo?.title || "Rituals & Reflections | Verde Salon"}
+        title={pageData?.seo?.title || "Reflections & Insights | Verde Salon"}
         description={pageData?.seo?.description || "Curated insights from Verde Salon on beauty and intentional living."}
       />
       <Navbar />
@@ -55,11 +55,11 @@ export default function BlogPage() {
           ) : (
             /* ⚠️ CRITICAL: Do NOT modify fallback unless CMS data is truly empty. */
             <div className="py-40 text-center text-muted-foreground flex flex-col items-center justify-center space-y-6">
-              <p className="font-headline text-2xl">Journal Architecture Pending</p>
+              <p className="font-headline text-2xl">Blogs Architecture Pending</p>
               <p className="text-sm font-light max-w-md mx-auto">
                 {isEditMode 
                   ? "Initialize the Blog page in the Sanctuary Command to start editing."
-                  : "Our journal is currently being curated. New reflections coming soon."}
+                  : "Our blog is currently being curated. New reflections coming soon."}
               </p>
             </div>
           )

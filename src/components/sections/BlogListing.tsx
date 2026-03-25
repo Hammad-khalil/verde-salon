@@ -14,8 +14,8 @@ interface BlogListingProps {
 }
 
 export default function BlogListing({ 
-  title = "Rituals & Reflections", 
-  subtitle = "The Journal",
+  title = "Reflections & Insights", 
+  subtitle = "Blogs",
   description = "Mastering the art of natural beauty and sustainable luxury.",
   styles 
 }: BlogListingProps) {
@@ -85,7 +85,7 @@ export default function BlogListing({
 
         {isLoading ? (
           <div className="py-20 text-center animate-pulse font-headline text-primary tracking-widest uppercase">
-            Assembling Journal...
+            Assembling Blogs...
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-24">
@@ -101,7 +101,7 @@ export default function BlogListing({
             ))}
             {processedPosts.length === 0 && (
               <div className="col-span-full py-40 text-center text-muted-foreground font-light italic bg-muted/20 rounded-sm">
-                The journal is currently quiet. Check back soon for new insights.
+                Our blog is currently quiet. Check back soon for new insights.
               </div>
             )}
           </div>
