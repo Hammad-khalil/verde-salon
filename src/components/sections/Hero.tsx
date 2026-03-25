@@ -36,7 +36,7 @@ export default function Hero({
   title = "Elevate Your Natural Beauty", 
   subtitle = "Premium hair, skin, and wellness treatments tailored for you.", 
   ctaText = "Book Appointment", 
-  ctaUrl = "/services",
+  ctaUrl = "/services#book-now",
   imageUrl,
   altText = "Verde Salon Atmosphere",
   videoUrl,
@@ -154,7 +154,7 @@ export default function Hero({
                   : 'bg-accent text-primary hover:bg-white hover:text-primary'
               )}
             >
-              <Link href={ctaUrl || '/services'}>
+              <Link href={ctaUrl || '/services#book-now'}>
                 <span className="relative z-10">{ctaText}</span>
               </Link>
             </Button>

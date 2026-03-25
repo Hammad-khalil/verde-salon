@@ -35,7 +35,12 @@ export default function Navbar() {
     { name: 'Blogs', href: '/blog' },
   ], []);
 
-  const getHref = (path: string) => isEditMode ? `${path}${path.includes('?') ? '&' : '?'}edit=true` : path;
+  const getHref = (path: string) => {
+    if (!isEditMode) return path;
+    const [base, hash] = path.split('#');
+    const separator = base.includes('?') ? '&' : '?';
+    return `${base}${separator}edit=true${hash ? `#${hash}` : ''}`;
+  };
 
   const brandConfig = useMemo(() => isEditMode ? settings : settings?.published, [isEditMode, settings]);
   const logoSettings = brandConfig?.logo;
@@ -146,7 +151,7 @@ export default function Navbar() {
                 <Search className="w-4 h-4" />
               </Button>
               <Button className="bg-primary hover:bg-accent text-white rounded-none px-10 py-6 text-[10px] font-bold tracking-[0.3em] uppercase transition-all duration-700 shadow-lg" asChild>
-                <Link href={getHref('/services')}>Book Now</Link>
+                <Link href={getHref('/services#book-now')}>Book Now</Link>
               </Button>
             </div>
           </div>
@@ -176,7 +181,7 @@ export default function Navbar() {
                     </Link>
                   ))}
                   <Button className="w-full max-w-xs bg-primary hover:bg-accent text-white rounded-none py-8 text-[12px] font-bold tracking-[0.3em] uppercase transition-all duration-500" asChild>
-                    <Link href={getHref('/services')}>Book Service</Link>
+                    <Link href={getHref('/services#book-now')}>Book Service</Link>
                   </Button>
                 </div>
               </SheetContent>

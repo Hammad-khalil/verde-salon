@@ -96,7 +96,7 @@ export default function FormBlock({ title, subtitle, type }: FormBlockProps) {
 
   if (isSuccess) {
     return (
-      <section className="py-32 bg-white">
+      <section id="book-now" className="py-32 bg-white">
         <div className="container mx-auto px-6 max-w-2xl text-center space-y-8 animate-fade-in">
           <CheckCircle2 className="w-16 h-16 text-primary mx-auto" />
           <h2 className="text-4xl font-headline font-light">Thank You</h2>
@@ -112,7 +112,7 @@ export default function FormBlock({ title, subtitle, type }: FormBlockProps) {
   }
 
   return (
-    <section className="py-32 bg-[#F9F9F9]">
+    <section id="book-now" className="py-32 bg-[#F9F9F9]">
       <div className="container mx-auto px-6 max-w-4xl">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
           <div className="space-y-8">

@@ -15,7 +15,7 @@ export default function CTA({
   title = "Ready for a transformation?", 
   subtitle = "Book your experience today at Verde Salon.", 
   buttonText = "Book Your Visit",
-  buttonUrl = "/services"
+  buttonUrl = "/services#book-now"
 }: CTAProps) {
   return (
     <section className="py-32 bg-primary text-primary-foreground overflow-hidden relative">
@@ -35,7 +35,7 @@ export default function CTA({
           </p>
           <div className="pt-8">
             <Button asChild className="bg-accent text-primary hover:bg-white hover:text-primary rounded-none px-16 py-8 text-[12px] font-bold tracking-[0.4em] uppercase transition-all duration-700 shadow-2xl group">
-              <Link href={buttonUrl || '/services'} className="relative z-10 flex items-center">
+              <Link href={buttonUrl || '/services#book-now'} className="relative z-10 flex items-center">
                 {buttonText}
                 <ArrowRight className="ml-3 w-4 h-4 transition-transform duration-500 group-hover:translate-x-2" />
               </Link>

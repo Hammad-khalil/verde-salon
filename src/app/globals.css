@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
   :root {
     /* Luxury Botanical Palette */
     --background: 40 24% 95%; /* #F5F3EF */

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -322,7 +321,7 @@ export default function PagesEditor() {
                           </div>
                           <div>
                             <div className="flex items-center space-x-3 mb-1">
-                              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent block">{section.type}</span>
+                              <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent block">{section.type}</span>
                               {isHidden && <Badge variant="outline" className="h-4 text-[8px] uppercase tracking-widest border-amber-200 text-amber-600 bg-amber-50">Hidden from Public</Badge>}
                             </div>
                             <h3 className={cn("font-headline text-xl font-bold", isHidden && "text-slate-400 line-through")}>
@@ -773,10 +772,10 @@ const defaultStyles = {
 };
 
 const defaultContents: Record<string, any> = {
-  Hero: { title: 'Elevate Your Natural Beauty', subtitle: 'Premium hair, skin, and wellness treatments tailored for you.', ctaText: 'Book Appointment', ctaUrl: '/services', imageUrl: 'https://picsum.photos/seed/verde-luxury-hero/1920/1080', backgroundType: 'image' },
+  Hero: { title: 'Elevate Your Natural Beauty', subtitle: 'Premium hair, skin, and wellness treatments tailored for you.', ctaText: 'Book Appointment', ctaUrl: '/services#book-now', imageUrl: 'https://picsum.photos/seed/verde-luxury-hero/1920/1080', backgroundType: 'image' },
   TextBlock: { title: 'A New Narrative', content: 'Share your story here...', alignment: 'center' },
   BrandIntro: { title: 'About VERDE SALON', subtitle: 'The Essence of Luxury', content: 'At Verde Salon, we blend modern beauty techniques with natural care. Our mission is to enhance your beauty while maintaining the health of your hair and skin.', imageUrl: 'https://picsum.photos/seed/verde-about/800/1000', buttonText: 'Discover Our Story', buttonUrl: '/blog' },
-  CTA: { title: 'Ready for a transformation?', subtitle: 'Book your experience today at Verde Salon.', buttonText: 'Book Your Visit', buttonUrl: '/services' },
+  CTA: { title: 'Ready for a transformation?', subtitle: 'Book your experience today at Verde Salon.', buttonText: 'Book Your Visit', buttonUrl: '/services#book-now' },
   FormBlock: { title: 'Book an Experience', subtitle: 'Request a service at Verde Salon.', type: 'Booking' },
   VideoBlock: { 
     title: 'Featured Video', 
