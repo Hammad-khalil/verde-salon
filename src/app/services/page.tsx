@@ -4,6 +4,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import SectionRenderer from '@/components/sections/SectionRenderer';
 import SEOManager from '@/components/seo/SEOManager';
+import WhatsAppButton from '@/components/ui/WhatsAppButton';
 import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useSearchParams } from 'next/navigation';
@@ -50,19 +51,24 @@ export default function ServicesPage() {
         {isLoading ? (
           <div className="h-screen bg-background" />
         ) : pageData ? (
-          sectionIds.length > 0 ? (
-            <SectionRenderer sectionIds={sectionIds} />
-          ) : (
-            /* ⚠️ CRITICAL: Do NOT modify fallback unless CMS data is truly empty. */
-            <div className="py-40 text-center text-muted-foreground flex flex-col items-center justify-center space-y-6">
-              <p className="font-headline text-2xl">Ritual Architecture Pending</p>
-              <p className="text-sm font-light max-w-md mx-auto">
-                {isEditMode 
-                  ? "Initialize the Services page in the Sanctuary Command to start editing."
-                  : "We are currently updating our ritual menu. Please check back shortly."}
-              </p>
-            </div>
-          )
+          <>
+            {sectionIds.length > 0 ? (
+              <SectionRenderer sectionIds={sectionIds} />
+            ) : (
+              /* ⚠️ CRITICAL: Do NOT modify fallback unless CMS data is truly empty. */
+              <div className="py-40 text-center text-muted-foreground flex flex-col items-center justify-center space-y-6">
+                <p className="font-headline text-2xl">Ritual Architecture Pending</p>
+                <p className="text-sm font-light max-w-md mx-auto">
+                  {isEditMode 
+                    ? "Initialize the Services page in the Sanctuary Command to start editing."
+                    : "We are currently updating our ritual menu. Please check back shortly."}
+                </p>
+              </div>
+            )}
+            
+            {/* Floating WhatsApp Button - Modern, Minimal, Bottom-Right */}
+            {!isEditMode && <WhatsAppButton />}
+          </>
         ) : (
           <div className="py-40 text-center text-muted-foreground flex flex-col items-center justify-center space-y-6">
             <p className="font-headline text-2xl">Architecture Pending</p>
