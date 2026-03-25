@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit, Trash2, Scissors, Image as ImageIcon, Upload } from 'lucide-react';
+import { Plus, Edit, Trash2, Scissors, Image as ImageIcon, Upload, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -67,6 +67,15 @@ export default function ServicesAdmin() {
 
   const handleFileUpload = (file: File) => {
     if (!file) return;
+    const limit = 400000; // 400KB
+    if (file.size > limit) {
+      toast({ 
+        variant: "destructive", 
+        title: "Database Limit", 
+        description: "Image too large. Please use an asset under 400KB." 
+      });
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (e) => {
       if (typeof e.target?.result === 'string') {
@@ -120,18 +129,18 @@ export default function ServicesAdmin() {
                            )}
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-headline font-bold text-lg">{service.title}</span>
-                          <span className="text-xs text-muted-foreground font-light line-clamp-1 max-w-[300px]">{service.description}</span>
+                          <span className="font-headline font-bold text-lg">{service.title ?? ''}</span>
+                          <span className="text-xs text-muted-foreground font-light line-clamp-1 max-w-[300px]">{service.description ?? ''}</span>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="rounded-none uppercase tracking-[0.2em] text-[10px] px-3 py-1 bg-white border-primary/10">
-                        {service.category}
+                        {service.category ?? ''}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-mono text-primary font-bold">{service.price}</TableCell>
-                    <TableCell className="text-muted-foreground text-xs uppercase tracking-widest">{service.duration}</TableCell>
+                    <TableCell className="font-mono text-primary font-bold">{service.price ?? ''}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs uppercase tracking-widest">{service.duration ?? ''}</TableCell>
                     <TableCell className="text-right px-8 space-x-2">
                       <Button variant="ghost" size="icon" onClick={() => openEditDialog(service)} className="hover:bg-primary/5 text-primary">
                         <Edit className="w-4 h-4" />
@@ -165,7 +174,7 @@ export default function ServicesAdmin() {
               <div className="space-y-2">
                 <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Service Name</Label>
                 <Input 
-                  value={editingService?.title || ''} 
+                  value={editingService?.title ?? ''} 
                   onChange={(e) => setEditingService({...editingService, title: e.target.value})}
                   className="rounded-none border-primary/10 h-12"
                   placeholder="e.g., Signature Balayage"
@@ -175,7 +184,7 @@ export default function ServicesAdmin() {
               <div className="space-y-2">
                 <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Category</Label>
                 <Select 
-                  value={editingService?.category} 
+                  value={editingService?.category ?? 'Hair'} 
                   onValueChange={(val) => setEditingService({...editingService, category: val})}
                 >
                   <SelectTrigger className="rounded-none border-primary/10 h-12">
@@ -192,7 +201,15 @@ export default function ServicesAdmin() {
             </div>
             
             <div className="space-y-2">
-              <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Media Asset</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Media Asset</Label>
+                <div className="group relative">
+                  <Info className="w-3.5 h-3.5 text-muted-foreground/40 cursor-help" />
+                  <div className="absolute right-0 bottom-full mb-2 w-48 p-2 bg-black text-white text-[8px] rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                    Max size: 400KB. For HD imagery, provide an external URL below.
+                  </div>
+                </div>
+              </div>
               <div className="flex items-center space-x-6 bg-slate-50 p-4 border border-dashed border-primary/10">
                 <div className="w-24 h-24 bg-white border flex items-center justify-center relative group overflow-hidden">
                   {editingService?.imageUrl ? (
@@ -209,12 +226,12 @@ export default function ServicesAdmin() {
                 </div>
                 <div className="flex-grow space-y-2">
                   <Input 
-                    value={editingService?.imageUrl || ''} 
+                    value={editingService?.imageUrl?.startsWith('data:') ? 'Local Asset' : (editingService?.imageUrl ?? '')} 
                     onChange={(e) => setEditingService({...editingService, imageUrl: e.target.value})}
                     placeholder="External Image URL"
                     className="rounded-none h-10 text-xs border-primary/5"
                   />
-                  <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">Recommended: 800x1000px Vertical Portrait</p>
+                  <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">Recommended: 800x1000px, Max 400KB</p>
                 </div>
                 <input id="service-upload" type="file" className="hidden" accept="image/*" onChange={(e) => {
                   const file = e.target.files?.[0];
@@ -226,7 +243,7 @@ export default function ServicesAdmin() {
             <div className="space-y-2">
               <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Description</Label>
               <Textarea 
-                value={editingService?.description || ''} 
+                value={editingService?.description ?? ''} 
                 onChange={(e) => setEditingService({...editingService, description: e.target.value})}
                 className="rounded-none border-primary/10 min-h-[120px] text-sm leading-relaxed"
                 placeholder="Describe the service experience..."
@@ -238,7 +255,7 @@ export default function ServicesAdmin() {
               <div className="space-y-2">
                 <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Price Profile</Label>
                 <Input 
-                  value={editingService?.price || ''} 
+                  value={editingService?.price ?? ''} 
                   onChange={(e) => setEditingService({...editingService, price: e.target.value})}
                   className="rounded-none border-primary/10 h-12 font-mono"
                   placeholder="e.g., $120+"
@@ -248,7 +265,7 @@ export default function ServicesAdmin() {
               <div className="space-y-2">
                 <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Duration Profile</Label>
                 <Input 
-                  value={editingService?.duration || ''} 
+                  value={editingService?.duration ?? ''} 
                   onChange={(e) => setEditingService({...editingService, duration: e.target.value})}
                   className="rounded-none border-primary/10 h-12"
                   placeholder="e.g., 90 min"

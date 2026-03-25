@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Save, ArrowLeft, Image as ImageIcon, Search, Upload, Trash2, Globe } from 'lucide-react';
+import { Save, ArrowLeft, Image as ImageIcon, Search, Upload, Trash2, Globe, Info } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Switch } from '@/components/ui/switch';
@@ -62,8 +62,15 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
 
   const handleFileUpload = (file: File) => {
     if (!file) return;
-    if (file.size > 1000000) {
-      toast({ variant: "destructive", title: "File too large", description: "Please use images under 1MB." });
+    
+    // Firestore Document Limit is 1MB. We store data twice (Draft + Live).
+    const limit = 400000; // 400KB
+    if (file.size > limit) {
+      toast({ 
+        variant: "destructive", 
+        title: "File too large", 
+        description: "Please use images under 400KB for internal storage, or use a Direct URL." 
+      });
       return;
     }
     const reader = new FileReader();
@@ -88,7 +95,7 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
       ...post,
       id: blogId,
       updatedAt: new Date().toISOString(),
-      slug: post.slug || post.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '')
+      slug: (post.slug || post.title).toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '')
     };
 
     setDocumentNonBlocking(doc(db, 'blog_posts', blogId), finalPost, { merge: true });
@@ -149,7 +156,7 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
                 <Label className="text-[10px] uppercase font-bold tracking-widest opacity-50">Headline Title</Label>
                 <Input 
                   className="text-3xl font-headline h-16 rounded-none border-0 border-b focus-visible:ring-0 focus-visible:border-primary px-0" 
-                  value={post.title} 
+                  value={post.title ?? ''} 
                   onChange={(e) => setPost({...post, title: e.target.value})}
                   placeholder="Enter a compelling title..." 
                 />
@@ -160,7 +167,7 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
                   <Label className="text-[10px] uppercase font-bold tracking-widest opacity-50">URL Slug</Label>
                   <Input 
                     className="rounded-none h-12"
-                    value={post.slug} 
+                    value={post.slug ?? ''} 
                     onChange={(e) => setPost({...post, slug: e.target.value})}
                     placeholder="e.g., summer-rituals" 
                   />
@@ -169,7 +176,7 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
                   <Label className="text-[10px] uppercase font-bold tracking-widest opacity-50">Category</Label>
                   <Input 
                     className="rounded-none h-12"
-                    value={post.category} 
+                    value={post.category ?? ''} 
                     onChange={(e) => setPost({...post, category: e.target.value})}
                     placeholder="e.g., Hair Design" 
                   />
@@ -180,7 +187,7 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
                 <Label className="text-[10px] uppercase font-bold tracking-widest opacity-50">Short Excerpt (Search Preview)</Label>
                 <Textarea 
                   className="rounded-none min-h-[100px] text-sm leading-relaxed"
-                  value={post.excerpt} 
+                  value={post.excerpt ?? ''} 
                   onChange={(e) => setPost({...post, excerpt: e.target.value})}
                   placeholder="Summarize the article for the listing page..." 
                 />
@@ -190,7 +197,7 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
                 <Label className="text-[10px] uppercase font-bold tracking-widest opacity-50">Story Content (Rich Text)</Label>
                 <Textarea 
                   className="min-h-[600px] font-body text-lg leading-relaxed rounded-none border-primary/5 focus-visible:ring-primary/10" 
-                  value={post.content} 
+                  value={post.content ?? ''} 
                   onChange={(e) => setPost({...post, content: e.target.value})}
                   placeholder="Begin your narrative here..." 
                 />
@@ -205,9 +212,17 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
           {/* Media Engine */}
           <Card className="border-none shadow-sm rounded-none overflow-hidden">
             <CardHeader className="bg-slate-50/50 border-b">
-              <CardTitle className="text-lg font-headline flex items-center">
-                <ImageIcon className="w-4 h-4 mr-2 text-primary" /> Cover Media
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-headline flex items-center">
+                  <ImageIcon className="w-4 h-4 mr-2 text-primary" /> Cover Media
+                </CardTitle>
+                <div className="group relative">
+                  <Info className="w-4 h-4 text-muted-foreground/40 cursor-help" />
+                  <div className="absolute right-0 top-full mt-2 w-48 p-2 bg-black text-white text-[8px] rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                    Max file size: 400KB. Larger files will fail to save.
+                  </div>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="p-6 space-y-6">
               <div 
@@ -249,7 +264,7 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
                 <Label className="text-[10px] uppercase font-bold opacity-40">Image Path / URL</Label>
                 <Input 
                   className="h-10 text-[10px] font-mono rounded-none"
-                  value={post.imageUrl?.startsWith('data:') ? 'Local Asset Uploaded' : post.imageUrl} 
+                  value={post.imageUrl?.startsWith('data:') ? 'Local Asset Uploaded' : (post.imageUrl ?? '')} 
                   onChange={(e) => setPost({...post, imageUrl: e.target.value})}
                   placeholder="External URL" 
                 />
@@ -269,7 +284,7 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
                 <Label className="text-[10px] uppercase font-bold opacity-50">Meta Title</Label>
                 <Input 
                   className="rounded-none"
-                  value={post.seo?.title || ''} 
+                  value={post.seo?.title ?? ''} 
                   onChange={(e) => setPost({...post, seo: {...post.seo, title: e.target.value}})}
                   placeholder="Google search title" 
                 />
@@ -278,7 +293,7 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
                 <Label className="text-[10px] uppercase font-bold opacity-50">Meta Description</Label>
                 <Textarea 
                   className="text-xs rounded-none min-h-[100px]"
-                  value={post.seo?.description || ''} 
+                  value={post.seo?.description ?? ''} 
                   onChange={(e) => setPost({...post, seo: {...post.seo, description: e.target.value}})}
                   placeholder="Search engine summary" 
                 />

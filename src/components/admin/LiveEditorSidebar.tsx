@@ -22,7 +22,8 @@ import {
   Upload,
   Trash2,
   Loader2,
-  Globe
+  Globe,
+  Info
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -59,15 +60,15 @@ const MediaField = ({
   const handleFile = (file: File) => {
     if (!file) return;
     
-    // Video files can be larger, but Firestore has a 1MB doc limit.
-    // We advise users to keep base64 within reasonable limits.
-    const limit = type === 'video' ? 2000000 : 800000;
+    // CRITICAL: Firestore Document Limit is 1MB. 
+    // Since we store content TWICE (Draft + Published), we must limit raw files to ~400KB.
+    const limit = type === 'video' ? 500000 : 400000;
     
     if (file.size > limit) {
       toast({ 
         variant: "destructive", 
-        title: "Asset too large", 
-        description: `Please use ${type} files under ${Math.round(limit/1000000)}MB for local upload, or use a direct URL.` 
+        title: "Database Limit Warning", 
+        description: `This ${type} is too large for internal storage. Please use a file under ${Math.round(limit/1000)}KB or use an External URL for high-quality media.` 
       });
       return;
     }
@@ -86,7 +87,15 @@ const MediaField = ({
   return (
     <div className="space-y-3 p-4 bg-white border rounded-sm shadow-sm border-primary/5">
       <div className="flex items-center justify-between">
-        <Label className="text-[9px] uppercase font-bold tracking-widest text-primary/60">{label}</Label>
+        <div className="flex items-center space-x-2">
+          <Label className="text-[9px] uppercase font-bold tracking-widest text-primary/60">{label}</Label>
+          <div className="group relative">
+            <Info className="w-3 h-3 text-muted-foreground/40 cursor-help" />
+            <div className="absolute bottom-full left-0 mb-2 w-48 p-2 bg-black text-white text-[8px] rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+              Internal storage limit: {type === 'video' ? '500KB' : '400KB'}. For HD media, use an External URL.
+            </div>
+          </div>
+        </div>
         {onRemove && (
           <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={onRemove}>
             <Trash2 className="w-3.5 h-3.5" />
@@ -262,7 +271,7 @@ export default function LiveEditorSidebar() {
       toast({ title: "Sanctuary Published", description: "All changes are now live for visitors." });
     } catch (err) {
       console.error("Publish Error:", err);
-      toast({ variant: "destructive", title: "Sync Failed", description: "Could not take changes live." });
+      toast({ variant: "destructive", title: "Sync Failed", description: "The content might be too large for the database. Try using external URLs for images/videos." });
     } finally {
       setIsPublishing(false);
     }

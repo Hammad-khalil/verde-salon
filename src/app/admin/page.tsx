@@ -39,22 +39,22 @@ export default function AdminDashboard() {
   const { data: services } = useCollection(servicesQuery);
   const { data: testimonials } = useCollection(testimonialsQuery);
 
-  // Logic to show seeding banner only if core architecture is missing
+  // Logic to show seeding banner only if core architecture is missing or outdated
   const isMissingCorePages = useMemo(() => {
     if (pagesLoading) return false;
     if (!pages || pages.length === 0) return true;
     const required = ['home', 'services', 'blog'];
-    // Also check if they have published IDs (Migration check)
+    // Check if pages exist and have published IDs (Strict Migration check)
     return !required.every(id => {
       const p = pages.find(page => page.id === id);
-      return p && p.publishedSectionIds && p.publishedSectionIds.length > 0;
+      return p && p.publishedSectionIds !== undefined;
     });
   }, [pages, pagesLoading]);
 
   async function handleSeedSanctuary() {
     setIsSeeding(true);
     try {
-      // 1. Safe Global Settings (Only if missing)
+      // 1. Safe Global Settings (Migration check)
       const settingsRef = doc(db, 'settings', 'global');
       const settingsSnap = await getDoc(settingsRef);
       if (!settingsSnap.exists()) {
@@ -72,7 +72,7 @@ export default function AdminDashboard() {
         }, { merge: true });
       }
 
-      // 2. Define Essential Sections (Default IDs)
+      // 2. Define Essential Sections (Lightweight Migration)
       const sections = [
         {
           id: 'initial-hero',
@@ -95,32 +95,18 @@ export default function AdminDashboard() {
           })
         },
         {
-          id: 'initial-intro',
-          type: 'BrandIntro',
+          id: 'initial-services-list',
+          type: 'ServicesListing',
           content: JSON.stringify({ 
-            title: 'The Verde Philosophy', 
-            subtitle: 'Pure. Elegant. Conscious.',
-            content: 'At Verde Salon, we blend modern beauty techniques with natural care. Our mission is to enhance your beauty while maintaining the health of your hair and skin.',
-            imageUrl: 'https://picsum.photos/seed/verde-about/800/1000'
+            title: 'Signature Services', 
+            subtitle: 'The Menu',
+            description: 'Timeless techniques meets contemporary science.'
           }),
           publishedContent: JSON.stringify({ 
-            title: 'The Verde Philosophy', 
-            subtitle: 'Pure. Elegant. Conscious.',
-            content: 'At Verde Salon, we blend modern beauty techniques with natural care. Our mission is to enhance your beauty while maintaining the health of your hair and skin.',
-            imageUrl: 'https://picsum.photos/seed/verde-about/800/1000'
+            title: 'Signature Services', 
+            subtitle: 'The Menu',
+            description: 'Timeless techniques meets contemporary science.'
           })
-        },
-        {
-          id: 'initial-craft',
-          type: 'ServicesPreview',
-          content: JSON.stringify({ title: 'Signature Services', subtitle: 'Our Craft' }),
-          publishedContent: JSON.stringify({ title: 'Signature Services', subtitle: 'Our Craft' })
-        },
-        {
-          id: 'initial-gallery',
-          type: 'FeaturedWork',
-          content: JSON.stringify({ title: 'Our Work', subtitle: 'The Verde Aesthetic', images: [] }),
-          publishedContent: JSON.stringify({ title: 'Our Work', subtitle: 'The Verde Aesthetic', images: [] })
         },
         {
           id: 'initial-blog-list',
@@ -135,41 +121,27 @@ export default function AdminDashboard() {
             subtitle: 'Blogs',
             description: 'Curated thoughts on beauty and intentional living.'
           })
-        },
-        {
-          id: 'initial-services-list',
-          type: 'ServicesListing',
-          content: JSON.stringify({ 
-            title: 'Signature Services', 
-            subtitle: 'The Menu',
-            description: 'Timeless techniques meets contemporary science.'
-          }),
-          publishedContent: JSON.stringify({ 
-            title: 'Signature Services', 
-            subtitle: 'The Menu',
-            description: 'Timeless techniques meets contemporary science.'
-          })
         }
       ];
 
-      // Safe write sections (Ensure publishedContent exists)
+      // Safe write sections - Only fill missing fields to avoid breaking user data
       for (const section of sections) {
         const secRef = doc(db, 'cms_page_sections', section.id);
         const secSnap = await getDoc(secRef);
         if (!secSnap.exists()) {
           setDocumentNonBlocking(secRef, section, { merge: true });
         } else {
-          // Migration: Ensure publishedContent is set for existing sections
+          // Migration: Ensure publishedContent is set for legacy sections
           const existing = secSnap.data();
-          if (!existing.publishedContent) {
+          if (existing.publishedContent === undefined) {
             setDocumentNonBlocking(secRef, { publishedContent: existing.content || section.content }, { merge: true });
           }
         }
       }
 
-      // 3. Safe Page Construction (Additive & Migration)
+      // 3. Page Construction (Healing legacy pages)
       const pageDefinitions = [
-        { id: 'home', title: 'Home', slug: '/', sections: ['initial-hero', 'initial-intro', 'initial-craft', 'initial-gallery'] },
+        { id: 'home', title: 'Home', slug: '/', sections: ['initial-hero'] },
         { id: 'services', title: 'Services', slug: '/services', sections: ['initial-services-list'] },
         { id: 'blog', title: 'Blogs', slug: '/blog', sections: ['initial-blog-list'] }
       ];
@@ -189,21 +161,21 @@ export default function AdminDashboard() {
             createdAt: new Date().toISOString()
           }, { merge: true });
         } else {
-          // Migration: Ensure publishedSectionIds is set for existing pages
+          // Migration: Force sync legacy published fields
           const currentData = pSnap.data();
-          if (!currentData.publishedSectionIds || currentData.publishedSectionIds.length === 0) {
+          if (currentData.publishedSectionIds === undefined) {
             setDocumentNonBlocking(pRef, {
-              publishedSectionIds: currentData.sectionIds && currentData.sectionIds.length > 0 ? currentData.sectionIds : p.sections,
-              sectionIds: currentData.sectionIds && currentData.sectionIds.length > 0 ? currentData.sectionIds : p.sections
+              publishedSectionIds: currentData.sectionIds || p.sections,
+              sectionIds: currentData.sectionIds || p.sections
             }, { merge: true });
           }
         }
       }
 
-      toast({ title: "Sanctuary Synced", description: "All pages and sections migrated to the new Publish system." });
+      toast({ title: "Sanctuary Synced", description: "Architecture migrated to the new Publish system." });
     } catch (e) {
       console.error(e);
-      toast({ variant: "destructive", title: "Setup Failed", description: "Could not verify architecture." });
+      toast({ variant: "destructive", title: "Setup Failed", description: "Could not finalize architecture. Please try again." });
     } finally {
       setIsSeeding(false);
     }

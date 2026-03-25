@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Save, Palette, Type, ImageIcon, Layout, Upload, Trash2, Globe, Loader2 } from 'lucide-react';
+import { Save, Palette, Type, ImageIcon, Layout, Upload, Trash2, Globe, Loader2, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -27,8 +27,15 @@ const LogoMediaField = ({
 
   const handleFile = (file: File) => {
     if (!file) return;
-    if (file.size > 800000) {
-      toast({ variant: "destructive", title: "Asset too large", description: "Please use files under 800KB." });
+    // Branding settings store the logo twice (current + published), 
+    // so we must be strict with logo size.
+    const limit = 300000; // 300KB
+    if (file.size > limit) {
+      toast({ 
+        variant: "destructive", 
+        title: "Asset too large", 
+        description: `Logo files must be under 300KB for database compatibility.` 
+      });
       return;
     }
     const reader = new FileReader();
@@ -41,7 +48,15 @@ const LogoMediaField = ({
 
   return (
     <div className="space-y-3">
-      <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">{label}</Label>
+      <div className="flex items-center justify-between">
+        <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">{label}</Label>
+        <div className="group relative">
+          <Info className="w-3 h-3 text-muted-foreground/40 cursor-help" />
+          <div className="absolute bottom-full right-0 mb-2 w-48 p-2 bg-black text-white text-[8px] rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+            Recommended: PNG with transparency, max 300KB.
+          </div>
+        </div>
+      </div>
       <div 
         className={cn(
           "relative border-2 border-dashed rounded-lg transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden bg-slate-50/50 min-h-[160px]",
@@ -196,7 +211,7 @@ export default function BrandingEditor() {
 
       toast({ title: "Identity Published", description: "Your brand changes are now live for everyone." });
     } catch (e) {
-      toast({ variant: "destructive", title: "Publish Failed" });
+      toast({ variant: "destructive", title: "Publish Failed", description: "The logo or brand data might be too large for the database. Try using an external image URL." });
     } finally {
       setIsPublishing(false);
     }
@@ -243,7 +258,7 @@ export default function BrandingEditor() {
                   />
                   <div className="space-y-4">
                     <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Navbar Alignment</Label>
-                    <Select value={form.logoPlacement} onValueChange={(v) => setForm({...form, logoPlacement: v})}>
+                    <Select value={form.logoPlacement ?? 'left'} onValueChange={(v) => setForm({...form, logoPlacement: v})}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="left">Left Aligned</SelectItem>
@@ -262,11 +277,11 @@ export default function BrandingEditor() {
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <p className="text-[9px] opacity-50 uppercase">Height</p>
-                        <Slider value={[form.logoHeight]} max={150} min={20} step={2} onValueChange={([v]) => setForm({...form, logoHeight: v})} />
+                        <Slider value={[form.logoHeight ?? 40]} max={150} min={20} step={2} onValueChange={([v]) => setForm({...form, logoHeight: v})} />
                       </div>
                       <div className="space-y-2">
                         <p className="text-[9px] opacity-50 uppercase">Width (Set 0 for Auto)</p>
-                        <Slider value={[form.logoWidth]} max={400} min={0} step={5} onValueChange={([v]) => setForm({...form, logoWidth: v})} />
+                        <Slider value={[form.logoWidth ?? 0]} max={400} min={0} step={5} onValueChange={([v]) => setForm({...form, logoWidth: v})} />
                       </div>
                     </div>
                   </div>
@@ -278,11 +293,11 @@ export default function BrandingEditor() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <p className="text-[9px] opacity-50 uppercase">Padding</p>
-                        <Input type="number" value={form.logoPadding} onChange={(e) => setForm({...form, logoPadding: parseInt(e.target.value) || 0})} />
+                        <Input type="number" value={form.logoPadding ?? 0} onChange={(e) => setForm({...form, logoPadding: parseInt(e.target.value) || 0})} />
                       </div>
                       <div className="space-y-2">
                         <p className="text-[9px] opacity-50 uppercase">Margin</p>
-                        <Input type="number" value={form.logoMargin} onChange={(e) => setForm({...form, logoMargin: parseInt(e.target.value) || 0})} />
+                        <Input type="number" value={form.logoMargin ?? 0} onChange={(e) => setForm({...form, logoMargin: parseInt(e.target.value) || 0})} />
                       </div>
                     </div>
                   </div>
@@ -295,14 +310,14 @@ export default function BrandingEditor() {
                           <p className="text-[9px] opacity-50 uppercase">Hover Zoom (%)</p>
                           <span className="text-[10px] font-mono">{form.hoverScale}%</span>
                         </div>
-                        <Slider value={[form.hoverScale]} max={150} min={80} step={1} onValueChange={([v]) => setForm({...form, hoverScale: v})} />
+                        <Slider value={[form.hoverScale ?? 100]} max={150} min={80} step={1} onValueChange={([v]) => setForm({...form, hoverScale: v})} />
                       </div>
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <p className="text-[9px] opacity-50 uppercase">Hover Opacity (%)</p>
                           <span className="text-[10px] font-mono">{form.hoverOpacity}%</span>
                         </div>
-                        <Slider value={[form.hoverOpacity]} max={100} min={10} step={5} onValueChange={([v]) => setForm({...form, hoverOpacity: v})} />
+                        <Slider value={[form.hoverOpacity ?? 100]} max={100} min={10} step={5} onValueChange={([v]) => setForm({...form, hoverOpacity: v})} />
                       </div>
                     </div>
                   </div>
