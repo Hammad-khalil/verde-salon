@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,19 +17,21 @@ import { cn } from '@/lib/utils';
 const LogoMediaField = ({ 
   label, 
   value, 
-  onChange 
+  onChange,
+  altValue,
+  onAltChange 
 }: { 
   label: string, 
   value: string, 
-  onChange: (val: string) => void 
+  onChange: (val: string) => void,
+  altValue?: string,
+  onAltChange?: (val: string) => void 
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
 
   const handleFile = (file: File) => {
     if (!file) return;
-    // Branding settings store the logo twice (current + published), 
-    // so we must be strict with logo size.
     const limit = 300000; // 300KB
     if (file.size > limit) {
       toast({ 
@@ -50,12 +53,7 @@ const LogoMediaField = ({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">{label}</Label>
-        <div className="group relative">
-          <Info className="w-3 h-3 text-muted-foreground/40 cursor-help" />
-          <div className="absolute bottom-full right-0 mb-2 w-48 p-2 bg-black text-white text-[8px] rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
-            Recommended: PNG with transparency, max 300KB.
-          </div>
-        </div>
+        <Info className="w-3 h-3 text-muted-foreground/40 cursor-help" />
       </div>
       <div 
         className={cn(
@@ -74,7 +72,7 @@ const LogoMediaField = ({
       >
         {value ? (
           <div className="relative w-full h-full p-4 flex items-center justify-center group">
-            <img src={value} className="max-h-32 object-contain" alt="Logo Preview" />
+            <img src={value} className="max-h-32 object-contain" alt={altValue || "Logo Preview"} />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-lg">
               <Upload className="w-6 h-6 text-white" />
             </div>
@@ -82,7 +80,7 @@ const LogoMediaField = ({
         ) : (
           <div className="flex flex-col items-center space-y-2 opacity-40">
             <Upload className="w-8 h-8" />
-            <p className="text-xs font-bold uppercase tracking-widest">Drop logo here or click to browse</p>
+            <p className="text-xs font-bold uppercase tracking-widest">Drop logo here</p>
           </div>
         )}
         <input id="logo-upload" type="file" className="hidden" accept="image/*" onChange={(e) => {
@@ -90,14 +88,25 @@ const LogoMediaField = ({
           if (file) handleFile(file);
         }} />
       </div>
-      <div className="space-y-1">
-        <Label className="text-[9px] opacity-40 uppercase font-bold">Or use a Direct URL</Label>
-        <Input 
-          placeholder="https://..."
-          className="h-9 text-xs rounded-none"
-          value={value?.startsWith('data:') ? 'Local Asset Uploaded' : (value ?? '')}
-          onChange={(e) => onChange(e.target.value)}
-        />
+      <div className="space-y-3">
+        <div className="space-y-1">
+          <Label className="text-[9px] opacity-40 uppercase font-bold">Direct URL</Label>
+          <Input 
+            placeholder="https://..."
+            className="h-9 text-xs rounded-none"
+            value={value?.startsWith('data:') ? 'Local Asset' : (value ?? '')}
+            onChange={(e) => onChange(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[9px] opacity-40 uppercase font-bold">Logo Alt Text</Label>
+          <Input 
+            placeholder="Verde Salon Logo Description"
+            className="h-9 text-xs rounded-none"
+            value={altValue ?? ''}
+            onChange={(e) => onAltChange?.(e.target.value)}
+          />
+        </div>
       </div>
     </div>
   );
@@ -113,6 +122,7 @@ export default function BrandingEditor() {
   const [form, setForm] = useState({
     siteName: 'Verde Salon',
     logoUrl: '',
+    logoAlt: '',
     logoHeight: 40,
     logoWidth: 0,
     logoPlacement: 'left',
@@ -132,6 +142,7 @@ export default function BrandingEditor() {
       setForm({
         siteName: settings.siteName || 'Verde Salon',
         logoUrl: settings.logo?.url || '',
+        logoAlt: settings.logo?.alt || '',
         logoHeight: settings.logo?.height || 40,
         logoWidth: settings.logo?.width || 0,
         logoPlacement: settings.logo?.placement || 'left',
@@ -154,6 +165,7 @@ export default function BrandingEditor() {
       siteName: form.siteName,
       logo: {
         url: form.logoUrl,
+        alt: form.logoAlt,
         height: form.logoHeight,
         width: form.logoWidth,
         placement: form.logoPlacement,
@@ -183,6 +195,7 @@ export default function BrandingEditor() {
         siteName: form.siteName,
         logo: {
           url: form.logoUrl,
+          alt: form.logoAlt,
           height: form.logoHeight,
           width: form.logoWidth,
           placement: form.logoPlacement,
@@ -211,7 +224,7 @@ export default function BrandingEditor() {
 
       toast({ title: "Identity Published", description: "Your brand changes are now live for everyone." });
     } catch (e) {
-      toast({ variant: "destructive", title: "Publish Failed", description: "The logo or brand data might be too large for the database. Try using an external image URL." });
+      toast({ variant: "destructive", title: "Publish Failed" });
     } finally {
       setIsPublishing(false);
     }
@@ -239,7 +252,6 @@ export default function BrandingEditor() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
-          {/* Logo Management */}
           <Card className="border-none shadow-sm overflow-hidden">
             <CardHeader className="bg-slate-50/50 border-b">
               <div className="flex items-center space-x-2">
@@ -254,7 +266,9 @@ export default function BrandingEditor() {
                   <LogoMediaField 
                     label="Brand Logo" 
                     value={form.logoUrl} 
-                    onChange={(val) => setForm({...form, logoUrl: val})} 
+                    onChange={(val) => setForm({...form, logoUrl: val})}
+                    altValue={form.logoAlt}
+                    onAltChange={(val) => setForm({...form, logoAlt: val})} 
                   />
                   <div className="space-y-4">
                     <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Navbar Alignment</Label>
@@ -270,10 +284,7 @@ export default function BrandingEditor() {
 
                 <div className="space-y-8">
                   <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                      <Label className="text-[10px] font-bold uppercase opacity-60">Dimensions (px)</Label>
-                      <span className="text-[10px] font-mono opacity-40">{form.logoHeight}H × {form.logoWidth || 'Auto'}W</span>
-                    </div>
+                    <Label className="text-[10px] font-bold uppercase opacity-60">Dimensions (px)</Label>
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <p className="text-[9px] opacity-50 uppercase">Height</p>
@@ -287,9 +298,7 @@ export default function BrandingEditor() {
                   </div>
 
                   <div className="space-y-6 pt-6 border-t">
-                    <div className="flex justify-between items-center">
-                      <Label className="text-[10px] font-bold uppercase opacity-60">Spacing (px)</Label>
-                    </div>
+                    <Label className="text-[10px] font-bold uppercase opacity-60">Spacing (px)</Label>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <p className="text-[9px] opacity-50 uppercase">Padding</p>
@@ -301,32 +310,11 @@ export default function BrandingEditor() {
                       </div>
                     </div>
                   </div>
-
-                  <div className="space-y-6 pt-6 border-t">
-                    <Label className="text-[10px] font-bold uppercase opacity-60">Interactive Effects</Label>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <p className="text-[9px] opacity-50 uppercase">Hover Zoom (%)</p>
-                          <span className="text-[10px] font-mono">{form.hoverScale}%</span>
-                        </div>
-                        <Slider value={[form.hoverScale ?? 100]} max={150} min={80} step={1} onValueChange={([v]) => setForm({...form, hoverScale: v})} />
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <p className="text-[9px] opacity-50 uppercase">Hover Opacity (%)</p>
-                          <span className="text-[10px] font-mono">{form.hoverOpacity}%</span>
-                        </div>
-                        <Slider value={[form.hoverOpacity ?? 100]} max={100} min={10} step={5} onValueChange={([v]) => setForm({...form, hoverOpacity: v})} />
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Colors & Fonts */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <Card className="border-none shadow-sm">
               <CardHeader>
@@ -374,16 +362,11 @@ export default function BrandingEditor() {
                   <Label className="text-[10px] uppercase">Body Text Font</Label>
                   <Input value={form.bodyFont ?? ''} onChange={(e) => setForm({...form, bodyFont: e.target.value})} />
                 </div>
-                <div className="p-6 bg-slate-50 border border-dashed rounded-lg text-center">
-                  <h3 className="text-2xl mb-2" style={{ fontFamily: form.headlineFont }}>Sample Title</h3>
-                  <p className="text-sm opacity-60" style={{ fontFamily: form.bodyFont }}>Refining beauty through sustainable elegance.</p>
-                </div>
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Live Sidebar Preview */}
         <div className="space-y-8">
           <Card className="border-none shadow-xl sticky top-8 bg-white overflow-hidden">
             <CardHeader className="bg-primary text-white">
@@ -391,11 +374,6 @@ export default function BrandingEditor() {
                 <CardTitle className="text-sm flex items-center">
                   <Layout className="w-4 h-4 mr-2" /> Live Navbar Preview
                 </CardTitle>
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 rounded-full bg-red-400" />
-                  <div className="w-2 h-2 rounded-full bg-amber-400" />
-                  <div className="w-2 h-2 rounded-full bg-green-400" />
-                </div>
               </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -409,19 +387,10 @@ export default function BrandingEditor() {
                       <div className="relative group cursor-pointer" style={{ padding: `${form.logoPadding}px`, margin: `${form.logoMargin}px` }}>
                         <img 
                           src={form.logoUrl} 
-                          alt="Logo Preview" 
+                          alt={form.logoAlt || form.siteName} 
                           style={{ 
                             height: `${form.logoHeight}px`,
                             width: form.logoWidth && form.logoWidth > 0 ? `${form.logoWidth}px` : 'auto'
-                          }}
-                          className="transition-transform duration-500"
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = `scale(${form.hoverScale / 100})`;
-                            e.currentTarget.style.opacity = `${form.hoverOpacity / 100}`;
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = `scale(1)`;
-                            e.currentTarget.style.opacity = `1`;
                           }}
                         />
                       </div>
@@ -429,16 +398,6 @@ export default function BrandingEditor() {
                       <span className="font-headline text-xl tracking-[0.3em] font-light uppercase">{form.siteName}</span>
                     )}
                   </div>
-                </div>
-                <div className="mt-4 text-center">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Draft Header Simulation</p>
-                </div>
-              </div>
-              <div className="p-6 space-y-4">
-                <div className="h-4 w-3/4 bg-slate-100 rounded animate-pulse" />
-                <div className="h-4 w-1/2 bg-slate-100 rounded animate-pulse" />
-                <div className="h-32 w-full bg-slate-50 rounded border border-dashed flex items-center justify-center text-[10px] uppercase font-bold text-muted-foreground">
-                  Content Body
                 </div>
               </div>
             </CardContent>

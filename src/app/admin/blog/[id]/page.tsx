@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
@@ -9,12 +10,87 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Save, ArrowLeft, Image as ImageIcon, Search, Upload, Trash2, Globe, Info } from 'lucide-react';
+import { 
+  Save, 
+  ArrowLeft, 
+  Image as ImageIcon, 
+  Search, 
+  Upload, 
+  Trash2, 
+  Globe, 
+  Info,
+  Bold,
+  Italic,
+  Underline,
+  List,
+  ListOrdered,
+  Link as LinkIcon,
+  Type
+} from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+
+/**
+ * Custom Rich Text Editor for premium blog editing.
+ */
+const RichTextEditor = ({ value, onChange, onImageUpload }: { value: string, onChange: (val: string) => void, onImageUpload: (file: File) => void }) => {
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  const exec = (command: string, val?: string) => {
+    document.execCommand(command, false, val);
+    if (editorRef.current) onChange(editorRef.current.innerHTML);
+  };
+
+  useEffect(() => {
+    if (editorRef.current && editorRef.current.innerHTML !== value) {
+      // Sync only once on mount to prevent cursor reset, or check if value is vastly different
+      if (!editorRef.current.innerHTML && value) {
+        editorRef.current.innerHTML = value;
+      }
+    }
+  }, [value]);
+
+  return (
+    <div className="border border-slate-200 rounded-none overflow-hidden">
+      <div className="bg-slate-50 border-b p-2 flex flex-wrap gap-1">
+        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => exec('bold')} title="Bold"><Bold className="w-4 h-4" /></Button>
+        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => exec('italic')} title="Italic"><Italic className="w-4 h-4" /></Button>
+        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => exec('underline')} title="Underline"><Underline className="w-4 h-4" /></Button>
+        <div className="w-px h-4 bg-slate-300 mx-1 self-center" />
+        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => exec('formatBlock', 'H1')} title="Heading 1"><span className="text-[10px] font-bold">H1</span></Button>
+        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => exec('formatBlock', 'H2')} title="Heading 2"><span className="text-[10px] font-bold">H2</span></Button>
+        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => exec('formatBlock', 'P')} title="Paragraph"><Type className="w-4 h-4" /></Button>
+        <div className="w-px h-4 bg-slate-300 mx-1 self-center" />
+        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => exec('insertUnorderedList')} title="Unordered List"><List className="w-4 h-4" /></Button>
+        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => exec('insertOrderedList')} title="Ordered List"><ListOrdered className="w-4 h-4" /></Button>
+        <div className="w-px h-4 bg-slate-300 mx-1 self-center" />
+        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => {
+          const url = prompt('Enter URL:');
+          if (url) exec('createLink', url);
+        }} title="Insert Link"><LinkIcon className="w-4 h-4" /></Button>
+        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => {
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'image/*';
+          input.onchange = (e) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
+            if (file) onImageUpload(file);
+          };
+          input.click();
+        }} title="Insert Image"><ImageIcon className="w-4 h-4" /></Button>
+      </div>
+      <div
+        ref={editorRef}
+        contentEditable
+        className="p-6 min-h-[500px] focus:outline-none bg-white font-body text-lg leading-relaxed prose max-w-none"
+        onInput={(e) => onChange(e.currentTarget.innerHTML)}
+      />
+    </div>
+  );
+};
 
 export default function BlogPostEditor({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -39,6 +115,7 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
     publishedAt: '',
     isPublished: false,
     imageUrl: '',
+    imageAlt: '',
     seo: {
       title: '',
       description: '',
@@ -50,26 +127,30 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
 
   useEffect(() => {
     if (existingPost) {
-      setPost(existingPost);
+      setPost({
+        ...existingPost,
+        imageAlt: existingPost.imageAlt ?? '',
+        content: existingPost.content ?? ''
+      });
     } else if (isNew) {
       setPost((prev: any) => ({ 
         ...prev, 
         publishedAt: new Date().toISOString(),
-        imageUrl: 'https://picsum.photos/seed/blog/1200/800'
+        imageUrl: 'https://picsum.photos/seed/blog/1200/800',
+        imageAlt: 'Blog cover placeholder'
       }));
     }
   }, [existingPost, isNew]);
 
-  const handleFileUpload = (file: File) => {
+  const handleFileUpload = (file: File, isInline: boolean = false) => {
     if (!file) return;
     
-    // Firestore Document Limit is 1MB. We store data twice (Draft + Live).
     const limit = 400000; // 400KB
     if (file.size > limit) {
       toast({ 
         variant: "destructive", 
         title: "File too large", 
-        description: "Please use images under 400KB for internal storage, or use a Direct URL." 
+        description: "Please use images under 400KB for database compatibility." 
       });
       return;
     }
@@ -77,8 +158,15 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
     reader.onload = (e) => {
       const result = e.target?.result;
       if (typeof result === 'string') {
-        setPost({ ...post, imageUrl: result });
-        toast({ title: "Image Uploaded", description: "Local asset processed for preview." });
+        if (isInline) {
+          const alt = prompt('Enter image description (Alt Text):') || '';
+          const imgHtml = `<img src="${result}" alt="${alt}" style="max-width: 100%; height: auto; margin: 2rem 0; display: block;" />`;
+          document.execCommand('insertHTML', false, imgHtml);
+          setPost((prev: any) => ({ ...prev, content: document.querySelector('.prose')?.innerHTML || prev.content }));
+        } else {
+          setPost({ ...post, imageUrl: result });
+          toast({ title: "Image Uploaded", description: "Cover image updated." });
+        }
       }
     };
     reader.readAsDataURL(file);
@@ -102,7 +190,7 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
     
     toast({
       title: "Article Saved",
-      description: "Changes have been stored in the database.",
+      description: "Changes have been stored in the sanctuary library.",
     });
 
     if (isNew) {
@@ -193,15 +281,13 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <Label className="text-[10px] uppercase font-bold tracking-widest opacity-50">Story Content (Rich Text)</Label>
-                <Textarea 
-                  className="min-h-[600px] font-body text-lg leading-relaxed rounded-none border-primary/5 focus-visible:ring-primary/10" 
+                <RichTextEditor 
                   value={post.content ?? ''} 
-                  onChange={(e) => setPost({...post, content: e.target.value})}
-                  placeholder="Begin your narrative here..." 
+                  onChange={(val) => setPost({...post, content: val})} 
+                  onImageUpload={(file) => handleFileUpload(file, true)}
                 />
-                <p className="text-[10px] text-muted-foreground italic">Tip: Use # for H1, ## for H2, and * for lists.</p>
               </div>
             </CardContent>
           </Card>
@@ -216,12 +302,7 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
                 <CardTitle className="text-lg font-headline flex items-center">
                   <ImageIcon className="w-4 h-4 mr-2 text-primary" /> Cover Media
                 </CardTitle>
-                <div className="group relative">
-                  <Info className="w-4 h-4 text-muted-foreground/40 cursor-help" />
-                  <div className="absolute right-0 top-full mt-2 w-48 p-2 bg-black text-white text-[8px] rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
-                    Max file size: 400KB. Larger files will fail to save.
-                  </div>
-                </div>
+                <Info className="w-4 h-4 text-muted-foreground/40 cursor-help" />
               </div>
             </CardHeader>
             <CardContent className="p-6 space-y-6">
@@ -251,7 +332,7 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
                 ) : (
                   <div className="flex flex-col items-center space-y-3 opacity-40">
                     <Upload className="w-8 h-8" />
-                    <p className="text-[10px] font-bold uppercase tracking-widest">Drop local file here</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest">Drop local file</p>
                   </div>
                 )}
                 <input id="blog-upload" type="file" className="hidden" accept="image/*" onChange={(e) => {
@@ -260,14 +341,25 @@ export default function BlogPostEditor({ params }: { params: Promise<{ id: strin
                 }} />
               </div>
               
-              <div className="space-y-2">
-                <Label className="text-[10px] uppercase font-bold opacity-40">Image Path / URL</Label>
-                <Input 
-                  className="h-10 text-[10px] font-mono rounded-none"
-                  value={post.imageUrl?.startsWith('data:') ? 'Local Asset Uploaded' : (post.imageUrl ?? '')} 
-                  onChange={(e) => setPost({...post, imageUrl: e.target.value})}
-                  placeholder="External URL" 
-                />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase font-bold opacity-40">Image Path / URL</Label>
+                  <Input 
+                    className="h-10 text-[10px] font-mono rounded-none"
+                    value={post.imageUrl?.startsWith('data:') ? 'Local Asset' : (post.imageUrl ?? '')} 
+                    onChange={(e) => setPost({...post, imageUrl: e.target.value})}
+                    placeholder="External URL" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase font-bold opacity-40">Cover Alt Text (SEO)</Label>
+                  <Input 
+                    className="h-10 text-xs rounded-none"
+                    value={post.imageAlt ?? ''} 
+                    onChange={(e) => setPost({...post, imageAlt: e.target.value})}
+                    placeholder="Describe the cover image..." 
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>

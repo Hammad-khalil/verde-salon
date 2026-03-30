@@ -27,7 +27,8 @@ export type PageSectionType =
   | 'CallToActionBlock' 
   | 'FormBlock' 
   | 'FAQSection' 
-  | 'BlogListing';
+  | 'BlogListing'
+  | 'ServicesListing';
 
 export type PageSection = {
   id: string;
@@ -56,6 +57,7 @@ export type Service = {
   price: string;
   duration: string;
   imageUrl: string;
+  imageUrlAlt?: string;
   category: string;
   isPublished: boolean;
 };
@@ -67,6 +69,7 @@ export type BlogPost = {
   author: string;
   content: string;
   imageUrl: string;
+  imageAlt?: string;
   publishedAt: string;
   isPublished: boolean;
   category: string;
@@ -93,6 +96,7 @@ export type GlobalSettings = {
   siteName: string;
   logo?: {
     url: string;
+    alt?: string;
     height: number;
     placement: 'left' | 'center';
   };

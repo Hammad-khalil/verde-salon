@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -36,13 +37,14 @@ export default function ServicesAdmin() {
       price: '',
       duration: '',
       imageUrl: 'https://picsum.photos/seed/service/800/600',
+      imageUrlAlt: '',
       isPublished: true
     });
     setIsDialogOpen(true);
   }
 
   function openEditDialog(service: any) {
-    setEditingService({ ...service });
+    setEditingService({ ...service, imageUrlAlt: service.imageUrlAlt ?? '' });
     setIsDialogOpen(true);
   }
 
@@ -169,7 +171,7 @@ export default function ServicesAdmin() {
             <DialogDescription className="text-white/60 uppercase tracking-widest text-[10px] font-bold">Artisan Menu Configuration</DialogDescription>
           </DialogHeader>
           
-          <form onSubmit={handleSave} className="p-8 space-y-8 bg-white">
+          <form onSubmit={handleSave} className="p-8 space-y-8 bg-white max-h-[70vh] overflow-y-auto custom-scrollbar">
             <div className="grid grid-cols-2 gap-8">
               <div className="space-y-2">
                 <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Service Name</Label>
@@ -203,12 +205,7 @@ export default function ServicesAdmin() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Media Asset</Label>
-                <div className="group relative">
-                  <Info className="w-3.5 h-3.5 text-muted-foreground/40 cursor-help" />
-                  <div className="absolute right-0 bottom-full mb-2 w-48 p-2 bg-black text-white text-[8px] rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
-                    Max size: 400KB. For HD imagery, provide an external URL below.
-                  </div>
-                </div>
+                <Info className="w-3.5 h-3.5 text-muted-foreground/40 cursor-help" />
               </div>
               <div className="flex items-center space-x-6 bg-slate-50 p-4 border border-dashed border-primary/10">
                 <div className="w-24 h-24 bg-white border flex items-center justify-center relative group overflow-hidden">
@@ -231,7 +228,15 @@ export default function ServicesAdmin() {
                     placeholder="External Image URL"
                     className="rounded-none h-10 text-xs border-primary/5"
                   />
-                  <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">Recommended: 800x1000px, Max 400KB</p>
+                  <div className="space-y-1">
+                    <Label className="text-[8px] uppercase opacity-40 font-bold">Image Alt Text (SEO)</Label>
+                    <Input 
+                      value={editingService?.imageUrlAlt ?? ''} 
+                      onChange={(e) => setEditingService({...editingService, imageUrlAlt: e.target.value})}
+                      placeholder="Describe this service image..."
+                      className="rounded-none h-8 text-[10px] border-primary/5"
+                    />
+                  </div>
                 </div>
                 <input id="service-upload" type="file" className="hidden" accept="image/*" onChange={(e) => {
                   const file = e.target.files?.[0];
@@ -274,7 +279,7 @@ export default function ServicesAdmin() {
               </div>
             </div>
 
-            <DialogFooter className="pt-6 border-t mt-8">
+            <DialogFooter className="pt-6 border-t mt-8 sticky bottom-0 bg-white">
               <Button type="button" variant="ghost" className="rounded-none uppercase tracking-widest text-[10px] font-bold" onClick={() => setIsDialogOpen(false)}>Discard</Button>
               <Button type="submit" className="bg-primary hover:bg-accent text-white rounded-none px-12 h-14 uppercase tracking-[0.2em] text-[11px] font-bold shadow-xl transition-all duration-500">
                 Update Menu

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo } from 'react';
@@ -9,7 +10,7 @@ import { cn } from '@/lib/utils';
 interface FeaturedWorkProps {
   title?: string;
   subtitle?: string;
-  images?: string[];
+  images?: Array<string | { url: string, alt: string }>;
   styles?: any;
 }
 
@@ -33,17 +34,17 @@ export default function FeaturedWork({
     
     // 2. Dynamic: Service Images from CMS
     if (services && services.length > 0) {
-      return services.map(s => s.imageUrl).filter(Boolean);
+      return services.map(s => ({ url: s.imageUrl, alt: s.imageUrlAlt || s.title })).filter(img => !!img.url);
     }
 
     // 3. Fallback: Aesthetic Placeholders
     return [
-      'https://picsum.photos/seed/verde-work-1/600/800',
-      'https://picsum.photos/seed/verde-work-2/600/800',
-      'https://picsum.photos/seed/verde-work-3/600/800',
-      'https://picsum.photos/seed/verde-work-4/600/800',
-      'https://picsum.photos/seed/verde-work-5/600/800',
-      'https://picsum.photos/seed/verde-work-6/600/800',
+      { url: 'https://picsum.photos/seed/verde-work-1/600/800', alt: 'Hair transformation' },
+      { url: 'https://picsum.photos/seed/verde-work-2/600/800', alt: 'Salon interior' },
+      { url: 'https://picsum.photos/seed/verde-work-3/600/800', alt: 'Skincare products' },
+      { url: 'https://picsum.photos/seed/verde-work-4/600/800', alt: 'Nail art details' },
+      { url: 'https://picsum.photos/seed/verde-work-5/600/800', alt: 'Relaxing atmosphere' },
+      { url: 'https://picsum.photos/seed/verde-work-6/600/800', alt: 'Specialist at work' },
     ];
   }, [images, services]);
 
@@ -73,21 +74,26 @@ export default function FeaturedWork({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {displayImages.map((img, i) => (
-            <div key={i} className="group relative aspect-[3/4] overflow-hidden bg-muted shadow-2xl">
-              <Image 
-                src={typeof img === 'string' ? img : (img as any).imageUrl || 'https://picsum.photos/seed/missing/600/800'} 
-                alt={`${title} item ${i+1}`} 
-                fill 
-                className={cn(
-                  "grayscale-[0.3] transition-all duration-[2s] group-hover:scale-110 group-hover:grayscale-0",
-                  objectFit === 'contain' ? "object-contain" : "object-cover"
-                )}
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
-              <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-colors duration-700 pointer-events-none" />
-            </div>
-          ))}
+          {displayImages.map((img, i) => {
+            const url = typeof img === 'string' ? img : img.url;
+            const alt = typeof img === 'string' ? `${title} item ${i+1}` : img.alt;
+            
+            return (
+              <div key={i} className="group relative aspect-[3/4] overflow-hidden bg-muted shadow-2xl">
+                <Image 
+                  src={url || 'https://picsum.photos/seed/missing/600/800'} 
+                  alt={alt || "Verde Salon transformation"} 
+                  fill 
+                  className={cn(
+                    "grayscale-[0.3] transition-all duration-[2s] group-hover:scale-110 group-hover:grayscale-0",
+                    objectFit === 'contain' ? "object-contain" : "object-cover"
+                  )}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+                <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-colors duration-700 pointer-events-none" />
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

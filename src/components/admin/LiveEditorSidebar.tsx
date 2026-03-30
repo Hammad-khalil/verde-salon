@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -25,8 +26,6 @@ import {
   Loader2,
   Globe,
   Info,
-  Volume2,
-  VolumeX,
   MonitorPlay,
   AlertTriangle,
   Maximize
@@ -51,12 +50,16 @@ const MediaField = ({
   label, 
   value, 
   onChange, 
+  altValue,
+  onAltChange,
   type = 'image',
   onRemove
 }: { 
   label: string, 
   value: string, 
   onChange: (val: string) => void, 
+  altValue?: string,
+  onAltChange?: (val: string) => void,
   type?: 'image' | 'video',
   onRemove?: () => void
 }) => {
@@ -152,14 +155,28 @@ const MediaField = ({
         }} />
       </div>
 
-      <div className="space-y-1">
-        <Label className="text-[8px] uppercase opacity-40 font-bold">Or External Source URL</Label>
-        <Input 
-          placeholder={type === 'video' ? "https://youtube.com/watch?v=..." : "https://..."}
-          className="h-8 text-[9px] font-mono rounded-none"
-          value={safeValue.startsWith('data:') ? 'Local Asset' : safeValue}
-          onChange={(e) => onChange(e.target.value)}
-        />
+      <div className="space-y-3">
+        <div className="space-y-1">
+          <Label className="text-[8px] uppercase opacity-40 font-bold">External Source URL</Label>
+          <Input 
+            placeholder={type === 'video' ? "https://youtube.com/watch?v=..." : "https://..."}
+            className="h-8 text-[9px] font-mono rounded-none"
+            value={safeValue.startsWith('data:') ? 'Local Asset' : safeValue}
+            onChange={(e) => onChange(e.target.value)}
+          />
+        </div>
+        
+        {type === 'image' && onAltChange && (
+          <div className="space-y-1 border-t pt-2 mt-2">
+            <Label className="text-[8px] uppercase opacity-40 font-bold">Alt Text (SEO/Access)</Label>
+            <Input 
+              placeholder="Describe this image..."
+              className="h-8 text-[9px] rounded-none"
+              value={altValue || ''}
+              onChange={(e) => onAltChange(e.target.value)}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -257,6 +274,10 @@ export default function LiveEditorSidebar() {
     );
   };
 
+  const getDeepValue = (obj: any, path: string) => {
+    return path.split('.').reduce((prev, curr) => prev && prev[curr], obj);
+  };
+
   async function handlePublish() {
     if (!pageData || !pageId) return;
     setIsPublishing(true);
@@ -290,7 +311,6 @@ export default function LiveEditorSidebar() {
     }
   }
 
-  // OPTIMIZATION: Only render the heavy editor UI if we are in edit mode
   if (!isEditMode) return null;
 
   return (
@@ -363,11 +383,21 @@ export default function LiveEditorSidebar() {
                       return f.value.map((item: any, idx: number) => {
                         const itemUrl = typeof item === 'string' ? item : (item.imageUrl || item.url || '');
                         if (typeof itemUrl !== 'string') return null;
+                        
+                        const itemAlt = typeof item === 'string' ? '' : (item.alt || item.imageUrlAlt || '');
+
                         return (
                           <MediaField 
                             key={`${f.path}-${idx}`} 
                             label={`${f.path} [${idx + 1}]`} 
                             value={itemUrl ?? ''} 
+                            altValue={itemAlt ?? ''}
+                            onAltChange={(newAlt) => {
+                              const newArr = [...f.value];
+                              if (typeof newArr[idx] === 'string') newArr[idx] = { url: newArr[idx], alt: newAlt };
+                              else newArr[idx] = { ...newArr[idx], alt: newAlt };
+                              updateValue(f.path, newArr);
+                            }}
                             onChange={(newVal) => {
                               const newArr = [...f.value];
                               if (typeof newArr[idx] === 'string') newArr[idx] = newVal;
@@ -385,6 +415,8 @@ export default function LiveEditorSidebar() {
                           key={f.path} 
                           label={f.path} 
                           value={f.value ?? ''} 
+                          altValue={getDeepValue(editingData.parsedContent, f.path + 'Alt')}
+                          onAltChange={(newAlt) => updateValue(f.path + 'Alt', newAlt)}
                           onChange={(newVal) => updateValue(f.path, newVal)} 
                           type={isVideoField ? 'video' : 'image'} 
                         />

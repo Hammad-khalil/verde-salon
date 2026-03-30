@@ -1,3 +1,4 @@
+
 'use client';
 
 import { use, useEffect, useState } from 'react';
@@ -78,6 +79,9 @@ export default function BlogPostDetail({ params }: { params: Promise<{ slug: str
     );
   }
 
+  // Detect if content is Rich Text (HTML) or Legacy (Markdown-ish)
+  const isHtmlContent = post.content?.trim().startsWith('<') || post.content?.includes('<p>') || post.content?.includes('<h1');
+
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <SEOManager 
@@ -131,7 +135,7 @@ export default function BlogPostDetail({ params }: { params: Promise<{ slug: str
           <div className="relative aspect-[21/9] mb-32 overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.15)] bg-slate-50">
             <Image 
               src={post.imageUrl || 'https://picsum.photos/seed/verde-blog-hero/1920/1080'} 
-              alt={post.title} 
+              alt={post.imageAlt || post.title} 
               fill 
               className="object-cover transition-transform duration-[5s] hover:scale-105"
               priority
@@ -141,34 +145,41 @@ export default function BlogPostDetail({ params }: { params: Promise<{ slug: str
 
           {/* Article Master Content */}
           <div className="max-w-3xl mx-auto">
-            <div className="font-body text-lg md:text-xl leading-[1.8] md:leading-[2] text-muted-foreground/90 space-y-10 tracking-wide">
-              {post.content.split('\n').map((line: string, i: number) => {
-                if (line.startsWith('# ')) {
-                  return <h2 key={i} className="text-4xl md:text-5xl font-headline font-bold text-primary mt-20 mb-8 leading-tight">{line.replace('# ', '')}</h2>;
-                }
-                if (line.startsWith('## ')) {
-                  return <h3 key={i} className="text-2xl md:text-3xl font-headline font-bold text-primary mt-16 mb-6">{line.replace('## ', '')}</h3>;
-                }
-                if (line.startsWith('* ') || line.startsWith('1. ')) {
-                  return (
-                    <div key={i} className="flex items-start space-x-4 ml-2 md:ml-4 mb-4">
-                      <div className="mt-3 w-1.5 h-1.5 bg-accent rounded-full shrink-0" />
-                      <p className="text-lg">{line.replace(/^\* |^1\. /, '')}</p>
-                    </div>
-                  );
-                }
-                
-                const trimmedLine = line.trim();
-                if (trimmedLine) {
-                  return (
-                    <p key={i} className="mb-6 last:mb-0">
-                      {trimmedLine}
-                    </p>
-                  );
-                }
-                return <div key={i} className="h-4" />;
-              })}
-            </div>
+            {isHtmlContent ? (
+              <div 
+                className="rich-text-content font-body text-lg md:text-xl leading-[1.8] text-muted-foreground/90 prose prose-slate max-w-none"
+                dangerouslySetInnerHTML={{ __html: post.content }}
+              />
+            ) : (
+              <div className="font-body text-lg md:text-xl leading-[1.8] md:leading-[2] text-muted-foreground/90 space-y-10 tracking-wide">
+                {post.content.split('\n').map((line: string, i: number) => {
+                  if (line.startsWith('# ')) {
+                    return <h2 key={i} className="text-4xl md:text-5xl font-headline font-bold text-primary mt-20 mb-8 leading-tight">{line.replace('# ', '')}</h2>;
+                  }
+                  if (line.startsWith('## ')) {
+                    return <h3 key={i} className="text-2xl md:text-3xl font-headline font-bold text-primary mt-16 mb-6">{line.replace('## ', '')}</h3>;
+                  }
+                  if (line.startsWith('* ') || line.startsWith('1. ')) {
+                    return (
+                      <div key={i} className="flex items-start space-x-4 ml-2 md:ml-4 mb-4">
+                        <div className="mt-3 w-1.5 h-1.5 bg-accent rounded-full shrink-0" />
+                        <p className="text-lg">{line.replace(/^\* |^1\. /, '')}</p>
+                      </div>
+                    );
+                  }
+                  
+                  const trimmedLine = line.trim();
+                  if (trimmedLine) {
+                    return (
+                      <p key={i} className="mb-6 last:mb-0">
+                        {trimmedLine}
+                      </p>
+                    );
+                  }
+                  return <div key={i} className="h-4" />;
+                })}
+              </div>
+            )}
 
             {/* Reflection Signature */}
             <div className="mt-32 pt-16 border-t border-primary/10 flex flex-col md:flex-row items-center justify-between gap-10">

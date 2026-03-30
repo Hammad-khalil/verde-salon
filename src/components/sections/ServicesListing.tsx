@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -14,6 +15,7 @@ interface ServiceItem {
   price: string;
   duration?: string;
   imageUrl: string;
+  imageUrlAlt?: string;
   category: string;
 }
 
@@ -114,7 +116,7 @@ export default function ServicesListing({
                         <div className="relative aspect-[4/5] overflow-hidden shadow-2xl bg-muted group-hover:shadow-accent/10 transition-all duration-700">
                           <Image 
                             src={service.imageUrl || 'https://picsum.photos/seed/verde-service/800/1000'} 
-                            alt={service.title} 
+                            alt={service.imageUrlAlt || service.title} 
                             fill 
                             className="object-cover grayscale-[0.2] transition-transform duration-[2.5s] ease-out group-hover:scale-110 group-hover:grayscale-0" 
                             sizes="(max-width: 768px) 100vw, 50vw"

@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -10,6 +11,7 @@ interface BrandIntroProps {
   title: string;
   content: string;
   imageUrl?: string;
+  imageUrlAlt?: string;
   altText?: string;
   subtitle?: string;
   buttonText?: string;
@@ -21,6 +23,7 @@ export default function BrandIntro({
   title = "About Verde Salon", 
   content, 
   imageUrl,
+  imageUrlAlt,
   altText = "Verde Salon Interior",
   subtitle = "The Essence of Luxury",
   buttonText = "Discover Our Story",
@@ -90,7 +93,7 @@ export default function BrandIntro({
             <div className="relative aspect-[4/5] overflow-hidden shadow-2xl">
               <Image 
                 src={safeImageUrl} 
-                alt={altText} 
+                alt={imageUrlAlt || altText} 
                 fill 
                 className={cn(
                   "transition-transform duration-[2s] ease-out group-hover:scale-105 grayscale-[0.2] group-hover:grayscale-0",

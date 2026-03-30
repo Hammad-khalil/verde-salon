@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -11,6 +12,7 @@ interface HeroProps {
   ctaText?: string;
   ctaUrl?: string;
   imageUrl?: string;
+  imageUrlAlt?: string;
   altText?: string;
   videoUrl?: string;
   videoStartTime?: number;
@@ -38,6 +40,7 @@ export default function Hero({
   ctaText = "Book Appointment", 
   ctaUrl = "/services#book-now",
   imageUrl,
+  imageUrlAlt,
   altText = "Verde Salon Atmosphere",
   videoUrl,
   videoStartTime,
@@ -108,7 +111,7 @@ export default function Hero({
         ) : backgroundType === 'image' ? (
           <Image 
             src={imageUrl || "https://picsum.photos/seed/verde-hero-main/1920/1080"} 
-            alt={altText} 
+            alt={imageUrlAlt || altText} 
             fill 
             priority // OPTIMIZATION: Prioritize LCP image
             className={cn("transition-transform duration-[3s] scale-[1.02]", objectFit === 'cover' ? "object-cover" : "object-contain")}
