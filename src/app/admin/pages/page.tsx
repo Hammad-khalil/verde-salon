@@ -46,6 +46,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { defaultContents, defaultStyles } from '@/lib/cms-defaults';
 
 export default function PagesEditor() {
   const db = useFirestore();
@@ -325,7 +326,7 @@ export default function PagesEditor() {
                               {isHidden && <Badge variant="outline" className="h-4 text-[8px] uppercase tracking-widest border-amber-200 text-amber-600 bg-amber-50">Hidden from Public</Badge>}
                             </div>
                             <h3 className={cn("font-headline text-xl font-bold", isHidden && "text-slate-400 line-through")}>
-                              {(content as any).title || (content as any).handle || 'Artisan Section'}
+                              {typeof content === 'object' && content !== null && 'title' in content ? (content as any).title : (content as any).handle || 'Artisan Element'}
                             </h3>
                           </div>
                         </div>
@@ -419,7 +420,7 @@ export default function PagesEditor() {
                         </div>
                         <div>
                           <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-accent mb-1">{section.type}</p>
-                          <h4 className="font-bold text-lg">{(content as any).title || 'Archived Section'}</h4>
+                          <h4 className="font-bold text-lg">{typeof content === 'object' && content !== null && 'title' in content ? (content as any).title : 'Archived Section'}</h4>
                           <p className="text-[10px] font-mono text-muted-foreground opacity-40">{section.id}</p>
                         </div>
                       </div>
@@ -758,48 +759,3 @@ export default function PagesEditor() {
     </div>
   );
 }
-
-const defaultStyles = {
-  backgroundColor: '#F5F3EF',
-  titleColor: '#0F2F2F',
-  subtitleColor: '#C6A15B',
-  paddingVertical: '128',
-  overlayOpacity: 20,
-  overlayColor: '#000000',
-  alignment: 'center',
-  buttonType: 'primary',
-  objectFit: 'cover'
-};
-
-const defaultContents: Record<string, any> = {
-  Hero: { title: 'Elevate Your Natural Beauty', subtitle: 'Premium hair, skin, and wellness treatments tailored for you.', ctaText: 'Book Appointment', ctaUrl: '/services#book-now', imageUrl: 'https://picsum.photos/seed/verde-luxury-hero/1920/1080', backgroundType: 'image' },
-  TextBlock: { title: 'A New Narrative', content: 'Share your story here...', alignment: 'center' },
-  BrandIntro: { title: 'About VERDE SALON', subtitle: 'The Essence of Luxury', content: 'At Verde Salon, we blend modern beauty techniques with natural care. Our mission is to enhance your beauty while maintaining the health of your hair and skin.', imageUrl: 'https://picsum.photos/seed/verde-about/800/1000', buttonText: 'Discover Our Story', buttonUrl: '/blog' },
-  CTA: { title: 'Ready for a transformation?', subtitle: 'Book your experience today at Verde Salon.', buttonText: 'Book Your Visit', buttonUrl: '/services#book-now' },
-  FormBlock: { title: 'Book an Experience', subtitle: 'Request a service at Verde Salon.', type: 'Booking' },
-  VideoBlock: { 
-    title: 'Featured Video', 
-    subtitle: 'Experience Verde Salon in motion', 
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 
-    posterUrl: 'https://picsum.photos/seed/video-thumb/1280/720', 
-    autoplay: true, 
-    loop: true, 
-    muted: true, 
-    showControls: false, 
-    startTime: 0, 
-    endTime: 60,
-    styles: {
-      ...defaultStyles,
-      objectFit: 'cover',
-      height: 'auto',
-      maxWidth: '100%'
-    }
-  },
-  FAQSection: { title: 'Common Queries', subtitle: 'Information for your visit' },
-  ServicesPreview: { title: 'Signature Services', subtitle: 'Our Craft', services: [] },
-  FeaturedWork: { title: 'Our Work', subtitle: 'The Verde Aesthetic', images: [] },
-  Testimonials: { title: 'Client Reflections', subtitle: 'Voices of Verde Salon', testimonials: [] },
-  InstagramPreview: { handle: '@verdesalonsalon', title: 'Follow Us on Instagram', posts: [] },
-  BlogListing: { title: 'Reflections & Insights', subtitle: 'Blogs', description: 'Curated thoughts on beauty and intentional living.' },
-  ServicesListing: { title: 'Signature Services', subtitle: 'The Menu', description: 'Timeless techniques meets contemporary science.' }
-};
